@@ -3,7 +3,7 @@ interface LanguageConfig {
 	extensionModule: () => Promise<any>;
 	defaultText: string;
 	mode: string;
-	runnerName?: string;
+	runnerName: string;
 	/**
 	 * The class name of the icon to display for this language.
 	 * @example
@@ -16,6 +16,7 @@ interface LanguageConfig {
 	 *
 	 */
 	iconClass: string | undefined;
+	languageName: string;
 }
 
 // https://github.com/ajaxorg/ace-builds/tree/cb4c7c3d105c92b04f45d78d329f5509b7098906/demo/kitchen-sink/docs
@@ -104,6 +105,7 @@ module Mankala {
 		runnerName: "TypeScript (Bun 1.1.33)",
 		mode: "typescript",
 		iconClass: "devicon-typescript-plain",
+		languageName: "TypeScript",
 	},
 	45: {
 		extensionModule: () =>
@@ -124,6 +126,7 @@ len equ $ - msg`,
 		runnerName: "Assembly (NASM 2.16.03)",
 		mode: "assembly_x86",
 		iconClass: "devicon-wasm-original",
+		languageName: "Assembly",
 	},
 	46: {
 		extensionModule: () => import("ace-builds/src-noconflict/mode-sh"),
@@ -131,6 +134,7 @@ len equ $ - msg`,
 		runnerName: "Bash (5.0.0)",
 		mode: "sh",
 		iconClass: "devicon-bash-plain",
+		languageName: "Bash",
 	},
 	// 47: {
 	// 	extensionModule: () => Promise.resolve(),
@@ -150,6 +154,7 @@ int main() {
 		runnerName: "C (Clang 19.1.0)",
 		mode: "c_cpp",
 		iconClass: "devicon-c-line",
+		languageName: "C",
 	},
 	76: {
 		// C++ (Clang 19.1.0)
@@ -162,6 +167,7 @@ int main() {
 		runnerName: "C++ (Clang 19.1.0)",
 		mode: "c_cpp",
 		iconClass: "devicon-cplusplus-plain",
+		languageName: "CPP",
 	},
 	48: {
 		// C (GCC 7.4.0)
@@ -174,6 +180,7 @@ int main() {
 		runnerName: "C (GCC 7.4.0)",
 		mode: "c_cpp",
 		iconClass: "devicon-c-line",
+		languageName: "C",
 	},
 	52: {
 		// C++ (GCC 10.2)
@@ -186,6 +193,7 @@ int main() {
 		runnerName: "C++ (GCC 10.2)",
 		mode: "c_cpp",
 		iconClass: "devicon-cplusplus-plain",
+		languageName: "CPP",
 	},
 	49: {
 		// C (GCC 11.5)
@@ -198,6 +206,7 @@ int main() {
 		runnerName: "C (GCC 11.5)",
 		mode: "c_cpp",
 		iconClass: "devicon-c-line",
+		languageName: "C",
 	},
 	53: {
 		extensionModule: () => import("ace-builds/src-noconflict/mode-c_cpp"),
@@ -209,6 +218,7 @@ int main() {
 		runnerName: "C++ (GCC 11.5)",
 		mode: "c_cpp",
 		iconClass: "devicon-cplusplus-plain",
+		languageName: "CPP",
 	},
 	50: {
 		extensionModule: () => import("ace-builds/src-noconflict/mode-c_cpp"),
@@ -220,6 +230,7 @@ int main() {
 		runnerName: "C (GCC 12.4)",
 		mode: "c_cpp",
 		iconClass: "devicon-c-line",
+		languageName: "C",
 	},
 	54: {
 		extensionModule: () => import("ace-builds/src-noconflict/mode-c_cpp"),
@@ -231,6 +242,7 @@ int main() {
 		runnerName: "C++ (GCC 12.4)",
 		mode: "c_cpp",
 		iconClass: "devicon-cplusplus-plain",
+		languageName: "CPP",
 	},
 	86: {
 		extensionModule: () => import("ace-builds/src-noconflict/mode-clojure"),
@@ -259,6 +271,7 @@ int main() {
 		runnerName: "Clojure (1.11.2)",
 		mode: "clojure",
 		iconClass: "devicon-clojure-line",
+		languageName: "Clojure",
 	},
 	77: {
 		extensionModule: () => import("ace-builds/src-noconflict/mode-cobol"),
@@ -307,6 +320,7 @@ int main() {
 		runnerName: "COBOL (GnuCOBOL 3.1.2)",
 		mode: "cobol",
 		iconClass: undefined,
+		languageName: "COBOL",
 	},
 	55: {
 		extensionModule: () => import("ace-builds/src-noconflict/mode-lisp"),
@@ -353,6 +367,7 @@ int main() {
 		runnerName: "Common Lisp (SBCL 2.4.9)",
 		mode: "lisp",
 		iconClass: undefined,
+		languageName: "Lisp",
 	},
 	56: {
 		extensionModule: () => import("ace-builds/src-noconflict/mode-d"),
@@ -374,6 +389,7 @@ void main() {
 		runnerName: "D (DMD 2.109.1)",
 		mode: "d",
 		iconClass: undefined,
+		languageName: "D",
 	},
 	57: {
 		extensionModule: () => import("ace-builds/src-noconflict/mode-elixir"),
@@ -381,6 +397,7 @@ void main() {
 		runnerName: "Elixir (1.17.3)",
 		mode: "elixir",
 		iconClass: "devicon-elixir-plain",
+		languageName: "Elixir",
 	},
 	58: {
 		extensionModule: () => import("ace-builds/src-noconflict/mode-erlang"),
@@ -428,6 +445,7 @@ word_frequency(Words) ->
 		runnerName: "Erlang (OTP 27.1.2)",
 		mode: "erlang",
 		iconClass: "devicon-erlang-plain",
+		languageName: "Erlang",
 	},
 	87: {
 		extensionModule: () => import("ace-builds/src-noconflict/mode-nim"),
@@ -488,6 +506,7 @@ for (n, s) in oddAbundant(1_000_000_000):
 		runnerName: "Nim (2.2.0)",
 		mode: "nim",
 		iconClass: "devicon-nim-plain",
+		languageName: "Nim",
 	},
 	59: {
 		extensionModule: () => import("ace-builds/src-noconflict/mode-fortran"),
@@ -530,6 +549,7 @@ end program main
 		runnerName: "Fortran (GFortran 13.3)",
 		mode: "fortran",
 		iconClass: "devicon-fortran-original",
+		languageName: "Fortran",
 	},
 	60: {
 		extensionModule: () => import("ace-builds/src-noconflict/mode-golang"),
@@ -541,6 +561,7 @@ func main() {
 		runnerName: "Go (1.23.2)",
 		mode: "golang",
 		iconClass: "devicon-go-original-wordmark",
+		languageName: "Go",
 	},
 	88: {
 		extensionModule: () => import("ace-builds/src-noconflict/mode-groovy"),
@@ -548,6 +569,7 @@ func main() {
 		runnerName: "Groovy (4.0.23)",
 		mode: "groovy",
 		iconClass: "devicon-groovy-plain",
+		languageName: "Groovy",
 	},
 	61: {
 		extensionModule: () => import("ace-builds/src-noconflict/mode-haskell"),
@@ -582,6 +604,7 @@ main = do
 		runnerName: "Haskell (7.8.4)",
 		mode: "haskell",
 		iconClass: "devicon-haskell-plain",
+		languageName: "Haskell",
 	},
 	62: {
 		extensionModule: () => import("ace-builds/src-noconflict/mode-java"),
@@ -593,6 +616,7 @@ main = do
 		runnerName: "Java (OpenJDK 23)",
 		mode: "java",
 		iconClass: "devicon-java-plain",
+		languageName: "Java",
 	},
 	63: {
 		extensionModule: () => import("ace-builds/src-noconflict/mode-javascript"),
@@ -600,6 +624,7 @@ main = do
 		runnerName: "JavaScript (Bun 1.1.33)",
 		mode: "javascript",
 		iconClass: "devicon-javascript-plain",
+		languageName: "JavaScript",
 	},
 	78: {
 		extensionModule: () => import("ace-builds/src-noconflict/mode-kotlin"),
@@ -609,6 +634,7 @@ main = do
 		runnerName: "Kotlin (2.0.21)",
 		mode: "kotlin",
 		iconClass: "devicon-kotlin-plain",
+		languageName: "Kotlin",
 	},
 	64: {
 		extensionModule: () => import("ace-builds/src-noconflict/mode-lua"),
@@ -653,6 +679,7 @@ print(5 --[[ blah ]])`,
 		runnerName: "Lua (5.4.7)",
 		mode: "lua",
 		iconClass: "devicon-lua-plain",
+		languageName: "Lua",
 	},
 	79: {
 		// Objective-C (Clang 7.0.1)
@@ -745,6 +772,7 @@ int main(int argc, const char *argv[]) {
 		runnerName: "Objective-C (Clang 7.0.1)",
 		mode: "objectivec",
 		iconClass: "devicon-objectivec-plain",
+		languageName: "Objective-C",
 	},
 	65: {
 		extensionModule: () => import("ace-builds/src-noconflict/mode-ocaml"),
@@ -773,6 +801,7 @@ let () =
 		runnerName: "OCaml (5.2.0)",
 		mode: "ocaml",
 		iconClass: "devicon-ocaml-plain",
+		languageName: "OCaml",
 	},
 	66: {
 		extensionModule: () => import("ace-builds/src-noconflict/mode-text"),
@@ -780,6 +809,7 @@ let () =
 		runnerName: "Octave (9.2.0)",
 		mode: "text",
 		iconClass: undefined,
+		languageName: "Octave",
 	},
 	67: {
 		extensionModule: () => import("ace-builds/src-noconflict/mode-pascal"),
@@ -834,6 +864,7 @@ PROGRAM Sort(input, output);
 		runnerName: "Pascal (FPC 3.2.2)",
 		mode: "pascal",
 		iconClass: undefined,
+		languageName: "Pascal",
 	},
 	85: {
 		extensionModule: () => import("ace-builds/src-noconflict/mode-perl"),
@@ -866,6 +897,7 @@ bernoulli_print();
 		runnerName: "Perl (5.40.0)",
 		mode: "perl",
 		iconClass: "devicon-perl-plain",
+		languageName: "Perl",
 	},
 	68: {
 		extensionModule: () => import("ace-builds/src-noconflict/mode-php"),
@@ -888,6 +920,7 @@ foreach (range(99, 1) as $i) {
 		runnerName: "PHP (8.3.13)",
 		mode: "php",
 		iconClass: "devicon-php-plain",
+		languageName: "PHP",
 	},
 	69: {
 		extensionModule: () => import("ace-builds/src-noconflict/mode-prolog"),
@@ -912,6 +945,7 @@ perfect(N) :-
 		runnerName: "Prolog (GNU Prolog 1.4.5)",
 		mode: "prolog",
 		iconClass: "devicon-prolog-plain",
+		languageName: "Prolog",
 	},
 	70: {
 		extensionModule: () =>
@@ -924,6 +958,7 @@ perfect(N) :-
 		runnerName: "Python (2.7.17)",
 		mode: "python",
 		iconClass: "devicon-python-plain",
+		languageName: "Python",
 	},
 	71: {
 		extensionModule: () => import("ace-builds/src-noconflict/mode-python"),
@@ -931,6 +966,7 @@ perfect(N) :-
 		runnerName: "Python (3.12.7)",
 		mode: "python",
 		iconClass: "devicon-python-plain",
+		languageName: "Python",
 	},
 	80: {
 		extensionModule: () => import("ace-builds/src-noconflict/mode-r"),
@@ -957,6 +993,7 @@ F-statistic: 91.88 on 1 and 4 DF,  p-value: 0.000662
 		runnerName: "R (4.4.1)",
 		mode: "r",
 		iconClass: undefined,
+		languageName: "R",
 	},
 	72: {
 		extensionModule: () => import("ace-builds/src-noconflict/mode-ruby"),
@@ -964,6 +1001,7 @@ F-statistic: 91.88 on 1 and 4 DF,  p-value: 0.000662
 		runnerName: "Ruby (2.7.0)",
 		mode: "ruby",
 		iconClass: "devicon-ruby-plain",
+		languageName: "Ruby",
 	},
 	73: {
 		extensionModule: () => import("ace-builds/src-noconflict/mode-rust"),
@@ -1032,6 +1070,7 @@ macro_rules! mac_variant {
 		runnerName: "Rust (1.82.0)",
 		mode: "rust",
 		iconClass: "devicon-rust-original",
+		languageName: "Rust",
 	},
 	81: {
 		extensionModule: () => import("ace-builds/src-noconflict/mode-scala"),
@@ -1082,6 +1121,7 @@ macro_rules! mac_variant {
 		runnerName: "Scala (3.5.2)",
 		mode: "scala",
 		iconClass: "devicon-scala-plain",
+		languageName: "Scala",
 	},
 	82: {
 		extensionModule: () => import("ace-builds/src-noconflict/mode-sql"),
@@ -1089,6 +1129,7 @@ macro_rules! mac_variant {
 		runnerName: "SQL (SQLite 3.46.1.1)",
 		mode: "sql",
 		iconClass: "devicon-sqlite-plain",
+		languageName: "SQL",
 	},
 	83: {
 		extensionModule: () => import("ace-builds/src-noconflict/mode-swift"),
@@ -1096,6 +1137,7 @@ macro_rules! mac_variant {
 		runnerName: "Swift (6.0.1)",
 		mode: "swift",
 		iconClass: "devicon-swift-plain",
+		languageName: "Swift",
 	},
 	84: {
 		extensionModule: () => import("ace-builds/src-noconflict/mode-text"),
@@ -1109,6 +1151,7 @@ End Module`,
 		runnerName: "Visual Basic.Net (vbnc 0.0.0.5943)",
 		mode: "text",
 		iconClass: "devicon-visualbasic-plain",
+		languageName: "VBNC",
 	},
 	90: {
 		//  C (GCC 13.3)
@@ -1121,6 +1164,7 @@ int main() {
 		runnerName: "C (GCC 13.3)",
 		mode: "c_cpp",
 		iconClass: "devicon-c-line",
+		languageName: "C",
 	},
 	91: {
 		// C++ (GCC 13.3)
@@ -1133,5 +1177,6 @@ int main() {
 		runnerName: "C++ (GCC 13.3)",
 		mode: "c_cpp",
 		iconClass: "devicon-cplusplus-plain",
+		languageName: "CPP",
 	},
 };
