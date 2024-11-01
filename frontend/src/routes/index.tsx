@@ -103,11 +103,10 @@ import { getStoredSubmissions } from 'src/utils/submissionCounter'
 import Header from '../components/Header'
 import OutputModal from '../components/OutputModal'
 import StdinModal from '../components/StdinModal'
-
+import { Helmet } from 'react-helmet';
 export const Route = createFileRoute('/')({
   component: MainPage,
 })
-
 export default function MainPage() {
   const [showStdinModal, setShowStdinModal] = useState(false)
   const [submissions, setSubmissions] = useState<StoredSubmission[]>([])
@@ -214,123 +213,172 @@ export default function MainPage() {
       </div>
     )
   }
+
+  const languageKeywords = Object.values(LANGUAGE_CONFIG)
+    .map(lang => lang?.runnerName.toLowerCase())
+    .filter(Boolean)
+    .join(', ');
+
   return (
-    <div className="min-h-screen bg-[#211e20] text-[#e9efec] font-mono flex flex-col">
-      <CustomToast />
-      <Header
-        code={code}
-        languages={JudgeAPI.languages.data ?? []}
-        languageID={languageID}
-        displayingSharedCode={false}
-        setLanguageID={setLanguageID}
-        onSubmit={() =>
-          Submissions.handleSubmitCode(
-            code.current,
-            languageID,
-            false,
-            setShowStdinModal,
-            JudgeAPI,
-            setSubmissions,
-          )
-        }
-        onSubmitWithStdin={() =>
-          Submissions.handleSubmitCode(
-            code.current,
-            languageID,
-            true,
-            setShowStdinModal,
-            JudgeAPI,
-            setSubmissions,
-          )
-        }
-        onClearSubmissions={() =>
-          Submissions.handleClearSubmissions(setSubmissions)
-        }
-      />
-      <PanelGroup direction="horizontal" className="flex-1">
-        <Panel defaultSize={70} minSize={30}>
-          {renderFirst === RenderFirst.WelcomeMarkdown && (
-            <div
-              style={{
-                display: 'flex',
-                width: '100%',
-                maxHeight: '90vh',
-                backgroundColor: '#1e1e1e',
-              }}
-            >
+    <>
+      <Helmet>
+        {/* Primary Meta Tags */}
+        <title>Online Code Playground - Multi-language Code Editor</title>
+        <meta name="title" content="Online Code Playground - Multi-language Code Editor" />
+        <meta name="description" content="Free online code editor and playground supporting multiple programming languages including Python, Typescript/Javascript, C/C++, and more. Write, run, and share code instantly." />
+
+        {/* Keywords - include your supported languages */}
+        <meta name="keywords" content={`code playground, online ide, code editor, ${languageKeywords}, programming tools`} />
+
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Online Code Playground - Multi-language Code Editor" />
+        <meta property="og:description" content="Write, run, and share code in multiple programming languages. Free online code editor with syntax highlighting and instant execution." />
+
+        {/* Twitter */}
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:title" content="Online Code Playground - Multi-language Code Editor" />
+        <meta property="twitter:description" content="Write, run, and share code in multiple programming languages. Free online code editor with syntax highlighting and instant execution." />
+
+        {/* Structured Data for Rich Results */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            "name": "Online Code Playground",
+            "applicationCategory": "DeveloperApplication",
+            "operatingSystem": "Web Browser",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "featureList": [
+              "Multi-language support",
+              "Syntax highlighting",
+              "Code execution",
+              "Code sharing"
+            ]
+          })}
+        </script>
+      </Helmet>
+      <div className="min-h-screen bg-[#211e20] text-[#e9efec] font-mono flex flex-col">
+        <CustomToast />
+        <Header
+          code={code}
+          languages={JudgeAPI.languages.data ?? []}
+          languageID={languageID}
+          displayingSharedCode={false}
+          setLanguageID={setLanguageID}
+          onSubmit={() =>
+            Submissions.handleSubmitCode(
+              code.current,
+              languageID,
+              false,
+              setShowStdinModal,
+              JudgeAPI,
+              setSubmissions,
+            )
+          }
+          onSubmitWithStdin={() =>
+            Submissions.handleSubmitCode(
+              code.current,
+              languageID,
+              true,
+              setShowStdinModal,
+              JudgeAPI,
+              setSubmissions,
+            )
+          }
+          onClearSubmissions={() =>
+            Submissions.handleClearSubmissions(setSubmissions)
+          }
+        />
+        <PanelGroup direction="horizontal" className="flex-1">
+          <Panel defaultSize={70} minSize={30}>
+            {renderFirst === RenderFirst.WelcomeMarkdown && (
               <div
                 style={{
-                  flex: 1,
-                  position: 'relative',
-                  overflow: 'auto',
-                  padding: '20px',
+                  display: 'flex',
+                  width: '100%',
+                  maxHeight: '90vh',
+                  backgroundColor: '#1e1e1e',
                 }}
               >
-                <Markdown
-                  remarkPlugins={[
-                    [remarkGfm, { singleTilde: false }],
-                    [
-                      remarkToc,
-                      { tight: true, maxDepth: 5, heading: 'contents' },
-                    ],
-                  ]}
-                  rehypePlugins={[[rehypeSlug]]}
-                >
-                  {readme}
-                </Markdown>
-              </div>
-            </div>
-          )}
-          {renderFirst === RenderFirst.CodeEditor && (
-            <div
-              style={{
-                display: 'flex',
-                height: '100vh',
-                width: '100%',
-                overflow: 'hidden',
-                backgroundColor: '#1e1e1e',
-              }}
-            >
-              <div style={{ flex: 1, position: 'relative' }}>
-                <AceEditor
-                  mode="python"
-                  ref={code}
-                  theme="tomorrow_night_eighties"
-                  name="ace-editor"
-                  enableBasicAutocompletion={true}
-                  enableLiveAutocompletion={true}
-                  enableSnippets={true}
-                  setOptions={{
-                    showLineNumbers: true,
-                    tabSize: 2,
+                <div
+                  style={{
+                    flex: 1,
+                    position: 'relative',
+                    overflow: 'auto',
+                    padding: '20px',
                   }}
-                  style={{ width: '100%', height: '100%', fontFamily: 'CommitMono' }}
-                />
+                >
+                  <Markdown
+                    remarkPlugins={[
+                      [remarkGfm, { singleTilde: false }],
+                      [
+                        remarkToc,
+                        { tight: true, maxDepth: 5, heading: 'contents' },
+                      ],
+                    ]}
+                    rehypePlugins={[[rehypeSlug]]}
+                  >
+                    {readme}
+                  </Markdown>
+                </div>
               </div>
+            )}
+            {renderFirst === RenderFirst.CodeEditor && (
+              <div
+                style={{
+                  display: 'flex',
+                  height: '100vh',
+                  width: '100%',
+                  overflow: 'hidden',
+                  backgroundColor: '#1e1e1e',
+                }}
+              >
+                <div style={{ flex: 1, position: 'relative' }}>
+                  <AceEditor
+                    mode="python"
+                    ref={code}
+                    theme="tomorrow_night_eighties"
+                    name="ace-editor"
+                    enableBasicAutocompletion={true}
+                    enableLiveAutocompletion={true}
+                    enableSnippets={true}
+                    setOptions={{
+                      showLineNumbers: true,
+                      tabSize: 2,
+                    }}
+                    style={{ width: '100%', height: '100%', fontFamily: 'CommitMono' }}
+                  />
+                </div>
+              </div>
+            )}
+          </Panel>
+          <PanelResizeHandle className="w-2 bg-[#3c3836] hover:bg-[#504945] cursor-col-resize" />
+          <Panel defaultSize={30} minSize={20}>
+            <div className="h-full bg-[#2c2a2a] p-4 overflow-y-auto">
+              <OutputModal
+                displayingSharedCode={false}
+                setSourceCode={setSourceCode}
+                submissions={submissions}
+                getSubmission={getSubmission}
+                setLanguageId={setLanguageID}
+              />
             </div>
-          )}
-        </Panel>
-        <PanelResizeHandle className="w-2 bg-[#3c3836] hover:bg-[#504945] cursor-col-resize" />
-        <Panel defaultSize={30} minSize={20}>
-          <div className="h-full bg-[#2c2a2a] p-4 overflow-y-auto">
-            <OutputModal
-              displayingSharedCode={false}
-              setSourceCode={setSourceCode}
-              submissions={submissions}
-              getSubmission={getSubmission}
-              setLanguageId={setLanguageID}
-            />
-          </div>
-        </Panel>
-      </PanelGroup>
-      <StdinModal
-        show={showStdinModal}
-        languageId={languageID}
-        onHide={() => setShowStdinModal(false)}
-        onSubmit={Submissions.handleSubmitStdin}
-        setSubmissions={setSubmissions}
-        judgeApi={JudgeAPI}
-      />
-    </div>
+          </Panel>
+        </PanelGroup>
+        <StdinModal
+          show={showStdinModal}
+          languageId={languageID}
+          onHide={() => setShowStdinModal(false)}
+          onSubmit={Submissions.handleSubmitStdin}
+          setSubmissions={setSubmissions}
+          judgeApi={JudgeAPI}
+        />
+      </div>
+    </>
   )
 }

@@ -124,11 +124,14 @@ app.put("/judge/submit/:id", rateLimiter, async (c) => {
 		c,
 	);
 
-	await db.updateTable("submissions").set({
-		updatedat: dayjs(),
-		sent: true,
-		judgetoken: result.token,
-	});
+	await db
+		.updateTable("submissions")
+		.set({
+			updatedat: dayjs(),
+			sent: true,
+			judgetoken: result.token,
+		})
+		.execute();
 
 	return c.json(result);
 });

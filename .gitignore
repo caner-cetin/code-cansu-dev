@@ -27,3 +27,5 @@ judge0.conf
 .dev.vars
 config.monitoring
 deployments/monitoring/alertmanager/config.yml
+frontend/src/scripts/generateLanguageRoutes.ts
+frontend/src/scripts/generateSitemap.ts

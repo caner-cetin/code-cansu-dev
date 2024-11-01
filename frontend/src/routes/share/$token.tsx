@@ -5,8 +5,8 @@ import CustomToast from 'src/components/CustomToast'
 import { initializeAce } from 'src/editor/config'
 import { LANGUAGE_CONFIG } from 'src/editor/languages'
 import { getSubmission, useJudge } from 'src/hooks/useJudge'
-import Header from '../components/Header'
-import OutputModal from '../components/OutputModal'
+import Header from 'src/components/Header'
+import OutputModal from 'src/components/OutputModal'
 import AceEditor from 'react-ace'
 import 'ace-builds/src-noconflict/ext-language_tools'
 import 'ace-builds/src-noconflict/ext-code_lens'
@@ -18,7 +18,7 @@ import { LanguageId, useColorTheme } from 'src/services/settings'
 import { useQuery } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 
-export const Route = createFileRoute('/$token')({
+export const Route = createFileRoute('/share/$token')({
   component: SharedCodePage,
 })
 
