@@ -85,6 +85,7 @@ export const useColorTheme = () => {
 export enum RenderFirst {
 	WelcomeMarkdown = 0,
 	CodeEditor = 1,
+	Unset = 2,
 }
 
 export const isValidRenderFirst = (value: number): value is RenderFirst => {
@@ -95,7 +96,7 @@ export const useRenderFirst = () => {
 	return useState(
 		getStoredSetting(
 			Settings.RENDER_FIRST,
-			RenderFirst.WelcomeMarkdown,
+			RenderFirst.Unset,
 			(value) => Number.parseInt(value, 10),
 			isValidRenderFirst,
 		),

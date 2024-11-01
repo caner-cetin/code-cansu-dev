@@ -49,13 +49,17 @@ wip
 
 - Octave has no modes, so it is rendered as plain text.
 
-## troubleshooting
-- if initial code example does not display upon selecting a language, try selecting another language and coming back to the desired language. 
-
 ## contact
 mail [hello@cansu.dev](mailto:hello@cansu.dev) for all feedbacks, questions, suggestions, anything.
 
 ## changelog
+### 2024-11-1
+- added
+  - language specific pages, such as [https://code.cansu.dev/language/typescript](https://code.cansu.dev/language/typescript) that redirects back to playground with selected language set as default.
+  - `Unset` initial view, which renders README until a default language is set by being redirected from a language page, or a language is selected from dropdown. default is now `Unset` instead of `README`
+- fixed
+  - saved and default codes are now loading on first load with no other steps
+  - code is now saved on quit. previously, code was only saved on language switch.
 ### 2024-10-27
 - added
   - GCC compiler versions:

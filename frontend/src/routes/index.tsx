@@ -113,13 +113,14 @@ export default function MainPage() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
   const [renderFirst, setRenderFirst] = useRenderFirst()
   const [colorTheme] = useColorTheme()
+  // indicates that user has been redirected from a language page, or a language is selected before
+  const defaultLanguageID = localStorage.getItem(Settings.DEFAULT_LANGUAGE_ID)
   const [languageID, setLanguageID] = useState<number>(() => {
-    if (renderFirst === RenderFirst.WelcomeMarkdown) {
+    if (renderFirst === RenderFirst.WelcomeMarkdown && defaultLanguageID === null) {
       return LanguageId.Markdown
     }
-    const storedLanguageID = localStorage.getItem(Settings.DEFAULT_LANGUAGE_ID)
-    return storedLanguageID
-      ? Number.parseInt(storedLanguageID, 10)
+    return defaultLanguageID
+      ? Number.parseInt(defaultLanguageID, 10)
       : LanguageId.Python3
   })
   const [prevLanguageID, setPrevLanguageID] = useState<number>(
@@ -134,9 +135,9 @@ export default function MainPage() {
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768)
     window.addEventListener('resize', checkMobile)
-    if (renderFirst === RenderFirst.CodeEditor) {
+    if (renderFirst === RenderFirst.CodeEditor || (defaultLanguageID !== null && renderFirst === RenderFirst.Unset)) {
       initializeAce(code, colorTheme, languageID)
-    } else if (renderFirst === RenderFirst.WelcomeMarkdown) {
+    } else if (renderFirst === RenderFirst.WelcomeMarkdown || renderFirst === RenderFirst.Unset) {
       const readReadme = async () => {
         const response = await fetch('/readme.md')
         if (response.ok) {
@@ -158,51 +159,77 @@ export default function MainPage() {
     }
   }, [isMobile])
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <declaring both language id and source code causes to re-render 2 times when a source code is reloaded>
   useEffect(() => {
-    if (languageID !== LanguageId.Markdown && languageID !== prevLanguageID) {
-      setRenderFirst(RenderFirst.CodeEditor)
-      const previousLanguage = LANGUAGE_CONFIG[prevLanguageID]
+    const initializeEditor = async () => {
+      if (code.current?.editor) {
+        const currentLanguage = LANGUAGE_CONFIG[languageID];
+        const savedCodes = JSON.parse(
+          localStorage.getItem(Settings.CODE_STORAGE) || '{}',
+        ) as CodeStorage;
+        const savedCode = savedCodes[currentLanguage?.mode] || '';
+        const defaultText = currentLanguage?.defaultText || '';
+        const initialText = savedCode ? atob(savedCode) : defaultText;
+        code.current.editor.setValue(initialText);
+      }
+    };
+
+    initializeEditor();
+  }, [languageID]);
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      const currentLanguage = LANGUAGE_CONFIG[languageID];
       const codes = JSON.parse(
         localStorage.getItem(Settings.CODE_STORAGE) || '{}',
-      ) as CodeStorage
+      ) as CodeStorage;
       const previousLanguageModeID: string = code.current?.editor
         ?.getSession()
         // @ts-ignore
-        .getMode().$id
-      const oldCode = code.current?.editor?.getValue()
+        .getMode().$id;
+      const oldCode = code.current?.editor?.getValue();
       codes[previousLanguageModeID] = oldCode
         ? btoa(oldCode)
-        : btoa(previousLanguage?.defaultText || '')
-      localStorage.setItem(Settings.CODE_STORAGE, JSON.stringify(codes))
+        : btoa(currentLanguage?.defaultText || '');
+      localStorage.setItem(Settings.CODE_STORAGE, JSON.stringify(codes));
+    };
 
-      const currentLanguage = LANGUAGE_CONFIG[languageID]
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [languageID]);
+
+  useEffect(() => {
+    if (languageID !== LanguageId.Markdown && languageID !== prevLanguageID) {
+      const previousLanguage = LANGUAGE_CONFIG[prevLanguageID];
+      const codes = JSON.parse(
+        localStorage.getItem(Settings.CODE_STORAGE) || '{}',
+      ) as CodeStorage;
+      const previousLanguageModeID: string = code.current?.editor
+        ?.getSession()
+        // @ts-ignore
+        .getMode().$id;
+      const oldCode = code.current?.editor?.getValue();
+      codes[previousLanguageModeID] = oldCode
+        ? btoa(oldCode)
+        : btoa(previousLanguage?.defaultText || '');
+      localStorage.setItem(Settings.CODE_STORAGE, JSON.stringify(codes));
+      const currentLanguage = LANGUAGE_CONFIG[languageID];
       currentLanguage?.extensionModule().then(() => {
         code.current?.editor?.session.setMode(
           `ace/mode/${currentLanguage?.mode}`,
-        )
-        const currentLanguageModeID: string =
-          // @ts-ignore
-          code.current?.editor?.session.getMode().$id
-        const cs = JSON.parse(
-          localStorage.getItem(Settings.CODE_STORAGE) || '{}',
-        ) as CodeStorage
-        const savedCode = cs[currentLanguageModeID]
-
-        // Restore source code
-        code.current?.editor?.setValue(
-          savedCode ? atob(savedCode) : currentLanguage?.defaultText || '',
-        )
-
-        if (sourceCode) {
-          code.current?.editor?.setValue(sourceCode)
-          setSourceCode(null) // Clear to avoid re-render
-        }
-      })
-      setPrevLanguageID(languageID)
-      localStorage.setItem(Settings.DEFAULT_LANGUAGE_ID, languageID.toString())
+        );
+      });
+      setPrevLanguageID(languageID);
+      localStorage.setItem(Settings.DEFAULT_LANGUAGE_ID, languageID.toString());
     }
-  }, [languageID])
+  }, [languageID, prevLanguageID]);
+
+  useEffect(() => {
+    if (sourceCode !== null) {
+      code.current?.editor?.setValue(sourceCode);
+    }
+  }, [sourceCode]);
 
   if (isMobile) {
     return (
@@ -328,7 +355,7 @@ export default function MainPage() {
                 </div>
               </div>
             )}
-            {renderFirst === RenderFirst.CodeEditor && (
+            {(renderFirst === RenderFirst.CodeEditor || (defaultLanguageID !== null && renderFirst === RenderFirst.Unset)) && (
               <div
                 style={{
                   display: 'flex',
