@@ -115,10 +115,9 @@ const LanguageLandingPage: React.FC<LanguagePageProps> = ({
     // Store language preference and redirect
     localStorage.setItem(Settings.DEFAULT_LANGUAGE_ID, languageId.toString());
 
-    // Add a small delay to ensure SEO crawlers can read the content
     const timer = setTimeout(() => {
       window.location.href = "/";
-    }, 100);
+    }, 3000);
 
     return () => clearTimeout(timer);
   }, [languageId]);
@@ -149,7 +148,7 @@ const LanguageLandingPage: React.FC<LanguagePageProps> = ({
 
         <link
           rel="canonical"
-          href={`https://code.cansu.dev/${languageName.toLowerCase()}`}
+          href={`https://code.cansu.dev/language/${languageName.toLowerCase()}`}
         />
 
         <script type="application/ld+json">
