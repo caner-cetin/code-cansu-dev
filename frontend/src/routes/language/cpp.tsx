@@ -7,5 +7,5 @@ export const Route = createFileRoute('/language/cpp')({
 })
 
 export default function CPPRoute() {
-  return <LanguageLandingPage languageId={52} languageName="C++" />
+  return <LanguageLandingPage languageId={91} languageName="C++ (GCC 13.3)" />
 }
