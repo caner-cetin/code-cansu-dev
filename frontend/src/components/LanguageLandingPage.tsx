@@ -1,11 +1,10 @@
-// biome-ignore lint/style/useImportType: <explanation>
+import { useNavigate } from "@tanstack/react-router";
 import React from "react";
-import { useEffect } from "react";
 import { Helmet } from "react-helmet";
 import { LANGUAGE_CONFIG } from "src/editor/languages";
 import { Settings } from "src/services/settings";
 
-// Types for better TypeScript support
+
 interface LanguageConfigType {
   runnerName: string;
   languageName: string;
@@ -13,11 +12,6 @@ interface LanguageConfigType {
   defaultText?: string;
   category?: "popular" | "beginner" | "specialized";
   description?: string;
-}
-
-interface LanguagePageProps {
-  languageId: number;
-  languageName: string;
 }
 
 const popularLanguages = [
@@ -30,21 +24,10 @@ const popularLanguages = [
   "Ruby",
 ];
 const beginnerLanguages = ["Javascript", "Python", "Ruby", "Basic"];
-
 const getLanguageCategory = (name: string): string => {
   if (popularLanguages.includes(name)) return "Popular Languages";
   if (beginnerLanguages.includes(name)) return "Great for Learning";
   return "Specialized Languages";
-};
-
-const generateSEODescription = (languageName: string): string => {
-  const templates = [
-    `Write and run ${languageName} code online with our free playground. Features syntax highlighting, instant execution, and code sharing. Perfect for learning ${languageName} programming.`,
-    `Free online ${languageName} editor and compiler. Test your ${languageName} code instantly with our feature-rich playground. No installation needed.`,
-    `Online ${languageName} playground with real-time compilation. Practice ${languageName} programming with our free editor featuring code execution and sharing capabilities.`,
-  ];
-  // biome-ignore lint/style/noNonNullAssertion: <what?>
-  return templates[Math.floor(Math.random() * templates.length)]!;
 };
 
 const CrossLinks: React.FC<{ currentLanguageId: number }> = ({
@@ -94,103 +77,138 @@ const CrossLinks: React.FC<{ currentLanguageId: number }> = ({
         );
       })}
 
-      <div className="mt-6 p-4 bg-[#211e20] rounded-lg">
-        <ul className="list-disc list-inside space-y-2 text-sm">
-          <li>✨ Clean, distraction-free coding environment</li>
-          <li>⚡ Instant code execution</li>
-          <li>🎨 Syntax highlighting</li>
-          <li>📤 Easy code sharing</li>
-          <li>💾 Auto-save functionality</li>
-        </ul>
-      </div>
     </div>
   );
 };
 
-const LanguageLandingPage: React.FC<LanguagePageProps> = ({
+
+export interface LanguageLandingPageProps {
+  languageId: number;
+  languageName: string;
+}
+
+
+const LanguageLandingPage: React.FC<LanguageLandingPageProps> = ({
   languageId,
   languageName,
 }) => {
-  useEffect(() => {
-    // Store language preference and redirect
-    localStorage.setItem(Settings.DEFAULT_LANGUAGE_ID, languageId.toString());
+  const navigate = useNavigate();
 
-    const timer = setTimeout(() => {
-      window.location.href = "/";
-    }, 3000);
+  const handleStartCoding = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(Settings.DEFAULT_LANGUAGE_ID, languageId.toString());
+      navigate({
+        to: '/',
+        replace: true
+      });
+    }
+  };
 
-    return () => clearTimeout(timer);
-  }, [languageId]);
-
-  const description = generateSEODescription(languageName);
-  const keywords = `${languageName.toLowerCase()} playground, ${languageName.toLowerCase()} online, ${languageName.toLowerCase()} compiler, ${languageName.toLowerCase()} editor, online ${languageName.toLowerCase()}, ${languageName.toLowerCase()} programming, code editor`;
+  const description = `Write, compile and run ${languageName} code online in our free, feature-rich playground. Perfect for learning ${languageName} with instant execution, syntax highlighting, and code sharing capabilities. No installation needed - start coding now!`;
 
   return (
     <div className="min-h-screen bg-[#211e20] text-[#e9efec] font-mono">
       <Helmet>
-        <title>{`${languageName} Playground - Free Online ${languageName} Editor and Compiler`}</title>
+        <title>{`${languageName} Online IDE - Free ${languageName} Editor and Compiler`}</title>
         <meta name="description" content={description} />
-        <meta name="keywords" content={keywords} />
-
-        <meta
-          property="og:title"
-          content={`${languageName} Online Playground - Free ${languageName} Editor`}
-        />
-        <meta property="og:description" content={description} />
-        <meta property="og:type" content="website" />
-
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta
-          name="twitter:title"
-          content={`${languageName} Online Playground - Free ${languageName} Editor`}
-        />
-        <meta name="twitter:description" content={description} />
-
+        <meta name="robots" content="index, follow" />
         <link
           rel="canonical"
           href={`https://code.cansu.dev/language/${languageName.toLowerCase()}`}
         />
-
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
-            "@type": "WebApplication",
-            name: `${languageName} Online Playground`,
+            "@type": "SoftwareApplication",
+            name: `${languageName} Online IDE`,
             applicationCategory: "DeveloperApplication",
             operatingSystem: "Web Browser",
-            description: description,
             offers: {
               "@type": "Offer",
               price: "0",
               priceCurrency: "USD",
             },
+            description: description,
+            url: `https://code.cansu.dev/language/${languageName.toLowerCase()}`,
             featureList: [
-              "Syntax highlighting",
-              "Code execution",
-              "Code sharing",
-              "Auto-save functionality",
+              "Live Code Execution",
+              "Syntax Highlighting",
+              "Code Sharing",
+              "Auto-save",
             ],
           })}
         </script>
       </Helmet>
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl mb-4 font-bold">
-            {languageName} Programming Playground
-          </h1>
-          <p className="text-xl mb-8">
-            Free online {languageName} editor with instant execution
-          </p>
-          <div className="animate-pulse">
-            <p className="text-lg">Loading your {languageName} playground...</p>
+      <div className="container mx-auto px-4 py-12">
+        <div className="max-w-4xl mx-auto">
+          {/* Main Content Section */}
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold mb-4">
+              {languageName} Online IDE
+            </h1>
+            <p className="text-xl mb-6">
+              Free {languageName} editor with instant compilation and execution
+            </p>
+            {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
+            <button
+              onClick={handleStartCoding}
+              className="bg-[#3c3836] hover:bg-[#504945] text-white font-bold py-3 px-6 rounded-lg transition-colors duration-200"
+            >
+              Start Coding Now
+            </button>
           </div>
-        </div>
 
-        <CrossLinks currentLanguageId={languageId} />
+          {/* Feature Highlights */}
+          <div className="grid md:grid-cols-2 gap-6 mb-8">
+            <div className="bg-[#2c2a2a] p-6 rounded-lg">
+              <h2 className="text-xl font-semibold mb-4">Key Features</h2>
+              <ul className="space-y-2">
+                <li className="flex items-center">
+                  <span className="mr-2">⚡</span> Instant code execution
+                </li>
+                <li className="flex items-center">
+                  <span className="mr-2">🎨</span> Syntax highlighting
+                </li>
+                <li className="flex items-center">
+                  <span className="mr-2">💾</span> Auto-save functionality
+                </li>
+                <li className="flex items-center">
+                  <span className="mr-2">📤</span> Easy code sharing
+                </li>
+              </ul>
+            </div>
+
+            <div className="bg-[#2c2a2a] p-6 rounded-lg">
+              <h2 className="text-xl font-semibold mb-4">
+                Why Choose Our IDE?
+              </h2>
+              <ul className="space-y-2">
+                <li>✓ No installation required</li>
+                <li>✓ Clean, distraction-free interface</li>
+                <li>✓ Perfect for learning {languageName}</li>
+                <li>✓ Mobile-friendly design</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* SEO Content */}
+          <div className="mt-8 prose prose-invert max-w-none">
+            <h2 className="text-2xl font-semibold mb-4">
+              Start Coding {languageName} Online
+            </h2>
+            <p className="mb-4">
+              Welcome to our free online {languageName} IDE. Whether you're a
+              beginner learning {languageName} or an experienced developer
+              looking for a quick coding environment, our platform provides
+              everything you need to write, test, and run {languageName} code
+              directly in your browser.
+            </p>
+          </div>
+          <CrossLinks currentLanguageId={languageId} />
+        </div>
       </div>
     </div>
   );
 };
-
 export default LanguageLandingPage;
