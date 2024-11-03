@@ -95,6 +95,7 @@ app.post("/judge/submit/stdin", async (c) => {
 			stdin: Buffer.from(stdin).toString("base64"),
 			updatedat: dayjs(),
 		})
+		.where("id", "=", Number(id))
 		.execute();
 
 	return c.json({ success: true });
