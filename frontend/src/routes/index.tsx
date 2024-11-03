@@ -250,7 +250,7 @@ export default function MainPage() {
     <>
       <Helmet>
         {/* Primary Meta Tags */}
-        <title>Online Code Playground - Multi-language Code Editor</title>
+        <title>Caner's Wonderland</title>
         <meta name="title" content="Online Code Playground - Multi-language Code Editor" />
         <meta name="description" content="Free online code editor and playground supporting multiple programming languages including Python, Typescript/Javascript, C/C++, and more. Write, run, and share code instantly." />
 
