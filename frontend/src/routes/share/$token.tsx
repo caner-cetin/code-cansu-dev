@@ -72,7 +72,7 @@ export default function SharedCodePage() {
       return
     }
     const language =
-      LANGUAGE_CONFIG[query.data.language.id || LanguageId.Python3]
+      LANGUAGE_CONFIG[query.data.language_id|| LanguageId.Python3]
     language?.extensionModule().then(() => {
       code.current?.editor?.session.setMode(`ace/mode/${language?.mode}`)
       if (query.data) {

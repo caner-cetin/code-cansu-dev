@@ -1,4 +1,5 @@
 import { z } from "zod";
+// not used but maybe wil lbe useful later
 export const HealthResponse = z.array(
 	z.object({
 		queue: z.string(),
@@ -43,14 +44,6 @@ export const GetSubmissionResponse = z.object({
 	message: z.string().nullable().optional(),
 	exit_code: z.number(),
 	wall_time: z.string(),
-	status: z.object({
-		id: z.number(),
-		description: z.string(),
-	}),
-	language: z.object({
-		id: z.number(),
-		name: z.string(),
-	}),
 });
 
 export const CreateSubmissionResponse = z.object({

@@ -49,14 +49,6 @@ export type GetSubmissionResponse = {
 	message: string | null | undefined;
 	exit_code: number;
 	wall_time: string;
-	status: {
-		id: number;
-		description: string;
-	};
-	language: {
-		id: number;
-		name: string;
-	};
 };
 
 const getHealth = () =>

@@ -1,6 +1,7 @@
 import { HTTPException } from "hono/http-exception";
 import type { Context } from "hono";
 import type { Bindings } from ".";
+import type { Dayjs } from "dayjs";
 async function IsOK(response: Response, message: string) {
 	if (!response.ok) {
 		console.error(
@@ -20,7 +21,7 @@ interface HealthResponse {
 	failed: number;
 }
 
-interface LanguagesResponse {
+export interface LanguagesResponse {
 	id: number;
 	name: string;
 }
@@ -29,59 +30,32 @@ interface CreateSubmissionResponse {
 	token: string;
 }
 
-interface GetSubmissionResponse {
+export interface GetSubmissionResponse {
 	source_code: string;
 	language_id: number;
 	stdin: string;
 	stdout: string | null | undefined;
 	status_id: number;
-	created_at: string;
-	finished_at: string;
-	time: string;
+	created_at: Dayjs;
+	finished_at: Dayjs;
+	time: number;
 	memory: number;
 	stderr: string | null | undefined;
 	token: string;
 	number_of_runs: number;
-	cpu_time_limit: string;
-	cpu_extra_time: string;
-	wall_time_limit: string;
+	cpu_time_limit: number;
+	cpu_extra_time: number;
+	wall_time_limit: number;
 	memory_limit: number;
 	stack_limit: number;
 	max_file_size: number;
 	compile_output: string | null | undefined;
 	message: string | null | undefined;
 	exit_code: number;
-	wall_time: string;
-	status: {
-		id: number;
-		description: string;
-	};
-	language: {
-		id: number;
-		name: string;
-	};
-}
-
-export interface Status {
-	id: number;
-	description: string;
-}
-
-export interface Language {
-	id: number;
-	name: string;
+	wall_time: number;
 }
 
 export interface Judge {
-	Health: {
-		getWorkerQueues(
-			c: Context<{ Bindings: Bindings }>,
-		): Promise<HealthResponse[]>;
-		checkStatus(c: Context<{ Bindings: Bindings }>): Promise<boolean>;
-	};
-	Language: {
-		getAll(c: Context<{ Bindings: Bindings }>): Promise<LanguagesResponse[]>;
-	};
 	Submission: {
 		create(
 			code: string,
@@ -91,46 +65,10 @@ export interface Judge {
 			wait: boolean | null | undefined,
 			c: Context<{ Bindings: Bindings }>,
 		): Promise<CreateSubmissionResponse>;
-		get(
-			token: string,
-			c: Context<{ Bindings: Bindings }>,
-		): Promise<GetSubmissionResponse>;
 	};
 }
 
 export const Judge0: Judge = {
-	Health: {
-		async getWorkerQueues(c: Context<{ Bindings: Bindings }>) {
-			const workerQueues = await fetch(`${c.env.JUDGE0_BASE_API_URL}/workers`, {
-				method: "GET",
-				headers: {
-					[c.env.JUDGE0_AUTHN_HEADER]: c.env.JUDGE0_AUTHN_TOKEN,
-				},
-			});
-			await IsOK(workerQueues, "Judges are not alive");
-			return (await workerQueues.json()) as HealthResponse[];
-		},
-		async checkStatus(c: Context<{ Bindings: Bindings }>) {
-			try {
-				await this.getWorkerQueues(c);
-				return true;
-			} catch {
-				return false;
-			}
-		},
-	},
-	Language: {
-		async getAll(c: Context<{ Bindings: Bindings }>) {
-			const response = await fetch(`${c.env.JUDGE0_BASE_API_URL}/languages`, {
-				method: "GET",
-				headers: {
-					[c.env.JUDGE0_AUTHN_HEADER]: c.env.JUDGE0_AUTHN_TOKEN,
-				},
-			});
-			await IsOK(response, "Can't get languages from judges.");
-			return (await response.json()) as LanguagesResponse[];
-		},
-	},
 	Submission: {
 		async create(
 			code: string,
@@ -166,31 +104,6 @@ export const Judge0: Judge = {
 			});
 			await IsOK(response, "Could not submit the submission to the judges.");
 			return (await response.json()) as CreateSubmissionResponse;
-		},
-		async get(token, c) {
-			const req = await fetch(
-				`${c.env.JUDGE0_BASE_API_URL}/submissions/${token}?base64_encoded=true&fields=*`,
-				{
-					headers: {
-						[c.env.JUDGE0_AUTHN_HEADER]: c.env.JUDGE0_AUTHN_TOKEN,
-					},
-					method: "GET",
-				},
-			);
-			await IsOK(req, "Judges refuses me to give an answer.");
-			const response = (await req.json()) as GetSubmissionResponse;
-			const decodeBase64 = (str: string | null | undefined) =>
-				str
-					? new TextDecoder().decode(
-							Uint8Array.from(atob(str), (c) => c.charCodeAt(0)),
-						)
-					: str;
-
-			response.stdout = decodeBase64(response.stdout);
-			response.stderr = decodeBase64(response.stderr);
-			response.compile_output = decodeBase64(response.compile_output);
-			response.message = decodeBase64(response.message);
-			return response;
 		},
 	},
 };
