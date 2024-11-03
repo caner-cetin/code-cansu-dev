@@ -131,6 +131,7 @@ app.put("/judge/submit/:id", rateLimiter, async (c) => {
 			sent: true,
 			judgetoken: result.token,
 		})
+		.where("id", "=", Number(id))
 		.execute();
 
 	return c.json(result);
