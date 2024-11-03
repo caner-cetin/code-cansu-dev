@@ -140,4 +140,13 @@ export function useJudge(): JudgeAPISpec {
 
 // Export this function separately
 export const getSubmission = (token: string) =>
-	api.get<GetSubmissionResponse>(`/judge/${token}`).then((res) => res.data);
+	api.get<GetSubmissionResponse>(`/judge/${token}`).then((res) => {
+		res.data.stdin = atob(res.data.stdin);
+		res.data.stdout = res.data.stdout ? atob(res.data.stdout) : null;
+		res.data.stderr = res.data.stderr ? atob(res.data.stderr) : null;
+		res.data.compile_output = res.data.compile_output
+			? atob(res.data.compile_output)
+			: null;
+		res.data.message = res.data.message ? atob(res.data.message) : null;
+		return res.data;
+	});
