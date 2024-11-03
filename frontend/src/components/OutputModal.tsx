@@ -34,6 +34,7 @@ import {
 import type { StoredSubmission } from "src/hooks/useSubmissions";
 import toast from "react-hot-toast";
 import ShareButton from "./ShareButton";
+import { LANGUAGE_CONFIG } from "src/editor/languages";
 
 interface OutputModalPropBase {
   displayingSharedCode: boolean;
@@ -122,8 +123,8 @@ const OutputModal: React.FC<OutputModalProps> = (props) => {
         enabled: !!activeTab,
         refetchInterval: (data) => {
           if (
-            data.state.data?.status.id === 2 ||
-            data.state.data?.status.id === 1
+            data.state.data?.status_id === 2 ||
+            data.state.data?.status_id === 1
           ) {
             setRefetchInterval(500);
             return 500;
@@ -148,7 +149,7 @@ const OutputModal: React.FC<OutputModalProps> = (props) => {
       return;
     }
     if (!setLanguageId || !setSourceCode) return;
-    setLanguageId(submissionResult.language.id);
+    setLanguageId(submissionResult.language_id);
     setSourceCode(atob(submissionResult.source_code));
   };
 
@@ -267,11 +268,40 @@ const OutputModal: React.FC<OutputModalProps> = (props) => {
       <div className="bg-[#2c2a2a] rounded-lg shadow-lg overflow-auto">
         <div className="flex items-center justify-between mb-2">
           <h4 className="text-lg font-bold flex items-center relative w-full">
-            {getStatusIcon(submissionResult.status.id)}
+            {getStatusIcon(submissionResult.status_id)}
             <span className="ml-2">
-              {submissionResult.status.id === 3
-                ? "Executed"
-                : submissionResult.status.description}
+              {(() => {
+                switch (submissionResult.status_id) {
+                  case 1:
+                    return "In Queue";
+                  case 2:
+                    return "Processing";
+                  case 3:
+                    return "Executed";
+                  case 5:
+                    return "Time Limit Exceeded";
+                  case 6:
+                    return "Compilation Error";
+                  case 7:
+                    return "Runtime Error (SIGSEGV)";
+                  case 8:
+                    return "Runtime Error (SIGXFSZ)";
+                  case 9:
+                    return "Runtime Error (SIGFPE)";
+                  case 10:
+                    return "Runtime Error (SIGABRT)";
+                  case 11:
+                    return "Runtime Error (NZEC)";
+                  case 12:
+                    return "Runtime Error (Other)";
+                  case 13:
+                    return "Internal Error";
+                  case 14:
+                    return "Exec Format Error";
+                  default:
+                    return "Lost in the void";
+                }
+              })()}
             </span>
             {refetchInterval && (
               <span className="text-sm text-gray-400 ml-2">
@@ -296,7 +326,7 @@ const OutputModal: React.FC<OutputModalProps> = (props) => {
 
         <div className="text-sm">
           <span className="mr-2 font-extrabold">
-            {submissionResult.language.name}
+            {LANGUAGE_CONFIG[submissionResult.language_id]?.runnerName}
           </span>
           <span>exited with code {submissionResult.exit_code}</span>
         </div>

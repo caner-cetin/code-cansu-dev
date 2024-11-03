@@ -1,11 +1,14 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
-import { Judge0 } from "./judge0";
+import {
+	type GetSubmissionResponse,
+	Judge0,
+	type LanguagesResponse,
+} from "./judge0";
 import dayjs from "dayjs";
 import { HTTPException } from "hono/http-exception";
-import { createDB } from "./db";
-import { LanguagesResponse } from "./schemas";
+import { createDB, Submissions } from "./db";
 import { rateLimiter } from "./middlewares/ratelimit";
 export type Bindings = {
 	DATABASE_URL: string;
@@ -45,13 +48,17 @@ app.options("*", (c) => {
 	return c.text("", 204);
 });
 app.get("/health", async (c) => {
-	const health = await Judge0.Health.getWorkerQueues(c);
-	return c.json(health);
+	return c.redirect("https://www.youtube.com/watch?v=vaLqF54Ae10");
 });
 
 app.get("/judge/languages", async (c) => {
-	const languages = await Judge0.Language.getAll(c);
-	return c.json(languages);
+	const db = createDB(c.env.DATABASE_URL);
+	const languages = await db
+		.selectFrom("languages")
+		.select(["id", "name"])
+		.where("is_archived", "=", false)
+		.execute();
+	return c.json(languages as LanguagesResponse[]);
 });
 
 app.post("/judge/submit/code", async (c) => {
@@ -63,10 +70,9 @@ app.post("/judge/submit/code", async (c) => {
 	const db = createDB(c.env.DATABASE_URL);
 
 	const subId = await db
-		.insertInto("submissions")
+		.insertInto("draft_submissions")
 		.values({
 			sourcecode: Buffer.from(code).toString("base64"),
-			judgetoken: "",
 			stdin: undefined,
 			sent: false,
 			createdat: dayjs(),
@@ -90,7 +96,7 @@ app.post("/judge/submit/stdin", async (c) => {
 	}
 	const db = createDB(c.env.DATABASE_URL);
 	await db
-		.updateTable("submissions")
+		.updateTable("draft_submissions")
 		.set({
 			stdin: Buffer.from(stdin).toString("base64"),
 			updatedat: dayjs(),
@@ -105,7 +111,7 @@ app.put("/judge/submit/:id", rateLimiter, async (c) => {
 	const language = Number(c.req.query("language"));
 	const db = createDB(c.env.DATABASE_URL);
 	const submission = await db
-		.selectFrom("submissions")
+		.selectFrom("draft_submissions")
 		.select(["sourcecode", "stdin", "sent"])
 		.where("id", "=", Number(id))
 		.executeTakeFirst();
@@ -126,12 +132,7 @@ app.put("/judge/submit/:id", rateLimiter, async (c) => {
 	);
 
 	await db
-		.updateTable("submissions")
-		.set({
-			updatedat: dayjs(),
-			sent: true,
-			judgetoken: result.token,
-		})
+		.deleteFrom("draft_submissions")
 		.where("id", "=", Number(id))
 		.execute();
 
@@ -139,9 +140,40 @@ app.put("/judge/submit/:id", rateLimiter, async (c) => {
 });
 
 app.get("/judge/:token", async (c) => {
+	const db = createDB(c.env.DATABASE_URL);
 	const token = c.req.param("token");
-	const submission = await Judge0.Submission.get(token, c);
-	return c.json(submission);
+	const submission = await db
+		.selectFrom("submissions")
+		.select([
+			"source_code",
+			"language_id",
+			"stdin",
+			"stdout",
+			"status_id",
+			"created_at",
+			"finished_at",
+			"time",
+			"memory",
+			"stderr",
+			"token",
+			"number_of_runs",
+			"cpu_time_limit",
+			"cpu_extra_time",
+			"wall_time_limit",
+			"memory_limit",
+			"stack_limit",
+			"max_file_size",
+			"compile_output",
+			"message",
+			"exit_code",
+			"wall_time",
+		])
+		.where("token", "=", token)
+		.executeTakeFirst();
+	if (!submission) {
+		throw new HTTPException(400, { message: "Submission not found" });
+	}
+	return c.json(submission as GetSubmissionResponse);
 });
 
 app.onError((err, c) => {

@@ -25,6 +25,7 @@
     "@types/bun": "latest",
     "@types/pg": "^8.11.10",
     "@types/uuid": "^10.0.0",
+    "kysely-codegen": "^0.17.0",
     "wrangler": "^3.83.0"
   },
   "main": "src/index.ts",
