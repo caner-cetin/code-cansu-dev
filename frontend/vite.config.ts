@@ -26,6 +26,8 @@ export default defineConfig({
 				},
 			},
 		},
+		manifest: true,
+		ssrManifest: true,
 	},
 	server: {
 		port: 5173,
