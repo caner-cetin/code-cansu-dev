@@ -8,6 +8,7 @@ export enum Settings {
 	CODE_STORAGE = "codeStorage",
 	DEFAULT_LANGUAGE_ID = "defaultLanguageID",
 	RENDER_FIRST = "renderFirst",
+	LIVE_2D_MODEL_ENABLED = "live2DModelEnabled",
 }
 export const getStoredSetting = <T>(
 	key: string,
@@ -153,3 +154,14 @@ export enum LanguageId {
 	TypeScript = 74,
 	VisualBasicNet = 84,
 }
+
+export const Live2DModelEnabled = true;
+export const useLive2DModelEnabled = () => {
+	return useState(
+		getStoredSetting<boolean>(
+			Settings.LIVE_2D_MODEL_ENABLED,
+			true,
+			(value) => value.toLowerCase() === "true",
+		),
+	);
+};

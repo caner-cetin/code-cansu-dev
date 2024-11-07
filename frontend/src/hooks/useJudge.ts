@@ -51,6 +51,12 @@ export type GetSubmissionResponse = {
 	wall_time: string;
 };
 
+export type ReactCodeResponse = {
+	message: string;
+};
+
+export type ReactSubmissionResponse = ReactCodeResponse;
+
 const getHealth = () =>
 	api.get<HealthResponse>("/judge/health").then((res) => res.data);
 const getLanguages = () =>
@@ -150,3 +156,17 @@ export const getSubmission = (token: string) =>
 		res.data.message = res.data.message ? atob(res.data.message) : null;
 		return res.data;
 	});
+
+export const reactCode = (code: string) =>
+	api
+		.post<ReactCodeResponse>("/react/code", code, {
+			headers: {
+				"Content-Type": "text/plain",
+			},
+		})
+		.then((res) => res.data);
+
+export const reactSubmission = (token: string) =>
+	api
+		.post<ReactSubmissionResponse>(`/react/submission/${token}`)
+		.then((res) => res.data);

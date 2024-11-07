@@ -89,7 +89,7 @@ import remarkToc from 'remark-toc'
 import CustomToast from 'src/components/CustomToast'
 import { initializeAce } from 'src/editor/config'
 import { LANGUAGE_CONFIG } from 'src/editor/languages'
-import { getSubmission, useJudge } from 'src/hooks/useJudge'
+import { getSubmission, reactCode, useJudge } from 'src/hooks/useJudge'
 import Submissions, { type StoredSubmission } from 'src/hooks/useSubmissions'
 import {
   type CodeStorage,
@@ -97,6 +97,7 @@ import {
   RenderFirst,
   Settings,
   useColorTheme,
+  useLive2DModelEnabled,
   useRenderFirst,
 } from 'src/services/settings'
 import { getStoredSubmissions } from 'src/utils/submissionCounter'
@@ -104,6 +105,7 @@ import Header from '../components/Header'
 import OutputModal from '../components/OutputModal'
 import StdinModal from '../components/StdinModal'
 import { Helmet } from 'react-helmet';
+import { Live2D } from 'src/scripts/live2d.helpers';
 export const Route = createFileRoute('/')({
   component: MainPage,
 })
@@ -112,6 +114,7 @@ export default function MainPage() {
   const [submissions, setSubmissions] = useState<StoredSubmission[]>([])
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
   const [renderFirst, setRenderFirst] = useRenderFirst()
+  const [live2DModelEnabled, setLive2DModelEnabled] = useLive2DModelEnabled()
   const [colorTheme] = useColorTheme()
   // indicates that user has been redirected from a language page, or a language is selected before
   const defaultLanguageID = localStorage.getItem(Settings.DEFAULT_LANGUAGE_ID)
@@ -130,6 +133,7 @@ export default function MainPage() {
   const [readme, setReadme] = useState<string | null>(null)
   const code = useRef<AceEditor | null>(null)
   const JudgeAPI = useJudge()
+  const debouncedHandleEditorChange = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <we do not need to re-render upon language ID change>
   useEffect(() => {
@@ -151,6 +155,77 @@ export default function MainPage() {
     }
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
+
+  useEffect(() => {
+    if (!isMobile && live2DModelEnabled === true) {
+      Promise.all([
+        // @ts-ignore
+        import('src/scripts/waifu-tips.js'),
+        import('src/scripts/live2d.css'),
+        // @ts-ignore
+        import('src/scripts/live2d.min.js'),
+      ]).then(
+        () => {// @ts-ignore
+          initWidget({
+            cdnPath: "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/",
+            tools: []
+          })
+        }
+      )
+      // ascii art from original author
+      // looks cute
+      console.log(`
+        く__,.ヘヽ.        /  ,ー､ 〉
+                 ＼ ', !-─‐-i  /  /´
+                 ／｀ｰ'       L/／｀ヽ､
+               /   ／,   /|   ,   ,       ',
+             ｲ   / /-‐/  ｉ  L_ ﾊ ヽ!   i
+              ﾚ ﾍ 7ｲ｀ﾄ   ﾚ'ｧ-ﾄ､!ハ|   |
+                !,/7 '0'     ´0iソ|    |
+                |.从"    _     ,,,, / |./    |
+                ﾚ'| i＞.､,,__  _,.イ /   .i   |
+                  ﾚ'| | / k_７_/ﾚ'ヽ,  ﾊ.  |
+                    | |/i 〈|/   i  ,.ﾍ |  i  |
+                   .|/ /  ｉ：    ﾍ!    ＼  |
+                    kヽ>､ﾊ    _,.ﾍ､    /､!
+                    !'〈//｀Ｔ´', ＼ ｀'7'ｰr'
+                    ﾚ'ヽL__|___i,___,ンﾚ|ノ
+                        ﾄ-,/  |___./
+                        'ｰ'    !_,.:
+      `);
+    }
+  }, [isMobile, live2DModelEnabled])
+
+  useEffect(() => {
+
+    const handleEditorChange = (newValue: string | undefined) => {
+      if (debouncedHandleEditorChange.current) {
+        clearTimeout(debouncedHandleEditorChange.current);
+      }
+      if (newValue) {
+        debouncedHandleEditorChange.current = setTimeout(() => {
+          reactCode(newValue).then((res) => {
+            console.log(res);
+            if (res.message) {
+              Live2D.showMessage({
+                text: res.message,
+                timeout: 5000,
+              });
+            }
+          });
+        }, 3000);
+      }
+    };
+
+    if (code.current?.editor) {
+      code.current.editor.on('change', (delta) => {
+        const newValue = code?.current?.editor.getValue();
+        handleEditorChange(newValue);
+      });
+    }
+
+
+  }, []);
 
   useEffect(() => {
     if (!isMobile) {
@@ -295,8 +370,10 @@ export default function MainPage() {
           code={code}
           languages={JudgeAPI.languages.data ?? []}
           languageID={languageID}
-          displayingSharedCode={false}
           setLanguageID={setLanguageID}
+          live2DModelEnabled={live2DModelEnabled}
+          setLive2DModelEnabled={setLive2DModelEnabled}
+          displayingSharedCode={false}
           onSubmit={() =>
             Submissions.handleSubmitCode(
               code.current,
@@ -323,7 +400,7 @@ export default function MainPage() {
         />
         <PanelGroup direction="horizontal" className="flex-1">
           <Panel defaultSize={70} minSize={30}>
-            {renderFirst === RenderFirst.WelcomeMarkdown && (
+            {(renderFirst === RenderFirst.WelcomeMarkdown || (renderFirst === RenderFirst.Unset && defaultLanguageID === null)) && (
               <div
                 style={{
                   display: 'flex',
@@ -355,7 +432,7 @@ export default function MainPage() {
                 </div>
               </div>
             )}
-            {(renderFirst === RenderFirst.CodeEditor || (defaultLanguageID !== null && renderFirst === RenderFirst.Unset)) && (
+            {((renderFirst === RenderFirst.CodeEditor || (defaultLanguageID !== null && renderFirst === RenderFirst.Unset))) && (
               <div
                 style={{
                   display: 'flex',
@@ -365,22 +442,42 @@ export default function MainPage() {
                   backgroundColor: '#1e1e1e',
                 }}
               >
-                <div style={{ flex: 1, position: 'relative' }}>
-                  <AceEditor
-                    mode="python"
-                    ref={code}
-                    theme="tomorrow_night_eighties"
-                    name="ace-editor"
-                    enableBasicAutocompletion={true}
-                    enableLiveAutocompletion={true}
-                    enableSnippets={true}
-                    setOptions={{
-                      showLineNumbers: true,
-                      tabSize: 2,
-                    }}
-                    style={{ width: '100%', height: '100%', fontFamily: 'CommitMono' }}
-                  />
-                </div>
+                <AceEditor
+                  mode="python"
+                  ref={code}
+                  theme="tomorrow_night_eighties"
+                  name="ace-editor"
+                  enableBasicAutocompletion={true}
+                  enableLiveAutocompletion={true}
+                  enableSnippets={true}
+                  setOptions={{
+                    showLineNumbers: true,
+                    tabSize: 2,
+                  }}
+                  style={{ width: '100%', height: '100%', fontFamily: 'CommitMono' }}
+                />
+                {/* <PanelGroup direction="horizontal" className="flex-1">
+                  <Panel defaultSize={18}>
+                    <FileExplorer />
+                  </Panel>
+                  <PanelResizeHandle className="w-2 bg-[#3c3836] hover:bg-[#504945] cursor-col-resize" />
+                  <Panel defaultSize={50}>
+                    <AceEditor
+                      mode="python"
+                      ref={code}
+                      theme="tomorrow_night_eighties"
+                      name="ace-editor"
+                      enableBasicAutocompletion={true}
+                      enableLiveAutocompletion={true}
+                      enableSnippets={true}
+                      setOptions={{
+                        showLineNumbers: true,
+                        tabSize: 2,
+                      }}
+                      style={{ width: '100%', height: '100%', fontFamily: 'CommitMono' }}
+                    />
+                  </Panel>
+                </PanelGroup> */}
               </div>
             )}
           </Panel>
@@ -409,3 +506,4 @@ export default function MainPage() {
     </>
   )
 }
+

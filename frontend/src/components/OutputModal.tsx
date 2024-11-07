@@ -1,4 +1,4 @@
-import React from "react";
+import React, { act } from "react";
 import { useState, useRef, useEffect } from "react";
 import { Tab, Tabs, Spinner, Button } from "react-bootstrap";
 import {
@@ -22,7 +22,7 @@ import {
   QuestionMark,
   Queue,
 } from "@phosphor-icons/react";
-import type { GetSubmissionResponse } from "src/hooks/useJudge";
+import { reactSubmission, type GetSubmissionResponse } from "src/hooks/useJudge";
 import {
   BarChart,
   Bar,
@@ -35,6 +35,7 @@ import type { StoredSubmission } from "src/hooks/useSubmissions";
 import toast from "react-hot-toast";
 import ShareButton from "./ShareButton";
 import { LANGUAGE_CONFIG } from "src/editor/languages";
+import { Live2D } from "src/scripts/live2d.helpers";
 
 interface OutputModalPropBase {
   displayingSharedCode: boolean;
@@ -237,7 +238,6 @@ const OutputModal: React.FC<OutputModalProps> = (props) => {
       </div>
     );
   };
-
   const renderSubmissionResult = () => {
     if (!activeTab) {
       return (
@@ -258,12 +258,20 @@ const OutputModal: React.FC<OutputModalProps> = (props) => {
         <div className="text-red-500">Error fetching submission result</div>
       );
     if (!submissionResult) return null;
+
     if (isLoading) return <Spinner animation="border" />;
     if (isError)
       return (
         <div className="text-red-500">Error fetching submission result</div>
       );
-    if (!submissionResult) return null;
+    reactSubmission(submissionResult.token).then((res) => {
+      if (res.message) {
+        Live2D.showMessage({
+          text: res.message,
+          timeout: 5000,
+        });
+      }
+    });
     return (
       <div className="bg-[#2c2a2a] rounded-lg shadow-lg overflow-auto">
         <div className="flex items-center justify-between mb-2">
