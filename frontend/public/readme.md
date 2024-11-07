@@ -53,6 +53,13 @@ wip
 mail [hello@cansu.dev](mailto:hello@cansu.dev) for all feedbacks, questions, suggestions, anything.
 
 ## changelog
+### 2024-11-7
+- added
+  - anime girl companion, can be disabled from settings.
+  - she will always react to your submissions, and will react to your code upon one second inactivity in typing.
+  - planning text to speech
+- removed
+  - my own sanity
 ### 2024-11-1
 - added
   - language specific pages, such as [https://code.cansu.dev/language/typescript](https://code.cansu.dev/language/typescript) that redirects back to playground with selected language set as default.

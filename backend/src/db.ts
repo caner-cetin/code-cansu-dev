@@ -87,6 +87,24 @@ export interface DraftSubmissions {
 	deletedat: Timestamp | undefined;
 }
 
+export interface SubmissionAIReaction {
+	id: Generated<number>;
+	judgetoken: string;
+	reaction: string;
+	created_at: Timestamp;
+	updated_at: Timestamp;
+	deleted_at: Timestamp | undefined;
+}
+
+export interface CodeAIReaction {
+	id: Generated<number>;
+	code: string;
+	reaction: string;
+	created_at: Timestamp;
+	updated_at: Timestamp;
+	deleted_at: Timestamp | undefined;
+}
+
 export interface DB {
 	ar_internal_metadata: ArInternalMetadata;
 	clients: Clients;
@@ -94,6 +112,8 @@ export interface DB {
 	schema_migrations: SchemaMigrations;
 	submissions: Submissions;
 	draft_submissions: DraftSubmissions;
+	submission_ai_reactions: SubmissionAIReaction;
+	code_ai_reactions: CodeAIReaction;
 }
 
 export function createDB(connectionString: string) {

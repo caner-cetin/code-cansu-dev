@@ -22,6 +22,10 @@ interface HeaderPropsEditor extends HeaderPropsBase {
   onSubmit: () => void;
   onSubmitWithStdin?: () => void;
   onClearSubmissions: () => void;
+  live2DModelEnabled: boolean;
+  setLive2DModelEnabled: (live2DModelEnabled: boolean) => void;
+  renderFirst: number,
+  setRenderFirst: (renderFirst: number) => void;
 }
 
 interface HeaderPropsShared extends HeaderPropsBase {
@@ -116,6 +120,14 @@ export default function Header(props: HeaderProps) {
         code={code}
         languageID={languageID}
         setLanguageID={setLanguageID}
+        live2DModelEnabled={
+          (props as HeaderPropsEditor).live2DModelEnabled
+        }
+        setLive2DModelEnabled={
+          (props as HeaderPropsEditor).setLive2DModelEnabled
+        }
+        renderFirst={(props as HeaderPropsEditor).renderFirst}
+        setRenderFirst={(props as HeaderPropsEditor).setRenderFirst}
       />
     </header>
   );

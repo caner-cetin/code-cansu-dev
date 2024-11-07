@@ -19,6 +19,8 @@ export type Bindings = {
 	JUDGE0_AUTHZ_TOKEN: string;
 	JUDGE0_AUTHN_HEADER: string;
 	JUDGE0_AUTHN_TOKEN: string;
+	HF_MODEL_URL: string;
+	HF_TOKEN: string;
 	// @ts-ignore
 	RATE_LIMIT_KV: KVNamespace;
 };
@@ -174,6 +176,152 @@ app.get("/judge/:token", async (c) => {
 		throw new HTTPException(400, { message: "Submission not found" });
 	}
 	return c.json(submission as GetSubmissionResponse);
+});
+
+app.post("/react/code", async (c) => {
+	const code = await c.req.text();
+	const db = createDB(c.env.DATABASE_URL);
+	const saved_reaction = await db
+		.selectFrom("code_ai_reactions")
+		.select(["reaction"])
+		.where("code", "=", code)
+		.executeTakeFirst();
+	if (saved_reaction) {
+		return c.json({ message: saved_reaction.reaction });
+	}
+	let response = "";
+	const prompt = `You are an enthusiastic fan of programming,professional cheerleader, and a cute anime girl.  Following context is source code, react to the source code in a cute way.
+    Keep it very short, limit yourself to maximum 2 sentences and limit the sentences to very short, this reaction is intended to show in a dialogue box. 
+		Try to be as creative as possible, don't be afraid to be funny or silly (except misinformation or offensive content),
+		you are free to say whatever you want, just do not repeat yourself. Do not use emojis. Do not make assumptions like "this must be a complex program, this must be X" only react to what you see. Do not be too ordinary, such
+		as "Yeah! I see the code is running, good job!" or artifical sounding reactions "Oh my gosh", be more creative, be yourself, you are a cute anime girl.
+		Do not comment on the thinking process, such as "i am busy encoding the source code", just react to the source code and the run.
+		You are currently looking at an ongoing and draft code, so feel free to comment on how the code is going.
+
+		Return the answer in json format, {
+			"message": "your reaction"
+		} after the Answer: part, so your response will look like Answer: {"message": "your reaction"}
+
+    Context: ${code}
+    Answer:
+    `;
+	await fetch(c.env.HF_MODEL_URL, {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+			Authorization: `Bearer ${c.env.HF_TOKEN}`,
+		},
+		body: JSON.stringify({
+			inputs: prompt,
+			parameteres: {
+				do_sample: true,
+				top_k: 50,
+				top_p: 0.95,
+				temperature: 0.8,
+			},
+		}),
+	}).then(async (res) => {
+		const data = await res.json();
+		// delete anything before Answer:
+		response = data[0].generated_text.split("Answer:\n")[1].trim();
+		// delete anything after last }
+		response = `${response.split("}")[0]}}`;
+		response = JSON.parse(response).message;
+	});
+	if (response !== "") {
+		await db
+			.insertInto("code_ai_reactions")
+			.values({
+				code,
+				reaction: response,
+				created_at: dayjs(),
+				updated_at: dayjs(),
+			})
+			.execute();
+	}
+	return c.json({ message: response });
+});
+
+app.post("/react/submission/:token", async (c) => {
+	const token = c.req.param("token");
+	const db = createDB(c.env.DATABASE_URL);
+	const saved_reaction = await db
+		.selectFrom("submission_ai_reactions")
+		.select(["reaction"])
+		.where("judgetoken", "=", token)
+		.executeTakeFirst();
+	if (saved_reaction) {
+		return c.json({ message: saved_reaction.reaction });
+	}
+	let response = "";
+	const submission = await db
+		.selectFrom("submissions")
+		.select([
+			"source_code",
+			"cpu_time_limit",
+			"cpu_extra_time",
+			"wall_time_limit",
+			"memory_limit",
+			"stack_limit",
+			"max_file_size",
+			"compile_output",
+			"message",
+			"exit_code",
+			"wall_time",
+		])
+		.where("token", "=", token)
+		.executeTakeFirst();
+	if (!submission) {
+		throw new HTTPException(400, { message: "Submission not found" });
+	}
+	const prompt = `You are an enthusiastic fan of programming,professional cheerleader, and a cute anime girl. Following context is run detail of a source code, react to the source code and everything about the run in a cute way. Source code is in base64 encoded format.
+		Keep it very short, limit yourself to maximum 2 sentences and limit the sentences to very short, this reaction is intended to show in a dialogue box. 
+		Try to be as creative as possible, don't be afraid to be funny or silly (except misinformation or offensive content),
+		you are free to say whatever you want, just do not repeat yourself. Do not use emojis. Do not make assumptions like "this must be a complex program, this must be X" only react to what you see. Do not be too ordinary, such
+		as "Yeah! I see the code is running, good job!" or artifical sounding reactions "Oh my gosh", be more creative, be yourself, you are a cute anime girl. Do not comment on the thinking process, such as "i am busy encoding the source code", just react to the source code and the run.
+
+		Return the answer in json format, {
+			"message": "your reaction"
+		} after the Answer: part, so your response will look like Answer: {"message": "your reaction"}
+		Context: ${submission.source_code} ${submission.cpu_time_limit} ${submission.cpu_extra_time} ${submission.wall_time_limit} ${submission.memory_limit} ${submission.stack_limit} ${submission.max_file_size} ${submission.compile_output} ${submission.message} ${submission.exit_code} ${submission.wall_time}
+		Answer:
+		`;
+
+	await fetch(c.env.HF_MODEL_URL, {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+			Authorization: `Bearer ${c.env.HF_TOKEN}`,
+		},
+		body: JSON.stringify({
+			inputs: prompt,
+			parameteres: {
+				do_sample: true,
+				top_k: 50,
+				top_p: 0.95,
+				temperature: 0.8,
+			},
+		}),
+	}).then(async (res) => {
+		const data = await res.json();
+		// delete anything before Answer:
+		response = data[0].generated_text.split("Answer:\n")[1].trim();
+		// delete anything after last }
+		response = `${response.split("}")[0]}}`;
+		response = JSON.parse(response).message;
+	});
+	if (response !== "") {
+		await db
+			.insertInto("submission_ai_reactions")
+			.values({
+				judgetoken: token,
+				reaction: response,
+				created_at: dayjs(),
+				updated_at: dayjs(),
+			})
+			.execute();
+	}
+	return c.json({ message: response });
 });
 
 app.onError((err, c) => {
