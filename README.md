@@ -1,7 +1,25 @@
+
+## important note
+
+i am archiving this repository, and leaving web development as a hobby in entirety. i am still looking for work in webdev (but still prefer anything related to devops), i am just done with "fun side project website" things.
+
+you can thank vite for ragequit.
+
+if you want to read why, i have a very long tweet chain that shows progress of me losing every shred of my sanity caused by vite. good luck finding it. 
+
+building this project was fun. goodbye. 
+
+
+
+## beep
+
+
 Code playground with 38 different environments, all with autocompletes, snippets, and syntax highlighters.
 
 ![alt text](static/main.png)
 
+- [important note](#important-note)
+- [beep](#beep)
 - [features](#features)
 - [supported languages](#supported-languages)
   - [available packages](#available-packages)
