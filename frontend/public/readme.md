@@ -58,6 +58,8 @@ mail [hello@cansu.dev](mailto:hello@cansu.dev) for all feedbacks, questions, sug
   - anime girl companion, can be disabled from settings.
   - she will always react to your submissions, and will react to your code upon one second inactivity in typing.
   - planning text to speech
+- updated
+  - language list is in now alphabetical order
 - removed
   - my own sanity
 ### 2024-11-1

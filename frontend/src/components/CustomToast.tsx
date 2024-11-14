@@ -1,8 +1,5 @@
-import React from 'react';
 import toast, { Toaster, ToastBar } from 'react-hot-toast';
-import toast_error from 'src/assets/toast_error.png'
-import toast_loading from 'src/assets/toast_loading.png'
-import toast_success from 'src/assets/toast_success.png'
+import Image from 'next/image'
 const CustomToast: React.FC = () => {
   return (
     <Toaster
@@ -22,23 +19,29 @@ const CustomToast: React.FC = () => {
             >
               <div className="flex items-center p-1">
                 <div className="flex-shrink-0">
-                  <div className='h-16 w-16 object-contain'>
+                  <div className='object-contain'>
                     {t.type === 'error' && (
-                      <img
-                        src={toast_error}
+                      <Image
+                        src="/toast_error.png"
                         alt={`error ${message}`}
+                        height={64}
+                        width={64}
                       />
                     )}
                     {t.type === 'success' && (
-                      <img
-                        src={toast_success}
+                      <Image
+                        src="/toast_success.png"
                         alt={`success ${message}`}
+                        height={64}
+                        width={64}
                       />
                     )}
                     {t.type === 'loading' && (
-                      <img
-                        src={toast_loading}
+                      <Image
+                        src="/toast_loading.png"
                         alt={`loading ${message}`}
+                        height={64}
+                        width={64}
                       />
                     )}
                   </div>

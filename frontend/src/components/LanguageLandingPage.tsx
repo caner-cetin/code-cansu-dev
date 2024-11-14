@@ -1,10 +1,10 @@
-import { useNavigate } from "@tanstack/react-router";
-import React from "react";
-import { Helmet } from "react-helmet";
-import { LANGUAGE_CONFIG } from "src/editor/languages";
-import { Settings } from "src/services/settings";
-
-
+'use client'
+import { LANGUAGE_CONFIG } from "@/config/languages";
+import { Settings } from "@/services/settings";
+import { NextSeo } from 'next-seo';
+import { SoftwareAppJsonLd } from 'next-seo';
+import { redirect } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 interface LanguageConfigType {
   runnerName: string;
   languageName: string;
@@ -92,15 +92,11 @@ const LanguageLandingPage: React.FC<LanguageLandingPageProps> = ({
   languageId,
   languageName,
 }) => {
-  const navigate = useNavigate();
-
+  const router = useRouter()
   const handleStartCoding = () => {
     if (typeof window !== 'undefined') {
       localStorage.setItem(Settings.DEFAULT_LANGUAGE_ID, languageId.toString());
-      navigate({
-        to: '/',
-        replace: true
-      });
+      router.push("/");
     }
   };
 
@@ -108,38 +104,26 @@ const LanguageLandingPage: React.FC<LanguageLandingPageProps> = ({
 
   return (
     <div className="min-h-screen bg-[#211e20] text-[#e9efec] font-mono">
-      <Helmet>
-        <title>{`${languageName} Online IDE - Free ${languageName} Editor and Compiler`}</title>
-        <meta name="description" content={description} />
-        <meta name="robots" content="index, follow" />
-        <link
-          rel="canonical"
-          href={`https://code.cansu.dev/language/${languageName.toLowerCase()}`}
-        />
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "SoftwareApplication",
-            name: `${languageName} Online IDE`,
-            applicationCategory: "DeveloperApplication",
-            operatingSystem: "Web Browser",
-            offers: {
-              "@type": "Offer",
-              price: "0",
-              priceCurrency: "USD",
-            },
-            description: description,
-            url: `https://code.cansu.dev/language/${languageName.toLowerCase()}`,
-            featureList: [
-              "Live Code Execution",
-              "Syntax Highlighting",
-              "Code Sharing",
-              "Auto-save",
-            ],
-          })}
-        </script>
-      </Helmet>
-
+      <NextSeo
+        title={`${languageName} Online IDE - Free ${languageName} Editor and Compiler`}
+        description={description}
+        canonical={`https://code.cansu.dev/language/${languageName.toLowerCase()}`}
+        openGraph={{
+          url: `https://code.cansu.dev/language/${languageName.toLowerCase()}`,
+          title: `${languageName} Online IDE - Free ${languageName} Editor and Compiler`,
+          description: description,
+          type: 'website',
+        }}
+      />
+      <SoftwareAppJsonLd
+        name={`${languageName} Online IDE`}
+        applicationCategory="DeveloperApplication"
+        operatingSystem="Web Browser"
+        price="0"
+        priceCurrency="USD"
+        description={description}
+        url={`https://code.cansu.dev/language/${languageName.toLowerCase()}`}
+      />
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-4xl mx-auto">
           {/* Main Content Section */}

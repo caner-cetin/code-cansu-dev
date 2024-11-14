@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Share, Copy } from 'lucide-react';
-import { Button } from 'react-bootstrap';
+import { Button } from '@/components//ui/button';
 
 interface ShareButtonProp {
   token: string
@@ -37,7 +37,7 @@ const ShareButton = (props: ShareButtonProp) => {
     <span className="text-sm text-gray-400 ml-2 inline-flex items-center">
       <Button
         type='button'
-        variant='outline-secondary'
+        variant='secondary'
         onClick={() => setIsOpen(!isOpen)}
       >
         <Share size={16} />
