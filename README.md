@@ -1,15 +1,9 @@
 
 ## important note
 
-i am archiving this repository, and leaving web development as a hobby in entirety. i am still looking for work in webdev (but still prefer anything related to devops), i am just done with "fun side project website" things.
+i have archived and unarchived this repository, due to sheer anger and pure vitriol hatred towards vitejs and react. i am not using vitejs anymore, i hate anything that relies on vitejs, and i will only use vitejs if you pay me from now on. there is a tweet chain on x if you are interested in to read why (good luck finding it). 
 
-you can thank vite for ragequit.
-
-if you want to read why, i have a very long tweet chain that shows progress of me losing every shred of my sanity caused by vite. good luck finding it. 
-
-building this project was fun. goodbye. 
-
-
+im currently focused on migrating to nextjs, refactor, improve individual parts of code, redesign the ugly parts etc. `haul` branch contains work in progress buggy code. thank you vitejs organization for breaking me mentally for a full week.
 
 ## beep
 
@@ -37,21 +31,19 @@ Code playground with 38 different environments, all with autocompletes, snippets
 ![demo execution](static/exec.gif)
 - Network Friendly
 
-This is what is most important to me in this project. You might say "dude we have unlimited gigabyte fiber internets who cares", but you can shove in all AI craps, popups, buzzwords,nothing will make me feel good as much as my sweet darling. From Haskell to NASM to Prolog to Lua, run everything with under 2 MB of network, all autocompletes and snippets included.
+From Haskell to NASM to Prolog to Lua, run everything with under 2 MB of network, all autocompletes and snippets included.
 
-Here is a comparison with JDoodle. With no cache, from initial load to output, JDoodle consumes 3.05 megabytes. And this is only for COBOL. My precious darling loads needs only 900 KB of network initially, 
-TO LOAD ALL LANGUAGES. Language switch only takes 200 kbs, where as JDoodle transfers 6 MB of network just to switch from COBOL to Fortran. And, JDoodle does not provide autocompletes and snippets.
+As a comparison, with no cache, from initial load to output, JDoodle consumes 3.05 megabytes for only loading COBOL. My precious darling loads needs only 1.6 MB of network initially, 
+for loading all languages. Language switch takes almost nothing, where as JDoodle transfers 6 MB of network just to switch from COBOL to Fortran. 
 
-here, check this video: https://youtu.be/St5z3afAguY (execution server is running on remote, somewhere in germany, during all demos)
-- Dynamic Color Theme
-![demo theme](static/theme.gif)
+Cached initial network transfer is only 4 KB, and executions, submissions, etc. takes only a few kilobytes per query.
 
 more to come, wip.
 
 ## supported languages
 
 - Assembly (NASM)
-- Bash
+- Bash 
 - Basic
 - C (Clang)
 - C++ (Clang)
