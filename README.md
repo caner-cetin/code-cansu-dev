@@ -3,7 +3,7 @@
 
 i have archived and unarchived this repository, due to sheer anger and pure vitriol hatred towards vitejs and react. i am not using vitejs anymore, i hate anything that relies on vitejs, and i will only use vitejs if you pay me from now on. there is a tweet chain on x if you are interested in to read why (good luck finding it). 
 
-so any further development is halted until nextjs migration is done. `haul` branch contains work in progress buggy code. thank you vitejs organization for breaking me mentally for a full week.
+im currently focused on migrating to nextjs, refactor, improve individual parts of code, redesign the ugly parts etc. `haul` branch contains work in progress buggy code. thank you vitejs organization for breaking me mentally for a full week.
 
 ## beep
 
