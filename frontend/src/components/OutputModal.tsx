@@ -1,6 +1,5 @@
-import React, { act } from "react";
+'use client'
 import { useState, useRef, useEffect } from "react";
-import { Tab, Tabs, Spinner, Button } from "react-bootstrap";
 import {
   useQuery,
   type UseQueryResult,
@@ -22,7 +21,6 @@ import {
   QuestionMark,
   Queue,
 } from "@phosphor-icons/react";
-import { reactSubmission, type GetSubmissionResponse } from "src/hooks/useJudge";
 import {
   BarChart,
   Bar,
@@ -31,52 +29,36 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import type { StoredSubmission } from "src/hooks/useSubmissions";
+import type { StoredSubmission } from "@/hooks/useSubmissions";
 import toast from "react-hot-toast";
 import ShareButton from "./ShareButton";
-import { LANGUAGE_CONFIG } from "src/editor/languages";
-import { Live2D } from "src/scripts/live2d.helpers";
+import { LANGUAGE_CONFIG } from "@/config/languages";
+import { Live2D } from "@/scripts/live2d.helpers";
+import { States } from "@/services/settings";
+import { LoadingSpinner } from "@/components/ui/spinner";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useAppContext } from "@/contexts/AppContext";
+import type { GetSubmissionResponse } from "@/actions/judge/types";
+import { getSubmission, reactSubmission } from "@/actions/judge/calls";
 
-interface OutputModalPropBase {
+interface OutputModalProps {
   displayingSharedCode: boolean;
+  query?: UseQueryResult<GetSubmissionResponse, unknown>;
 }
 
-interface OutputModalEditorProps extends OutputModalPropBase {
-  submissions: StoredSubmission[];
-  getSubmission: (token: string) => Promise<GetSubmissionResponse>;
-  setLanguageId: React.Dispatch<React.SetStateAction<number>>;
-  setSourceCode: React.Dispatch<React.SetStateAction<string | null>>;
-}
-
-interface OutputModalReadOnlyProps extends OutputModalPropBase {
-  query: UseQueryResult<GetSubmissionResponse, Error>;
-}
-
-type OutputModalProps = OutputModalReadOnlyProps | OutputModalEditorProps;
-
-const OutputModal: React.FC<OutputModalProps> = (props) => {
+const OutputModal: React.FC<OutputModalProps> = ({ displayingSharedCode, query }) => {
   // Don't set an initial active tab
-  const [activeTab, setActiveTab] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<string | undefined>(undefined);
   const initialRenderRef = useRef(true);
   // Keep track of the highest submission ID we've seen
   const lastSeenSubmissionRef = useRef<number>(0);
   const [refetchInterval, setRefetchInterval] = useState<number | false>(false);
+  const { submissions, setLanguageId, setSourceCode } = useAppContext();
   // Function to get numeric ID from submission
   const getSubmissionId = (submission: StoredSubmission): number =>
     submission.localId;
 
-  const submissions = props.displayingSharedCode
-    ? undefined
-    : (props as OutputModalEditorProps).submissions;
-  const getSubmission = props.displayingSharedCode
-    ? undefined
-    : (props as OutputModalEditorProps).getSubmission;
-  const setLanguageId = props.displayingSharedCode
-    ? undefined
-    : (props as OutputModalEditorProps).setLanguageId;
-  const setSourceCode = props.displayingSharedCode
-    ? undefined
-    : (props as OutputModalEditorProps).setSourceCode;
   // biome-ignore lint/correctness/useExhaustiveDependencies: <no need to renrender each time getSubmissionID is updated>
   useEffect(() => {
     // Skip the first render
@@ -105,37 +87,34 @@ const OutputModal: React.FC<OutputModalProps> = (props) => {
   }, [submissions]);
   // biome-ignore lint/correctness/useExhaustiveDependencies: <what?>
   useEffect(() => {
-    if (props.displayingSharedCode) {
-      const token = (props as OutputModalReadOnlyProps).query?.data?.token;
+    if (displayingSharedCode) {
+      const token = query?.data?.token;
       if (token) {
         setActiveTab(token);
       }
     }
   }, [
-    props.displayingSharedCode,
-    (props as OutputModalReadOnlyProps).query?.data
+    displayingSharedCode,
   ]);
-  const query =
-    getSubmission !== undefined
-      ? useQuery({
-        queryKey: ["submission", activeTab],
-        // biome-ignore lint/style/noNonNullAssertion: <explanation>
-        queryFn: () => getSubmission(activeTab!),
-        enabled: !!activeTab,
-        refetchInterval: (data) => {
-          if (
-            data.state.data?.status_id === 2 ||
-            data.state.data?.status_id === 1
-          ) {
-            setRefetchInterval(500);
-            return 500;
-          }
-          setRefetchInterval(false);
-          return false;
-        },
-      })
-      : (props as OutputModalReadOnlyProps).query;
-
+  if (!query) {
+    query = useQuery({
+      queryKey: ["submission", activeTab],
+      // biome-ignore lint/style/noNonNullAssertion: <explanation>
+      queryFn: () => getSubmission(activeTab!),
+      enabled: !!activeTab,
+      refetchInterval: (data) => {
+        if (
+          data.state.data?.status_id === 2 ||
+          data.state.data?.status_id === 1
+        ) {
+          setRefetchInterval(500);
+          return 500;
+        }
+        setRefetchInterval(false);
+        return false;
+      },
+    })
+  }
   const { data: submissionResult, isLoading, isError, refetch } = query;
 
   const handleRefresh = (token: string) => {
@@ -143,7 +122,6 @@ const OutputModal: React.FC<OutputModalProps> = (props) => {
       refetch();
     }
   };
-
   const restoreCode = () => {
     if (!submissionResult) {
       toast.error("No submission result to restore code from");
@@ -159,7 +137,7 @@ const OutputModal: React.FC<OutputModalProps> = (props) => {
       case 1:
         return <Queue />;
       case 2:
-        return <Spinner />;
+        return <LoadingSpinner />;
       case 3:
         return <CheckCircle />;
       case 5:
@@ -252,26 +230,27 @@ const OutputModal: React.FC<OutputModalProps> = (props) => {
         </div>
       );
     }
-    if (isLoading) return <Spinner animation="border" />;
+    if (isLoading) return <LoadingSpinner />;
     if (isError)
       return (
         <div className="text-red-500">Error fetching submission result</div>
       );
     if (!submissionResult) return null;
-
-    if (isLoading) return <Spinner animation="border" />;
     if (isError)
       return (
         <div className="text-red-500">Error fetching submission result</div>
       );
-    reactSubmission(submissionResult.token).then((res) => {
-      if (res.message) {
-        Live2D.showMessage({
-          text: res.message,
-          timeout: 5000,
-        });
-      }
-    });
+    setTimeout(async () => {
+      await reactSubmission(submissionResult.token)?.then((res) => {
+        if (!res) return;
+        if (res.message) {
+          Live2D.showMessage({
+            text: res.message,
+            timeout: 5000,
+          });
+        }
+      })
+    }, 200);
     return (
       <div className="bg-[#2c2a2a] rounded-lg shadow-lg overflow-auto">
         <div className="flex items-center justify-between mb-2">
@@ -316,11 +295,11 @@ const OutputModal: React.FC<OutputModalProps> = (props) => {
                 Refreshing... Interval: {refetchInterval}ms
               </span>
             )}
-            {(!refetchInterval && !props.displayingSharedCode) && (
+            {(!refetchInterval && !displayingSharedCode) && (
               <div className="flex items-center ml-auto">
                 <span className="text-sm text-gray-400">
                   <Button
-                    variant="outline-secondary"
+                    variant="secondary"
                     onClick={() => restoreCode()}
                   >
                     <ClockClockwise alt="Restore Code" />
@@ -378,7 +357,7 @@ const OutputModal: React.FC<OutputModalProps> = (props) => {
               <Terminal className="mr-2" />
               Output:
             </h5>
-            <pre className="bg-[#3c3836] p-3 rounded overflow-x-auto max-h-96">
+            <pre className="bg-[#3c3836] p-3 rounded overflow-x-auto max-h-96 text-sm">
               {submissionResult.stdout}
             </pre>
           </div>
@@ -400,7 +379,7 @@ const OutputModal: React.FC<OutputModalProps> = (props) => {
               <Terminal className="mr-2" />
               Compile Output:
             </h5>
-            <pre className="bg-[#3c3836] p-3 rounded overflow-x-auto max-h-96">
+            <pre className="bg-[#3c3836] p-3 rounded overflow-x-auto max-h-96 text-sm">
               {submissionResult.compile_output}
             </pre>
           </div>
@@ -422,62 +401,47 @@ const OutputModal: React.FC<OutputModalProps> = (props) => {
   };
   const renderSubmissionTabs = () => (
     <div className="flex flex-col">
-      <Tabs activeKey="submissions" className="mb-2">
-        {props.displayingSharedCode ? <Tab eventKey="submissions" title="Output" /> : <Tab eventKey="submissions" title="Submissions" />}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="mb-2">
+          {displayingSharedCode ? (
+            <TabsTrigger value="output">Output</TabsTrigger>
+          ) : (
+            submissions?.map((submission) => (
+              <TabsTrigger key={submission.token} value={submission.token} className="flex items-center gap-2">
+                <i className={submission.iconClass} />
+                <span>{submission.localId}</span>
+                {activeTab === submission.token && submissionResult?.status_id !== 3 && (
+                  <RefreshCw
+                    size={14}
+                    className="cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleRefresh(submission.token)
+                    }}
+                  />
+                )}
+              </TabsTrigger>
+            ))
+          )}
+        </TabsList>
+        {displayingSharedCode && (
+          <TabsContent value="output">
+            {/* Content for shared code output */}
+            <div>Shared code output</div>
+          </TabsContent>
+        )}
       </Tabs>
-      {submissions && (
-        <div className="relative">
-          <div
-            className="flex overflow-x-auto overflow-y-hidden whitespace-nowrap pb-2 ml-4"
-            style={{
-              msOverflowStyle: "none",
-              scrollbarWidth: "none",
-              WebkitOverflowScrolling: "touch",
-            }}
-          >
-            <div className="flex gap-2 min-w-min">
-              {submissions.map((submission) => (
-                <Button
-                  key={submission.token}
-                  variant={
-                    activeTab === submission.token
-                      ? "primary"
-                      : "outline-secondary"
-                  }
-                  size="sm"
-                  onClick={() => setActiveTab(submission.token)}
-                  className="flex items-stretch"
-                >
-                  <div>
-                    <i className={submission.iconClass} />
-                    <span className="ml-1">{submission.localId}</span>
-                  </div>
-                  {activeTab === submission.token &&
-                    submissionResult?.status_id !== 3 && (
-                      <RefreshCw
-                        size={14}
-                        className="cursor-pointer"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRefresh(submission.token);
-                        }}
-                      />
-                    )}
-                </Button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
   return (
-    <div className="output-modal h-full max-h-screen flex flex-col overflow-hidden">
-      <div className="flex-none">{renderSubmissionTabs()}</div>
-      <div className="flex-1 overflow-auto">
-        {activeTab && renderSubmissionResult()}
+    <>
+      <div className="output-modal h-full max-h-screen flex flex-col overflow-hidden">
+        <div className="flex-none">{renderSubmissionTabs()}</div>
+        <div className="flex-1 overflow-auto">
+          {activeTab && renderSubmissionResult()}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

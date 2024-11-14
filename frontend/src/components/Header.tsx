@@ -1,55 +1,43 @@
-import React from "react";
-import { useState } from "react";
-import { Settings } from "lucide-react";
-import Dropdown from "react-bootstrap/Dropdown";
-import ButtonGroup from "react-bootstrap/ButtonGroup";
-import Button from "react-bootstrap/Button";
-import type { LanguagesResponse } from "src/hooks/useJudge";
-import SettingsModal from "./settings/SettingsModal";
-import type AceEditor from "react-ace";
-import { LANGUAGE_CONFIG } from "src/editor/languages";
-import { LanguageId } from "src/services/settings";
+'use client'
 
-interface HeaderPropsBase {
-  code: React.MutableRefObject<AceEditor | null> | undefined;
-  languageID: number;
-  languages: LanguagesResponse | undefined;
-  setLanguageID?: React.Dispatch<React.SetStateAction<number>>;
-}
+import { useAppContext } from '@/contexts/AppContext'
+import { LANGUAGE_CONFIG } from '@/config/languages'
+import { LanguageId, RenderFirst } from '@/services/settings'
+import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import SettingsPopover from './settings/SettingsModal'
+import { Submissions } from '@/hooks/useSubmissions'
+import StdinModal from './StdinModal'
+import { useState } from 'react'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { SelectGroup, SelectLabel } from '@radix-ui/react-select'
 
-interface HeaderPropsEditor extends HeaderPropsBase {
-  displayingSharedCode: false;
-  onSubmit: () => void;
-  onSubmitWithStdin?: () => void;
-  onClearSubmissions: () => void;
-  live2DModelEnabled: boolean;
-  setLive2DModelEnabled: (live2DModelEnabled: boolean) => void;
-  renderFirst: number,
-  setRenderFirst: (renderFirst: number) => void;
-}
+export default function Header() {
+  const ctx = useAppContext()
+  const { languageId, languages, setLanguageId: setLanguageID, displayingSharedCode, renderFirst } = ctx
+  const [displayStdin, setDisplayStdin] = useState(false)
 
-interface HeaderPropsShared extends HeaderPropsBase {
-  displayingSharedCode: true;
-}
-
-type HeaderProps = HeaderPropsEditor | HeaderPropsShared;
-
-export default function Header(props: HeaderProps) {
-  const [showSettings, setShowSettings] = useState(false); // State to control modal
-  const { code, languageID, languages, setLanguageID, displayingSharedCode } =
-    props;
-  // wont be used in shared code, but we declare anyways
-  const onSubmit = (props as HeaderPropsEditor).onSubmit;
-  const onSubmitWithStdin = (props as HeaderPropsEditor).onSubmitWithStdin;
-  const onClearSubmissions = (props as HeaderPropsEditor).onClearSubmissions;
   return (
     <header className="w-full bg-[#211e20] border-b border-[#555568] p-2">
       <div className="flex justify-between items-center">
         <div className="text-[#a0a08b]">
           PIP-OS v7.1.0.8 -{" "}
-          {languageID === LanguageId.Markdown
+          {((languageId === LanguageId.Markdown) || (renderFirst === RenderFirst.WelcomeMarkdown))
             ? "README"
-            : LANGUAGE_CONFIG[languageID]?.runnerName}{" "}
+            : LANGUAGE_CONFIG[languageId]?.runnerName}{" "}
           {displayingSharedCode ? "- READ ONLY" : ""}
         </div>
         <div className="flex items-center space-x-2">
@@ -59,7 +47,7 @@ export default function Header(props: HeaderProps) {
                 variant="link"
                 style={{ color: "#e9efec" }}
                 className="hover:bg-[#504945] transition-colors duration-200"
-                onClick={onSubmit}
+                onClick={() => Submissions.handleSubmitCode(false, ctx)}
               >
                 Execute
               </Button>
@@ -67,68 +55,53 @@ export default function Header(props: HeaderProps) {
                 variant="link"
                 style={{ color: "#e9efec" }}
                 className="hover:bg-[#504945] transition-colors duration-200"
-                onClick={onSubmitWithStdin}
+                onClick={() => setDisplayStdin(!displayStdin)}
               >
+                <StdinModal display={displayStdin} setDisplay={setDisplayStdin} />
                 Execute with Stdin
               </Button>
               <Button
                 variant="link"
                 style={{ color: "#e9efec" }}
                 className="hover:bg-[#cc241d] transition-colors duration-200"
-                onClick={onClearSubmissions}
               >
                 Clear Local Submissions
               </Button>
               {languages && (
-                <Dropdown as={ButtonGroup}>
-                  <Dropdown.Toggle
-                    variant="link"
-                    style={{ color: "#e9efec" }}
-                    className="hover:bg-[#504945] transition-colors duration-200"
-                  >
-                    Languages
-                  </Dropdown.Toggle>
-                  <Dropdown.Menu className="border-[#555568] scrollable-dropdown">
-                    {languages.map((lang) => (
-                      // @ts-ignore
-                      <Dropdown.Item
-                        key={lang.id}
-                        className="text-[#e9efec] hover:bg-[#504945]"
-                        onClick={() => setLanguageID(lang.id)}
-                      >
-                        {lang.name}
-                      </Dropdown.Item>
-                    ))}
-                  </Dropdown.Menu>
-                </Dropdown>
+                <Select onValueChange={(id) => setLanguageID(Number.parseInt(id))}>
+                  <SelectTrigger className=" hover:bg-[#504945] transition-colors duration-20">
+                    <SelectValue placeholder="Languages" />
+                  </SelectTrigger>
+                  <SelectContent className="border-[#555568] scrollable-dropdown">
+                    <SelectGroup>
+                      {languages
+                        .slice()
+                        .sort((lang, nextLang) =>
+                          lang.name.localeCompare(nextLang.name, undefined, {
+                            sensitivity: "base",
+                          })
+                        )
+                        .map((lang) => (
+                          <SelectItem
+                            key={lang.id}
+                            value={lang.id.toString()}
+                            className="text-[#e9efec] hover:bg-[#504945] hover:text-red-200"
+                          >
+                            {lang.name}
+                          </SelectItem>
+                        ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
               )}
             </div>
           )}
         </div>
         <div className="flex items-center">
-          <Button variant="link" onClick={() => setShowSettings(true)}>
-            <Settings className="w-7 h-7 text-[#a0a08b] hover:text-[#e9efec] hover:bg-[#504945] p-1 rounded transition-colors duration-200" />
-          </Button>
-          <div className="text-[#a0a08b]">
-            {new Date().toLocaleTimeString()}
-          </div>
+          <SettingsPopover />
+          <time className="text-[#a0a08b]" dateTime={new Date().toLocaleTimeString()} suppressHydrationWarning />
         </div>
       </div>
-      <SettingsModal
-        show={showSettings}
-        onHide={() => setShowSettings(false)}
-        code={code}
-        languageID={languageID}
-        setLanguageID={setLanguageID}
-        live2DModelEnabled={
-          (props as HeaderPropsEditor).live2DModelEnabled
-        }
-        setLive2DModelEnabled={
-          (props as HeaderPropsEditor).setLive2DModelEnabled
-        }
-        renderFirst={(props as HeaderPropsEditor).renderFirst}
-        setRenderFirst={(props as HeaderPropsEditor).setRenderFirst}
-      />
     </header>
-  );
+  )
 }

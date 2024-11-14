@@ -1,4 +1,4 @@
-import type { StoredSubmission } from "src/hooks/useSubmissions";
+import type { StoredSubmission } from "@/hooks/useSubmissions";
 
 const SUBMISSION_COUNTER_KEY = "submissionCounter";
 const SUBMISSIONS_KEY = "submissions";
