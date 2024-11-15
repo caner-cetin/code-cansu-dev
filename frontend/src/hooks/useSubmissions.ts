@@ -118,14 +118,6 @@ export namespace Submissions {
 			duration: 3000,
 		});
 	}
-
-	export function handleClearSubmissions(
-		setSubmissions: React.Dispatch<React.SetStateAction<StoredSubmission[]>>,
-	): void {
-		clearStoredSubmissions();
-		setSubmissions([]);
-		toast.success("Submissions cleared");
-	}
 }
 
 export default Submissions;

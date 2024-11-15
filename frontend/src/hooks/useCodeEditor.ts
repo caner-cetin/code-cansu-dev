@@ -1,8 +1,8 @@
-import { useRef, useState, useEffect, useCallback } from "react";
+import { useRef, useEffect } from "react";
 import { LANGUAGE_CONFIG } from "@/config/languages";
-import { Settings, type CodeStorage, RenderFirst } from "@/services/settings";
-import { type AppContextType, useAppContext } from "@/contexts/AppContext";
-import { config, edit } from "ace-builds";
+import { Settings, type CodeStorage } from "@/services/settings";
+import type { AppContextType } from "@/contexts/AppContext";
+import { config } from "ace-builds";
 
 config.set(
 	"basePath",
@@ -18,7 +18,6 @@ export function useCodeEditor(ctx: AppContextType) {
 		const editor = ctx.code.current.editor;
 		const currentLanguage = LANGUAGE_CONFIG[ctx.languageId];
 		const prevLanguage = LANGUAGE_CONFIG[previousLanguageRef.current];
-
 
 		if (isFirstRender.current) {
 			isFirstRender.current = false;
@@ -52,7 +51,6 @@ export function useCodeEditor(ctx: AppContextType) {
 			const defaultText = currentLanguage?.defaultText || "";
 			const newContent = savedCode ? atob(savedCode) : defaultText;
 
-
 			// 4. Force a complete editor reset
 			editor.setValue(""); // Clear first
 			editor.session.setValue(newContent); // Then set new value
@@ -65,7 +63,6 @@ export function useCodeEditor(ctx: AppContextType) {
 			setTimeout(() => {
 				editor.renderer.updateFull(true);
 			}, 50);
-
 		}
 	}, [ctx.languageId]);
 

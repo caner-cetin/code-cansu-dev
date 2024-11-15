@@ -36,7 +36,7 @@ export interface AppContextType {
 	submissions: StoredSubmission[] | undefined;
 	setSubmissions: (value: StoredSubmission[]) => StoredSubmission[];
 	sourceCode?: string;
-	setSourceCode?: (sourceCode: string) => string;
+	setSourceCode?: (sourceCode: string) => void;
 	ongoingCodeSubmissionId: number;
 	setOngoingCodeSubmissionId: (id: number) => number;
 }

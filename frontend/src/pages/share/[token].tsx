@@ -5,10 +5,8 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { useQuery } from "@tanstack/react-query";
-import toast from "react-hot-toast";
 
 import CustomToast from "@/components/CustomToast";
-import { LANGUAGE_CONFIG } from "@/config/languages";
 import Header from "@/components/Header";
 import OutputModal from "@/components/OutputModal";
 import { LanguageId } from "@/services/settings";
