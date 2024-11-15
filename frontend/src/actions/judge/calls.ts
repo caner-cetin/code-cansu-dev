@@ -1,5 +1,3 @@
-"use server";
-
 import api from "@/services/api";
 import { States } from "@/services/settings";
 import type {
