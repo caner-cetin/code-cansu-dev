@@ -29,8 +29,15 @@
 	line-height: 0;
 	margin-bottom: -10px;
 	position: fixed;
+	z-index: 10000;
 	transform: translateY(3px);
 	transition: transform .3s ease-in-out, bottom 3s ease-in-out;
+}
+
+#live2d {
+	width: 250px;
+	height: 250px;
+	z-index: 10000;
 }
 
 #waifu:hover {

@@ -200,7 +200,6 @@ export default function AceEditor() {
       style={{
         width: "100%",
         height: "100%",
-        fontFamily: "CommitMono",
       }}
       editorProps={{ $blockScrolling: true }}
     />
