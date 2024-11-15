@@ -22,9 +22,8 @@ export async function getLanguages({
 	languages,
 	setLanguages,
 }: AppContextType): Promise<LanguagesResponse | undefined> {
-	if (!languages) {
-		const lang = (await api.get<LanguagesResponse>("/judge/languages")).data;
-		setLanguages(lang);
+	if (languages === undefined || languages.length === 0) {
+		setLanguages((await api.get<LanguagesResponse>("/judge/languages")).data);
 	}
 	return languages;
 }

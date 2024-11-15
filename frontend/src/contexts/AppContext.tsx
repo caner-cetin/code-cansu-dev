@@ -24,21 +24,21 @@ export interface AppContextType {
 	languageId: LanguageId;
 	setLanguageId: (id: number) => void;
 	languages: LanguagesResponse | undefined;
-	setLanguages: (languages: LanguagesResponse) => void;
+	setLanguages: (languages: LanguagesResponse) => LanguagesResponse;
 	displayingSharedCode: boolean;
 	setDisplayingSharedCode: (displaying: boolean) => void;
 	live2DModelEnabled: boolean;
-	setLive2DModelEnabled: (enabled: boolean) => void;
+	setLive2DModelEnabled: (enabled: boolean) => boolean;
 	renderFirst: number;
-	setRenderFirst: (renderFirst: number) => void;
+	setRenderFirst: (renderFirst: number) => number;
 	colorTheme: string;
-	setColorTheme: (theme: string) => void;
+	setColorTheme: (theme: string) => string;
 	submissions: StoredSubmission[] | undefined;
-	setSubmissions: (value: StoredSubmission[]) => void;
+	setSubmissions: (value: StoredSubmission[]) => StoredSubmission[];
 	sourceCode?: string;
-	setSourceCode?: (sourceCode: string) => void;
+	setSourceCode?: (sourceCode: string) => string;
 	ongoingCodeSubmissionId: number;
-	setOngoingCodeSubmissionId: (id: number) => void;
+	setOngoingCodeSubmissionId: (id: number) => number;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -52,7 +52,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
 		Settings.SUBMISSIONS_KEY,
 		[],
 	);
-	const [languages, setLanguages] = useState<LanguagesResponse>();
+	const [languages, setLanguages] = useLocalStorage<LanguagesResponse>(Settings.LANGUAGES, []);
 	const [displayingSharedCode, setDisplayingSharedCode] = useState(false);
 	const [live2DModelEnabled, setLive2DModelEnabled] = useLocalStorage<boolean>(Settings.LIVE_2D_MODEL_ENABLED, true);
 	const [renderFirst, setRenderFirst] = useLocalStorage<number>(Settings.RENDER_FIRST, RenderFirst.WelcomeMarkdown);

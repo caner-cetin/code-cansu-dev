@@ -36,7 +36,7 @@ const StdinModal: React.FC<StdinModalProps> = ({ display, setDisplay }) => {
 						Cancel
 					</Button>
 					<Button
-						onClick={() => Submissions.handleSubmitStdin(stdin, ctx)}
+						onClick={() => { Submissions.handleSubmitCode(true, ctx); Submissions.handleSubmitStdin(stdin, ctx) }}
 						className="bg-[#3c3836] text-[#e9efec] border border-[#555568] hover:bg-[#211e20]"
 					>
 						Submit
