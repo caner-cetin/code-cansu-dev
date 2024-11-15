@@ -2,6 +2,10 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import withPlugins from "next-compose-plugins";
 import withTM from "next-transpile-modules";
+// https://stackoverflow.com/questions/8817423/why-is-dirname-not-defined-in-node-repl
+import { dirname } from 'node:path';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const filesNeedToExcludeMinifying = [
 	"src/scripts/live2d.min.js",
@@ -23,7 +27,6 @@ const nextConfig = {
 			),
 		};
 		config.optimization.minimizer = config.optimization.minimizer.map(
-			// @ts-ignore
 			(plugin) => {
 				if (plugin.constructor.name === "TerserPlugin") {
 					plugin.options.exclude = filesPathToExcludeMinifying;
