@@ -1,7 +1,5 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import withPlugins from "next-compose-plugins";
-import withTM from "next-transpile-modules";
 // https://stackoverflow.com/questions/8817423/why-is-dirname-not-defined-in-node-repl
 import { dirname } from 'node:path';
 const __filename = fileURLToPath(import.meta.url);
@@ -38,15 +36,13 @@ const nextConfig = {
 	},
 	output: 'export',
 	images: {
-		// https://stackoverflow.com/questions/65487914/error-image-optimization-using-next-js-default-loader-is-not-compatible-with-n
-		loader: 'akamai',
-    path: '',
-		disableStaticImages: true,
+		unoptimized: true
 	},
 	eslint: {
 		ignoreDuringBuilds: true,
 	},
 	reactStrictMode: false,
+	transpilePackages: ['ace-builds'],
 };
 
-export default withPlugins([withTM(["ace-builds"])], nextConfig);
+export default nextConfig;

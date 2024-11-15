@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { useCodeEditor } from "@/hooks/useCodeEditor";
 import { useAppContext } from "@/contexts/AppContext";
 import AceEditorComponent from "react-ace";
@@ -135,19 +135,16 @@ import "ace-builds/src-min-noconflict/theme-chrome";
 import "ace-builds/src-min-noconflict/theme-chaos";
 import "ace-builds/src-min-noconflict/theme-ambiance";
 
-import { getLanguages } from "@/actions/judge/calls";
 import { LANGUAGE_CONFIG } from "@/config/languages";
 import { type CodeStorage, Settings } from "@/services/settings";
 import type { Ace } from "ace-builds";
 // ========================
 
-export default function AceEditor() {
+export interface AceEditorProps {
+  displayingSharedCode?: boolean;
+}
+export const AceEditor: React.FC<AceEditorProps> = (props) => {
   const ctx = useAppContext();
-
-  useEffect(() => {
-    getLanguages(ctx);
-  }, []);
-
   useCodeEditor(ctx);
 
 
@@ -184,6 +181,7 @@ export default function AceEditor() {
     <AceEditorComponent
       mode={LANGUAGE_CONFIG[ctx.languageId]?.mode || "python"}
       ref={ctx.code}
+      readOnly={props.displayingSharedCode ?? false}
       onLoad={onEditorLoad}
       theme={ctx.colorTheme}
       name="ace-editor"

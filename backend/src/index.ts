@@ -215,7 +215,7 @@ app.post("/react/code", async (c) => {
 		},
 		body: JSON.stringify({
 			inputs: prompt,
-			parameteres: {
+			parameters: {
 				do_sample: true,
 				top_k: 50,
 				top_p: 0.95,
@@ -300,7 +300,7 @@ app.post("/react/submission/:token", async (c) => {
 		},
 		body: JSON.stringify({
 			inputs: prompt,
-			parameteres: {
+			parameters: {
 				do_sample: true,
 				top_k: 50,
 				top_p: 0.95,

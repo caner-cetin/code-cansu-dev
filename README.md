@@ -16,6 +16,7 @@ Code playground with 38 different environments, all with autocompletes, snippets
 - [features](#features)
 - [supported languages](#supported-languages)
   - [notes](#notes)
+  - [next 13 is outdated](#next-13-is-outdated)
 
 ## features
 
@@ -84,3 +85,25 @@ more to come, wip.
 
 - Basic and Octave has no modes, so they are rendered as plain text.
 - readme.md in editor is the same as this file except there are no gifs.
+
+### next 13 is outdated
+i know, next 15's node version is not supported by cloudflare pages build system, so i downgraded from next 15 to 14.
+then my dummy page builds randomly stopped working with the error
+```
+Error occurred prerendering page "/language/swift". Read more: https://nextjs.org/docs/messages/prerender-error
+
+TypeError: Cannot read properties of null (reading 'useContext')
+    at exports.useContext (/Users/canercetin/Git/cansu.dev/code/frontend/node_modules/react/cjs/react.production.min.js:24:495)
+    at Head (/Users/canercetin/Git/cansu.dev/code/frontend/node_modules/next/dist/shared/lib/head.js:172:44)
+    at nj (/Users/canercetin/Git/cansu.dev/code/frontend/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:46251)
+    at nM (/Users/canercetin/Git/cansu.dev/code/frontend/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47571)
+    at nN (/Users/canercetin/Git/cansu.dev/code/frontend/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+    at nI (/Users/canercetin/Git/cansu.dev/code/frontend/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47010)
+    at nM (/Users/canercetin/Git/cansu.dev/code/frontend/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:47717)
+    at nN (/Users/canercetin/Git/cansu.dev/code/frontend/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+    at nM (/Users/canercetin/Git/cansu.dev/code/frontend/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:59102)
+    at nN (/Users/canercetin/Git/cansu.dev/code/frontend/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js:12:64546)
+```
+so i downgraded from next 14 to 13. then it started working again? 
+
+i did not pick any of the package versions for frontend, i was simply forced to for every package. so please do not mention it. xoxo 

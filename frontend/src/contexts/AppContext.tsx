@@ -6,7 +6,6 @@ import {
 	useState,
 	useRef,
 	type MutableRefObject,
-	useEffect,
 } from "react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import {
@@ -47,7 +46,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
 	children,
 }) => {
 	const code = useRef<AceEditor>();
-	const [languageId, setLanguageId] = useLocalStorage<number>(Settings.DEFAULT_LANGUAGE_ID, LanguageId.Python3);
+	const [languageId, setLanguageId] = useLocalStorage<number>(Settings.DEFAULT_LANGUAGE_ID, LanguageId.Markdown);
 	const [submissions, setSubmissions] = useLocalStorage<StoredSubmission[]>(
 		Settings.SUBMISSIONS_KEY,
 		[],
@@ -59,7 +58,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
 	const [colorTheme, setColorTheme] = useLocalStorage<string>(Settings.COLOR_THEME, Themes.TomorrowNightEighties);
 	const [sourceCode, setSourceCode] = useState<string>();
 	const [ongoingCodeSubmissionId, setOngoingCodeSubmissionId] = useLocalStorage<number>(Settings.ONGOING_CODE_SUBMISSION_ID, -1);
-
 
 	return (
 		<AppContext.Provider

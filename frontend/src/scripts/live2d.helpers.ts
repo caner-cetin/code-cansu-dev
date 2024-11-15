@@ -20,7 +20,7 @@ export const Live2D = {
 
 // https://github.com/stevenjoezhang/live2d-widget/blob/master/src/message.js
 function live2dShowMessage(text: string | string[], timeout: number): void {
-	if (localStorage.getItem(States.DISPLAYING_WAIFU_TIPS)) return;
+	if (localStorage.getItem(States.DISPLAYING_WAIFU_TIPS) === "1") return;
 	if (messageTimer) {
 		clearTimeout(messageTimer);
 		messageTimer = null;
@@ -29,11 +29,13 @@ function live2dShowMessage(text: string | string[], timeout: number): void {
 	const tips = document.getElementById("waifu-tips");
 	if (tips) {
 		tips.innerHTML = selectedText as string;
-		tips.classList.add("waifu-tips-active");
+		tips.style.opacity = "1";
+		tips.style.transition = "opacity .2s";
 		localStorage.setItem(States.DISPLAYING_WAIFU_TIPS, "1");
 		messageTimer = setTimeout(() => {
-			localStorage.removeItem(States.DISPLAYING_WAIFU_TIPS);
-			tips.classList.remove("waifu-tips-active");
+			localStorage.setItem(States.DISPLAYING_WAIFU_TIPS, "0");
+			tips.style.opacity = "0";
+			tips.style.transition = "";
 		}, timeout);
 	}
 }

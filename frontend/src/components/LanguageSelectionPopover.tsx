@@ -29,7 +29,7 @@ export const LanguageSelectionPopover: React.FC<LanguageSelectionPopoverProps> =
           variant="outline"
           // biome-ignore lint/a11y/useSemanticElements: <explanation>
           role="combobox"
-          className="w-48 justify-between bg-[#1e1e1e] border-[#555568] text-[#a0a08b] hover:bg-[#504945] hover:text-[#e9efec]"
+          className="w-82 justify-between bg-[#1e1e1e] border-[#555568] text-[#a0a08b] hover:bg-[#504945] hover:text-[#e9efec]"
         >
           {selectedLanguage ? (
             <span className="flex items-center">
@@ -43,7 +43,7 @@ export const LanguageSelectionPopover: React.FC<LanguageSelectionPopoverProps> =
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-96 p-0 bg-[#1e1e1e] border-[#555568] max-h-[320px] overflow-y-auto">
+      <PopoverContent className="w-80 p-0 bg-[#1e1e1e] border-[#555568] max-h-[320px] overflow-y-auto">
         <div className="grid">
           {languages
             .slice()

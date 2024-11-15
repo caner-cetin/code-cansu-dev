@@ -82,7 +82,7 @@ export async function reactSubmission(
 ): Promise<ReactSubmissionResponse | undefined> {
 	if (
 		typeof window !== "undefined" &&
-		localStorage.getItem(States.DISPLAYING_WAIFU_TIPS) !== null
+		localStorage.getItem(States.DISPLAYING_WAIFU_TIPS) === "1"
 	)
 		return;
 	const res = await api.post<ReactSubmissionResponse>(
