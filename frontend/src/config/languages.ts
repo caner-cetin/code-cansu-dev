@@ -1,25 +1,5 @@
 import { LanguageId } from "@/services/settings";
-
-interface LanguageConfig {
-	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-	extensionModule: () => Promise<any>;
-	defaultText: string;
-	mode: string;
-	runnerName: string;
-	/**
-	 * The class name of the icon to display for this language.
-	 * @example
-	 * ```ts
-	 * <i class="devicon-visualbasic-plain"></i>
-	 * ```
-	 *
-	 * To change the size, change the <i>'s `font-size`.
-	 * @see https://devicon.dev/
-	 *
-	 */
-	iconClass: string | undefined;
-	languageName: string;
-}
+import type { LanguageConfig } from "./types";
 
 // https://github.com/ajaxorg/ace-builds/tree/cb4c7c3d105c92b04f45d78d329f5509b7098906/demo/kitchen-sink/docs
 // nearly all default texts are from here, thanks to the ace-builds team for everything.
