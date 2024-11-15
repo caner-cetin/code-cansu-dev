@@ -36,7 +36,11 @@ const nextConfig = {
 		);
 		return config;
 	},
+	output: 'export',
 	images: {
+		// https://stackoverflow.com/questions/65487914/error-image-optimization-using-next-js-default-loader-is-not-compatible-with-n
+		loader: 'akamai',
+    path: '',
 		disableStaticImages: true,
 	},
 	eslint: {
