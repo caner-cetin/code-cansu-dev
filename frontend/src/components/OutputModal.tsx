@@ -54,7 +54,8 @@ const OutputModal: React.FC<OutputModalProps> = ({ displayingSharedCode, query }
   // Keep track of the highest submission ID we've seen
   const lastSeenSubmissionRef = useRef<number>(0);
   const [refetchInterval, setRefetchInterval] = useState<number | false>(false);
-  const { submissions, setLanguageId, setSourceCode } = useAppContext();
+  const ctx = useAppContext();
+  const { setLanguageId, setSourceCode } = ctx;
   // Function to get numeric ID from submission
   const getSubmissionId = (submission: StoredSubmission): number =>
     submission.localId;
@@ -66,16 +67,16 @@ const OutputModal: React.FC<OutputModalProps> = ({ displayingSharedCode, query }
       initialRenderRef.current = false;
       return;
     }
-    if (!submissions) return;
+    if (!ctx.submissions) return;
     // Find the highest submission ID in the current list
-    const currentMaxId = Math.max(...submissions.map(getSubmissionId));
+    const currentMaxId = Math.max(...ctx.submissions.map(getSubmissionId));
     // If we have submissions and found a new highest ID
     if (
-      submissions.length > 0 &&
+      ctx.submissions.length > 0 &&
       currentMaxId > lastSeenSubmissionRef.current
     ) {
       // Find the submission with the highest ID
-      const latestSubmission = submissions.reduce((latest, current) => {
+      const latestSubmission = ctx.submissions.reduce((latest, current) => {
         const currentId = getSubmissionId(current);
         const latestId = getSubmissionId(latest);
         return currentId > latestId ? current : latest;
@@ -84,7 +85,7 @@ const OutputModal: React.FC<OutputModalProps> = ({ displayingSharedCode, query }
       lastSeenSubmissionRef.current = currentMaxId;
       setActiveTab(latestSubmission.token);
     }
-  }, [submissions]);
+  }, [ctx.submissions]);
   // biome-ignore lint/correctness/useExhaustiveDependencies: <what?>
   useEffect(() => {
     if (displayingSharedCode) {
@@ -217,19 +218,6 @@ const OutputModal: React.FC<OutputModalProps> = ({ displayingSharedCode, query }
     );
   };
   const renderSubmissionResult = () => {
-    if (!activeTab) {
-      return (
-        <div className="flex items-center justify-center h-full text-gray-500">
-          <div className="text-center">
-            <p className="mb-2">No submission selected</p>
-            <p className="text-sm">
-              Select a submission to view results or execute code to create a
-              new submission
-            </p>
-          </div>
-        </div>
-      );
-    }
     if (isLoading) return <LoadingSpinner />;
     if (isError)
       return (
@@ -368,7 +356,7 @@ const OutputModal: React.FC<OutputModalProps> = ({ displayingSharedCode, query }
               <Terminal className="mr-2" />
               Error:
             </h5>
-            <pre className="bg-[#3c3836] p-3 rounded overflow-x-auto max-h-96 text-red-400">
+            <pre className="bg-[#3c3836] p-3 rounded overflow-x-auto max-h-96 text-red-400 text-sm">
               {submissionResult.stderr}
             </pre>
           </div>
@@ -399,14 +387,14 @@ const OutputModal: React.FC<OutputModalProps> = ({ displayingSharedCode, query }
       </div>
     );
   };
-  const renderSubmissionTabs = () => (
-    <div className="flex flex-col">
+  const renderSubmissionTabs = () => {
+    return <div className="flex flex-col">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="mb-2">
           {displayingSharedCode ? (
             <TabsTrigger value="output">Output</TabsTrigger>
           ) : (
-            submissions?.map((submission) => (
+            ctx.submissions?.map((submission) => (
               <TabsTrigger key={submission.token} value={submission.token} className="flex items-center gap-2">
                 <i className={submission.iconClass} />
                 <span>{submission.localId}</span>
@@ -432,13 +420,22 @@ const OutputModal: React.FC<OutputModalProps> = ({ displayingSharedCode, query }
         )}
       </Tabs>
     </div>
-  );
+  };
   return (
     <>
       <div className="output-modal h-full max-h-screen flex flex-col overflow-hidden">
-        <div className="flex-none">{renderSubmissionTabs()}</div>
+        <div className="flex-none">{ctx.submissions && renderSubmissionTabs()}</div>
         <div className="flex-1 overflow-auto">
-          {activeTab && renderSubmissionResult()}
+          {(!activeTab || ctx.submissions?.length === 0) ?
+            <div className="flex items-center justify-center h-full text-gray-500">
+              <div className="text-center">
+                <p className="mb-2">No submission selected</p>
+                <p className="text-sm">
+                  Select a submission to view results or execute code to create a
+                  new submission
+                </p>
+              </div>
+            </div> : renderSubmissionResult()}
         </div>
       </div>
     </>

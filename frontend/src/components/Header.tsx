@@ -64,6 +64,7 @@ export default function Header() {
                 variant="link"
                 style={{ color: "#e9efec" }}
                 className="hover:bg-[#cc241d] transition-colors duration-200"
+                onClick={() => Submissions.clearStoredSubmissions(ctx)}
               >
                 Clear Local Submissions
               </Button>

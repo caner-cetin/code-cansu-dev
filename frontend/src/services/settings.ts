@@ -1,10 +1,10 @@
-
 export type CodeStorage = Record<string, string | undefined>;
 export enum Settings {
 	COLOR_THEME = "colorTheme",
 	CODE_STORAGE = "codeStorage",
 	DEFAULT_LANGUAGE_ID = "defaultLanguageID",
 	RENDER_FIRST = "renderFirst",
+	LANGUAGES = "languages",
 	LIVE_2D_MODEL_ENABLED = "live2DModelEnabled",
 	SUBMISSION_COUNTER_KEY = "submissionCounter",
 	SUBMISSIONS_KEY = "submissions",

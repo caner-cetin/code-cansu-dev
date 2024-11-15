@@ -145,7 +145,7 @@ export default function AceEditor() {
   const ctx = useAppContext();
 
   useEffect(() => {
-    if (!ctx.languages) getLanguages(ctx);
+   getLanguages(ctx);
   }, []);
 
   useCodeEditor(ctx);

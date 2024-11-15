@@ -27,20 +27,25 @@ export namespace Submissions {
 		return nextId;
 	}
 
-	export function saveSubmission(submission: StoredSubmission): void {
-		const submissions = getStoredSubmissions();
-		submissions.push(submission);
-		localStorage.setItem(Settings.SUBMISSIONS_KEY, JSON.stringify(submissions));
+	export function saveSubmission(
+		submission: StoredSubmission,
+		ctx: AppContextType,
+	): void {
+		if (!ctx.submissions) {
+			ctx.setSubmissions([]);
+		}
+		// eslint please shut up
+		if (ctx.submissions) {
+			ctx.setSubmissions(
+				[submission, ...ctx.submissions].sort((a, b) => b.localId - a.localId),
+			);
+			ctx.setOngoingCodeSubmissionId(-1);
+		}
 	}
 
-	export function getStoredSubmissions(): StoredSubmission[] {
-		const storedSubmissions = localStorage.getItem(Settings.SUBMISSIONS_KEY);
-		return storedSubmissions ? JSON.parse(storedSubmissions) : [];
-	}
-
-	export function clearStoredSubmissions(): void {
-		localStorage.removeItem(Settings.SUBMISSIONS_KEY);
-		localStorage.removeItem(Settings.SUBMISSION_COUNTER_KEY);
+	export function clearStoredSubmissions(ctx: AppContextType): void {
+		ctx.setSubmissions([]);
+		localStorage.setItem(Settings.SUBMISSION_COUNTER_KEY, "0");
 	}
 
 	export async function handleSubmitCode(
@@ -58,9 +63,13 @@ export namespace Submissions {
 		}
 		try {
 			const result = await submitCode(src);
-			ctx.setOngoingCodeSubmissionId(result.id);
+			const subid = ctx.setOngoingCodeSubmissionId(result.id);
 			if (!withStdin) {
-				await finalizeSubmission(ctx);
+				// if i set the id and call finalize submission afterwards, ongoing id is -1, but when i call the handle submit code again, its correct value.
+				// looking at local storage, i am correctly setting the sub id just in time in context
+				// so there is a small delay of god knows what to update the context, we need to pass the id seperately to finalize submission
+				// i hate this language so fucking much
+				await finalizeSubmission(ctx, subid);
 			}
 		} catch (error) {
 			console.error(error);
@@ -84,33 +93,27 @@ export namespace Submissions {
 			if (stdin.trim() !== "") {
 				await submitStdin(ctx.ongoingCodeSubmissionId, stdin);
 			}
-			await finalizeSubmission(ctx);
+			// read the handlesubmitcode comment
+			await finalizeSubmission(ctx, ctx.ongoingCodeSubmissionId);
 		} catch (error) {
 			toast.error("Processing submission failed");
 			console.error(error);
 		}
 	}
 
-	async function finalizeSubmission(ctx: AppContextType): Promise<void> {
-		if (ctx.ongoingCodeSubmissionId === -1) {
-			toast.error("No submission available, submit code first");
-			return;
-		}
-		const result = await submitSubmission(
-			ctx.ongoingCodeSubmissionId,
-			ctx.languageId,
-		);
+	async function finalizeSubmission(
+		ctx: AppContextType,
+		id: number,
+	): Promise<void> {
+		const result = await submitSubmission(id, ctx.languageId);
 		const localId = getNextSubmissionId();
 		const newSubmission = {
 			localId,
-			globalId: ctx.ongoingCodeSubmissionId,
+			globalId: id,
 			token: result.token,
 			iconClass: LANGUAGE_CONFIG[ctx.languageId]?.iconClass || "",
 		};
-		saveSubmission(newSubmission);
-		ctx.setSubmissions((prev) =>
-			[newSubmission, ...prev].sort((a, b) => b.localId - a.localId),
-		);
+		saveSubmission(newSubmission, ctx);
 		toast.loading("Submission in progress...", {
 			duration: 3000,
 		});
