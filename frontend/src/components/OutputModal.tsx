@@ -117,6 +117,28 @@ const OutputModal: React.FC<OutputModalProps> = ({ displayingSharedCode, query }
     })
   }
   const { data: submissionResult, isLoading, isError, refetch } = query;
+  const [reacting, setReacting] = useState(false);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <no need to rerun on submissionResult and reacted change>
+  useEffect(() => {
+    console.log(activeTab)
+    if (submissionResult !== undefined && reacting === false) {
+      try {
+        setReacting(true);
+        reactSubmission(submissionResult.token)?.then((res) => {
+          if (!res) return;
+          if (res.message) {
+            Live2D.showMessage({
+              text: res.message,
+              timeout: 3000,
+            });
+          }
+        })
+      } finally {
+        setReacting(false);
+
+      }
+    }
+  }, [activeTab]);
 
   const handleRefresh = (token: string) => {
     if (token === activeTab) {
@@ -228,17 +250,6 @@ const OutputModal: React.FC<OutputModalProps> = ({ displayingSharedCode, query }
       return (
         <div className="text-red-500">Error fetching submission result</div>
       );
-    setTimeout(async () => {
-      await reactSubmission(submissionResult.token)?.then((res) => {
-        if (!res) return;
-        if (res.message) {
-          Live2D.showMessage({
-            text: res.message,
-            timeout: 5000,
-          });
-        }
-      })
-    }, 200);
     return (
       <div className="bg-[#2c2a2a] rounded-lg shadow-lg overflow-auto">
         <div className="flex items-center justify-between mb-2">
@@ -426,7 +437,7 @@ const OutputModal: React.FC<OutputModalProps> = ({ displayingSharedCode, query }
       <div className="output-modal h-full max-h-screen flex flex-col overflow-hidden">
         <div className="flex-none">{ctx.submissions && renderSubmissionTabs()}</div>
         <div className="flex-1 overflow-auto">
-          {(!activeTab || ctx.submissions?.length === 0) ?
+          {((!activeTab || ctx.submissions?.length === 0) && !displayingSharedCode) ?
             <div className="flex items-center justify-center h-full text-gray-500">
               <div className="text-center">
                 <p className="mb-2">No submission selected</p>

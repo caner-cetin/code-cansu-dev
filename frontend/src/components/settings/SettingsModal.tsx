@@ -11,14 +11,15 @@ import {
 } from "@/components/ui/popover"
 import { Button } from '@/components/ui/button'
 import { Settings as SettingsIcon } from 'lucide-react'
-export default function SettingsPopover() {
+export const SettingsPopover: React.FC = () => {
   const {
     renderFirst,
     setRenderFirst,
     live2DModelEnabled,
     setLive2DModelEnabled,
     colorTheme,
-    setColorTheme
+    setColorTheme,
+    displayingSharedCode
   } = useAppContext()
 
   return (
@@ -38,23 +39,20 @@ export default function SettingsPopover() {
             <div className="grid grid-cols-3 items-center gap-4">
               <ColorThemeSelection colorTheme={colorTheme} setColorTheme={setColorTheme} />
             </div>
-            <div className="grid grid-cols-3 items-center gap-4">
-              <RenderFirstSelection renderFirst={renderFirst} setRenderFirst={setRenderFirst} />
-            </div>
-            <div className="grid grid-cols-3 items-center gap-4">
-              <Label>
-                Live2D Model
-              </Label>
-              <Checkbox checked={live2DModelEnabled} onCheckedChange={(sf) => setLive2DModelEnabled(sf as boolean)} />
-            </div>
+            {displayingSharedCode &&
+              <div className="grid grid-cols-3 items-center gap-4">
+                <RenderFirstSelection renderFirst={renderFirst} setRenderFirst={setRenderFirst} />
+              </div>
+            }
+            {displayingSharedCode &&
+              <div className="grid grid-cols-3 items-center gap-4">
+                <Label>
+                  Live2D Model
+                </Label>
+                <Checkbox checked={live2DModelEnabled} onCheckedChange={(sf) => setLive2DModelEnabled(sf as boolean)} />
+              </div>
+            }
           </div>
-          <button
-            type='button'
-            className="btn btn-link text-[#e9efec] hover:bg-[#504945] transition-colors duration-200"
-            onClick={() => window.location.reload()}
-          >
-            Reload Page
-          </button>
         </div>
       </PopoverContent>
     </Popover>

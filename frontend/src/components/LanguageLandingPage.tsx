@@ -1,5 +1,6 @@
 'use client'
 import { LANGUAGE_CONFIG } from "@/config/languages";
+import { useAppContext } from "@/contexts/AppContext";
 import { Settings } from "@/services/settings";
 import { NextSeo } from 'next-seo';
 import { SoftwareAppJsonLd } from 'next-seo';
@@ -93,9 +94,10 @@ const LanguageLandingPage: React.FC<LanguageLandingPageProps> = ({
   languageName,
 }) => {
   const router = useRouter()
+  const ctx = useAppContext();
   const handleStartCoding = () => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem(Settings.DEFAULT_LANGUAGE_ID, languageId.toString());
+      ctx.setLanguageId(languageId);
       router.push("/");
     }
   };
@@ -171,7 +173,6 @@ const LanguageLandingPage: React.FC<LanguageLandingPageProps> = ({
                 <li>✓ No installation required</li>
                 <li>✓ Clean, distraction-free interface</li>
                 <li>✓ Perfect for learning {languageName}</li>
-                <li>✓ Mobile-friendly design</li>
               </ul>
             </div>
           </div>

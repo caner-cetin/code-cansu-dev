@@ -3,7 +3,7 @@
 import { useAppContext } from '@/contexts/AppContext'
 import { LanguageId, RenderFirst } from '@/services/settings'
 import { Button } from '@/components/ui/button'
-import SettingsPopover from './settings/SettingsModal'
+import { SettingsPopover } from './settings/SettingsModal'
 import { Submissions } from '@/hooks/useSubmissions'
 import StdinModal from './StdinModal'
 import { useState } from 'react'
@@ -19,11 +19,9 @@ export default function Header() {
     <header className="w-full bg-[#211e20] border-b border-[#555568] p-2">
       <div className="flex justify-between items-center">
         <div className="text-[#a0a08b]">
-          PIP-OS v7.1.0.8 -{" "}
-          {((languageId === LanguageId.Markdown) || (renderFirst === RenderFirst.WelcomeMarkdown))
-            ? "README"
-            : LANGUAGE_CONFIG[languageId]?.runnerName}{" "}
-          {displayingSharedCode ? "- READ ONLY" : ""}
+          PIP-OS v7.1.0.8
+          {((languageId === LanguageId.Markdown) && (renderFirst === RenderFirst.WelcomeMarkdown)) && " - README"}
+          {displayingSharedCode ? ` - ${LANGUAGE_CONFIG[languageId]?.runnerName} - READ ONLY` : ""}
         </div>
         <div className="flex items-center space-x-2">
           {!displayingSharedCode && (
