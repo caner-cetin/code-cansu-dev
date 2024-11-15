@@ -1,9 +1,8 @@
 
-## important note
+[main branch](https://code.cansu.dev)
+[development branch](https://haul.code-cansu-dev.pages.dev) *unstable*
 
-i have archived and unarchived this repository, due to sheer anger and pure vitriol hatred towards vitejs and react. i am not using vitejs anymore, i hate anything that relies on vitejs, and i will only use vitejs if you pay me from now on. there is a tweet chain on x if you are interested in to read why (good luck finding it). 
-
-im currently focused on migrating to nextjs, refactor, improve individual parts of code, redesign the ugly parts etc. `haul` branch contains work in progress buggy code. thank you vitejs organization for breaking me mentally for a full week.
+im currently migrating to nextjs, refactor, redesign parts here and there, so any feedbacks on development branch is welcome.
 
 ## beep
 
@@ -12,7 +11,6 @@ Code playground with 38 different environments, all with autocompletes, snippets
 
 ![alt text](static/main.png)
 
-- [important note](#important-note)
 - [beep](#beep)
 - [features](#features)
 - [supported languages](#supported-languages)
