@@ -34,6 +34,8 @@ app.use(
 			"https://code.cansu.dev",
 			"http://localhost:5173",
 			"http://localhost:4173",
+			"https://haul.code-cansu-dev.pages.dev",
+			"http://localhost:3000",
 		],
 		credentials: false,
 		maxAge: 600,

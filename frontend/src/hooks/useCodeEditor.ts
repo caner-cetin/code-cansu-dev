@@ -1,4 +1,5 @@
-import { useRef, useEffect } from "react";
+"use client";
+import { useRef, useEffect, startTransition } from "react";
 import { LANGUAGE_CONFIG } from "@/config/languages";
 import { Settings, type CodeStorage } from "@/services/settings";
 import type { AppContextType } from "@/contexts/AppContext";
@@ -100,43 +101,4 @@ export function useCodeEditor(ctx: AppContextType) {
 		window.addEventListener("beforeunload", handleBeforeUnload);
 		return () => window.removeEventListener("beforeunload", handleBeforeUnload);
 	}, [ctx.languageId]);
-
-	// 	useEffect(() => {
-	// 		if (live2DModelEnabled === true) {
-	// 			Promise.all([
-	// 				// @ts-ignore
-	// 				import("@/scripts/waifu-tips.js"),
-	// 				// @ts-ignore
-	// 				import("@/scripts/live2d.min.js"),
-	// 			]).then(() => {
-	// 				// @ts-ignore
-	// 				initWidget({
-	// 					cdnPath: "https://fastly.jsdelivr.net/gh/fghrsh/live2d_api/",
-	// 					tools: [],
-	// 				});
-	// 				// @ts-ignore
-	// 			});
-	// 			// ascii art from original author
-	// 			// looks cute
-	// 			console.log(`
-	// く__,.ヘヽ.        /  ,ー､ 〉
-	//          ＼ ', !-─‐-i  /  /´
-	//          ／｀ｰ'       L/／｀ヽ､
-	//        /   ／,   /|   ,   ,       ',
-	//      ｲ   / /-‐/  ｉ  L_ ﾊ ヽ!   i
-	//       ﾚ ﾍ 7ｲ｀ﾄ   ﾚ'ｧ-ﾄ､!ハ|   |
-	//         !,/7 '0'     ´0iソ|    |
-	//         |.从"    _     ,,,, / |./    |
-	//         ﾚ'| i＞.､,,__  _,.イ /   .i   |
-	//           ﾚ'| | / k_７_/ﾚ'ヽ,  ﾊ.  |
-	//             | |/i 〈|/   i  ,.ﾍ |  i  |
-	//            .|/ /  ｉ：    ﾍ!    ＼  |
-	//             kヽ>､ﾊ    _,.ﾍ､    /､!
-	//             !'〈//｀Ｔ´', ＼ ｀'7'ｰr'
-	//             ﾚ'ヽL__|___i,___,ンﾚ|ノ
-	//                 ﾄ-,/  |___./
-	//                 'ｰ'    !_,.:
-	//       `);
-	// 		}
-	// 	}, [live2DModelEnabled]);
 }

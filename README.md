@@ -1,5 +1,6 @@
 
 [main branch](https://code.cansu.dev)
+
 [development branch](https://haul.code-cansu-dev.pages.dev) *unstable*
 
 im currently migrating to nextjs, refactor, redesign parts here and there, so any feedbacks on development branch is welcome.
