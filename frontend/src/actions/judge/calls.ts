@@ -9,7 +9,7 @@ import type {
 	GetSubmissionResponse,
 	HealthResponse,
 } from "@/actions/judge/types";
-import { type AppContextType, useAppContext } from "@/contexts/AppContext";
+import type { AppContextType } from "@/contexts/AppContext";
 
 export type ReactSubmissionResponse = ReactCodeResponse;
 

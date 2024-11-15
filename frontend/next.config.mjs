@@ -1,6 +1,5 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-// @ts-ignore
 import withPlugins from "next-compose-plugins";
 import withTM from "next-transpile-modules";
 
@@ -14,7 +13,6 @@ const filesPathToExcludeMinifying = filesNeedToExcludeMinifying.map((src) => {
 });
 
 const nextConfig = {
-	// @ts-ignore
 	webpack: (config, { isServer }) => {
 		config.resolve.alias = {
 			...config.resolve.alias,

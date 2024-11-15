@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect } from "react";
 import { useCodeEditor } from "@/hooks/useCodeEditor";
 import { useAppContext } from "@/contexts/AppContext";
 import AceEditorComponent from "react-ace";
@@ -145,7 +145,7 @@ export default function AceEditor() {
   const ctx = useAppContext();
 
   useEffect(() => {
-   getLanguages(ctx);
+    getLanguages(ctx);
   }, []);
 
   useCodeEditor(ctx);
