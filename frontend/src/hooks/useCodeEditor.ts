@@ -1,104 +1,148 @@
-"use client";
-import { useRef, useEffect, startTransition } from "react";
+import { useRef, useEffect, useCallback } from "react";
 import { LANGUAGE_CONFIG } from "@/config/languages";
 import { Settings, type CodeStorage } from "@/services/settings";
-import type { AppContextType } from "@/contexts/AppContext";
 import { config } from "ace-builds";
+import { useAppStore } from "@/stores/AppStore";
+import type { IAceEditor } from "react-ace/lib/types";
+import type ReactAce from "react-ace/lib/ace";
 
 config.set(
 	"basePath",
 	"https://cdn.jsdelivr.net/npm/ace-builds@1.4.8/src-noconflict/",
 );
 
-export function useCodeEditor(ctx: AppContextType) {
-	const previousLanguageRef = useRef<number>(ctx.languageId);
+export const useEditorContent = () => {
+	const ctx = useAppStore.getState();
+	const languageMode = ctx.code?.current.editor?.getMode().$id;
+
+	const saveContent = useCallback(() => {
+		if (!ctx.code?.current.editor || !languageMode) return;
+		const currentContent = ctx.code.current.editor.getValue().trim();
+		if (!currentContent) return;
+
+		ctx.codeStorage[languageMode] = btoa(currentContent);
+		ctx.setCodeStorage(ctx.codeStorage);
+	}, [
+		ctx.code?.current.editor,
+		languageMode,
+		ctx.codeStorage,
+		ctx.setCodeStorage,
+	]);
+
+	const loadContent = useCallback(
+		(defaultText = "") => {
+			if (!ctx.code?.current.editor || !languageMode) return;
+
+			const savedCode = ctx.codeStorage[languageMode];
+			const newContent = savedCode ? atob(savedCode) : defaultText;
+
+			ctx.code.current.editor.setValue(""); // Clear first
+			ctx.code.current.editor.session.setValue(newContent);
+			ctx.code.current.editor.clearSelection();
+		},
+		[ctx.code?.current.editor, languageMode, ctx.codeStorage[languageMode]],
+	);
+
+	const setMode = useCallback(
+		(languageId: number) => {
+			if (!ctx.code?.current.editor) return;
+			ctx.code.current.editor.session.setMode(
+				`ace/mode/${LANGUAGE_CONFIG[languageId]?.mode}`,
+			);
+		},
+		[ctx.code?.current.editor],
+	);
+
+	return { saveContent, loadContent, setMode };
+};
+
+export function useCodeEditor() {
+	const ctx = useAppStore.getState();
 	const isFirstRender = useRef(true);
 
-	useEffect(() => {
-		if (!ctx.code?.current?.editor) return;
-		const editor = ctx.code.current.editor;
-		const currentLanguage = LANGUAGE_CONFIG[ctx.languageId];
-		const prevLanguage = LANGUAGE_CONFIG[previousLanguageRef.current];
+	const previousLanguageRef = useRef<number>(ctx.languageId);
+	const editor = ctx.code?.current?.editor;
 
-		if (isFirstRender.current) {
+	// Save current editor content
+	// biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+	const saveEditorContent = useCallback(
+		(languageMode: string) => {
+			if (!editor || !languageMode) return;
+
+			const currentContent = editor.getValue().trim();
+			if (!currentContent) return;
+
+			ctx.codeStorage[languageMode] = btoa(currentContent);
+			ctx.setCodeStorage(ctx.codeStorage);
+		},
+		[editor, ctx.codeStorage],
+	);
+
+	// Load content for a specific language
+	const loadEditorContent = useCallback(
+		(languageMode: string, defaultText = "") => {
+			if (!editor || !languageMode) return;
+
+			const savedCode = ctx.codeStorage[languageMode];
+			const newContent = savedCode ? atob(savedCode) : defaultText;
+			console.log(newContent);
+			editor.session.setValue(newContent);
+			editor.clearSelection();
+		},
+		[editor, ctx.codeStorage],
+	);
+
+	// Handle language changes
+	useEffect(() => {
+		if (!editor || isFirstRender.current) {
 			isFirstRender.current = false;
 			previousLanguageRef.current = ctx.languageId;
 			return;
 		}
 
-		if (ctx.languageId !== previousLanguageRef.current) {
-			// 1. Save current content before switching
-			const currentContent = editor.getValue();
-			const codes = JSON.parse(
-				localStorage.getItem(Settings.CODE_STORAGE) || "{}",
-			) as CodeStorage;
+		const currentLanguage = LANGUAGE_CONFIG[ctx.languageId];
+		const prevLanguage = LANGUAGE_CONFIG[previousLanguageRef.current];
 
-			if (currentContent.trim() && prevLanguage?.mode) {
-				codes[prevLanguage.mode] = btoa(currentContent);
-				localStorage.setItem(Settings.CODE_STORAGE, JSON.stringify(codes));
+		if (ctx.languageId !== previousLanguageRef.current) {
+			// Save current content before switching
+			if (prevLanguage?.mode) {
+				saveEditorContent(prevLanguage.mode);
 			}
 
-			// 2. Update editor mode
-			editor.session.setMode(`ace/mode/${currentLanguage?.mode}`);
+			// Update editor mode
+			if (currentLanguage?.mode) {
+				editor.session.setMode(`ace/mode/${currentLanguage.mode}`);
+				loadEditorContent(currentLanguage.mode, currentLanguage.defaultText);
+			}
 
-			// 3. Load content for new language
-			const savedCodes = JSON.parse(
-				localStorage.getItem(Settings.CODE_STORAGE) || "{}",
-			) as CodeStorage;
-
-			const savedCode = currentLanguage?.mode
-				? savedCodes[currentLanguage.mode]
-				: "";
-			const defaultText = currentLanguage?.defaultText || "";
-			const newContent = savedCode ? atob(savedCode) : defaultText;
-
-			// 4. Force a complete editor reset
-			editor.setValue(""); // Clear first
-			editor.session.setValue(newContent); // Then set new value
-			editor.clearSelection();
-
-			// 5. Update reference
 			previousLanguageRef.current = ctx.languageId;
 
-			// 6. Force refresh with a slight delay
+			// Force refresh with a slight delay
 			setTimeout(() => {
 				editor.renderer.updateFull(true);
 			}, 50);
 		}
-	}, [ctx.languageId]);
-
-	// Handle source code changes from external sources
-	useEffect(() => {
-		if (ctx.code?.current?.editor && ctx.sourceCode) {
-			ctx.code.current.editor.setValue(ctx.sourceCode, -1);
-			ctx.code.current.editor.clearSelection();
-		}
-	}, [ctx.sourceCode]);
+	}, [ctx.languageId, editor, saveEditorContent, loadEditorContent]);
 
 	// Handle theme changes
 	useEffect(() => {
-		if (ctx.code?.current?.editor) {
-			ctx.code.current.editor.setTheme(`ace/theme/${ctx.colorTheme}`);
+		if (editor) {
+			editor.setTheme(`ace/theme/${ctx.colorTheme}`);
 		}
-	}, [ctx.colorTheme]);
+	}, [editor, ctx.colorTheme]);
 
 	// Save before unload
 	useEffect(() => {
-		const handleBeforeUnload = () => {
-			if (ctx.code?.current?.editor) {
-				const currentContent = ctx.code.current.editor.getValue();
-				const currentLanguage = LANGUAGE_CONFIG[ctx.languageId];
+		if (!editor) return;
 
-				if (currentContent.trim() && currentLanguage?.mode) {
-					const codes = JSON.parse(
-						localStorage.getItem(Settings.CODE_STORAGE) || "{}",
-					) as CodeStorage;
-					codes[currentLanguage.mode] = btoa(currentContent);
-					localStorage.setItem(Settings.CODE_STORAGE, JSON.stringify(codes));
-				}
+		const handleBeforeUnload = () => {
+			const currentLanguage = LANGUAGE_CONFIG[ctx.languageId];
+			if (currentLanguage?.mode) {
+				saveEditorContent(currentLanguage.mode);
 			}
 		};
+
 		window.addEventListener("beforeunload", handleBeforeUnload);
 		return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-	}, [ctx.languageId]);
+	}, [editor, ctx.languageId, saveEditorContent]);
 }

@@ -8,8 +8,9 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
-import { useAppContext, type AppContextType } from '@/contexts/AppContext'
 import type { LanguageConfig } from '@/config/types'
+import { useAppStore } from '@/stores/AppStore'
+import { useShallow } from 'zustand/react/shallow'
 
 export interface LanguageSelectionPopoverProps {
   // header is also using the language config
@@ -17,7 +18,11 @@ export interface LanguageSelectionPopoverProps {
   languageCfg: Record<number, LanguageConfig>
 }
 export const LanguageSelectionPopover: React.FC<LanguageSelectionPopoverProps> = ({ languageCfg }: LanguageSelectionPopoverProps) => {
-  const ctx = useAppContext();
+  const ctx = useAppStore(useShallow((state) => ({
+    languageId: state.languageId,
+    setLanguageId: state.setLanguageId,
+    languages: state.languages,
+  })))
   const { languageId, setLanguageId, languages } = ctx;
   if (!languages) return;
   const selectedLanguage = languages.find(lang => lang.id === languageId)
