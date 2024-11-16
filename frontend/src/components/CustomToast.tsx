@@ -1,5 +1,4 @@
 import toast, { Toaster, ToastBar } from 'react-hot-toast';
-import Image from 'next/image'
 const CustomToast: React.FC = () => {
   return (
     <Toaster
@@ -21,7 +20,7 @@ const CustomToast: React.FC = () => {
                 <div className="flex-shrink-0">
                   <div className='object-contain'>
                     {t.type === 'error' && (
-                      <Image
+                      <img
                         src="/toast_error.png"
                         alt={`error ${message}`}
                         height={64}
@@ -29,7 +28,7 @@ const CustomToast: React.FC = () => {
                       />
                     )}
                     {t.type === 'success' && (
-                      <Image
+                      <img
                         src="/toast_success.png"
                         alt={`success ${message}`}
                         height={64}
@@ -37,7 +36,7 @@ const CustomToast: React.FC = () => {
                       />
                     )}
                     {t.type === 'loading' && (
-                      <Image
+                      <img
                         src="/toast_loading.png"
                         alt={`loading ${message}`}
                         height={64}

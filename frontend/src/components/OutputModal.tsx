@@ -38,9 +38,11 @@ import { States } from "@/services/settings";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useAppContext } from "@/contexts/AppContext";
-import type { GetSubmissionResponse } from "@/actions/judge/types";
-import { getSubmission, reactSubmission } from "@/actions/judge/calls";
+import type { GetSubmissionResponse } from "@/services/judge/types";
+import { getSubmission, reactSubmission } from "@/services/judge/calls";
+import { useAppStore } from "@/stores/AppStore";
+import { useEditorContent } from "@/hooks/useCodeEditor";
+import { useShallow } from "zustand/react/shallow";
 
 interface OutputModalProps {
   displayingSharedCode: boolean;
@@ -48,17 +50,22 @@ interface OutputModalProps {
 }
 
 const OutputModal: React.FC<OutputModalProps> = ({ displayingSharedCode, query }) => {
+  const ctx = useAppStore(useShallow((state) => ({
+    submissions: state.submissions,
+    setLanguageId: state.setLanguageId,
+    editor: state.code,
+  })));
+
   // Don't set an initial active tab
   const [activeTab, setActiveTab] = useState<string | undefined>(undefined);
   const initialRenderRef = useRef(true);
   // Keep track of the highest submission ID we've seen
   const lastSeenSubmissionRef = useRef<number>(0);
   const [refetchInterval, setRefetchInterval] = useState<number | false>(false);
-  const ctx = useAppContext();
-  const { setLanguageId, setSourceCode } = ctx;
   // Function to get numeric ID from submission
   const getSubmissionId = (submission: StoredSubmission): number =>
     submission.localId;
+  const { saveContent, loadContent, setMode } = useEditorContent();
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <no need to renrender each time getSubmissionID is updated>
   useEffect(() => {
@@ -150,9 +157,8 @@ const OutputModal: React.FC<OutputModalProps> = ({ displayingSharedCode, query }
       toast.error("No submission result to restore code from");
       return;
     }
-    if (!setLanguageId || !setSourceCode) return;
-    setLanguageId(submissionResult.language_id);
-    setSourceCode(atob(submissionResult.source_code));
+    loadContent(atob(submissionResult.source_code));
+    setMode(submissionResult.language_id);
   };
 
   const getStatusIcon = (id: number) => {

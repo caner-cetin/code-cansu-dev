@@ -1,8 +1,7 @@
-"use client";
+;
 
 import { useCallback, useEffect } from "react";
 import { useCodeEditor } from "@/hooks/useCodeEditor";
-import { useAppContext } from "@/contexts/AppContext";
 import AceEditorComponent from "react-ace";
 // unfortunately, i cannot use dynamic import for ace-builds
 // i will find a way to do so, but initial load is around 1.6 MB, and with cached, network transfer is around 4 KB, so it is not a big deal. for now.
@@ -134,18 +133,23 @@ import "ace-builds/src-min-noconflict/theme-cloud9_day";
 import "ace-builds/src-min-noconflict/theme-chrome";
 import "ace-builds/src-min-noconflict/theme-chaos";
 import "ace-builds/src-min-noconflict/theme-ambiance";
-
+// ========================
 import { LANGUAGE_CONFIG } from "@/config/languages";
 import { type CodeStorage, Settings } from "@/services/settings";
 import type { Ace } from "ace-builds";
-// ========================
+import { useAppStore } from "@/stores/AppStore";
+import { useShallow } from 'zustand/react/shallow'
 
 export interface AceEditorProps {
   displayingSharedCode?: boolean;
 }
 export const AceEditor: React.FC<AceEditorProps> = (props) => {
-  const ctx = useAppContext();
-  useCodeEditor(ctx);
+  const ctx = useAppStore(useShallow((state) => ({
+    code: state.code,
+    languageId: state.languageId,
+    colorTheme: state.colorTheme,
+  })));
+  useCodeEditor();
 
 
   const onEditorLoad = useCallback(

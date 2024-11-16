@@ -3,13 +3,14 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Submissions } from "@/hooks/useSubmissions";
-import { useAppContext } from "@/contexts/AppContext";
+import { useAppStore } from "@/stores/AppStore";
+import { useShallow } from "zustand/react/shallow";
 export interface StdinModalProps {
 	display: boolean,
 	setDisplay: (display: boolean) => void,
 }
 const StdinModal: React.FC<StdinModalProps> = ({ display, setDisplay }) => {
-	const ctx = useAppContext();
+	const languageId = useAppStore(useShallow((state) => state.languageId));
 	const [stdin, setStdin] = useState("");
 
 	return (
@@ -36,7 +37,7 @@ const StdinModal: React.FC<StdinModalProps> = ({ display, setDisplay }) => {
 						Cancel
 					</Button>
 					<Button
-						onClick={() => { Submissions.handleSubmitCode(true, ctx); Submissions.handleSubmitStdin(stdin, ctx) }}
+						onClick={() => { Submissions.handleSubmitCode(true); Submissions.handleSubmitStdin(stdin) }}
 						className="bg-[#3c3836] text-[#e9efec] border border-[#555568] hover:bg-[#211e20]"
 					>
 						Submit

@@ -1,5 +1,4 @@
 'use client'
-import { useAppContext } from '@/contexts/AppContext'
 import { ColorThemeSelection } from './ColorThemeSelection'
 import { RenderFirstSelection } from './RenderFirstSelection'
 import { Label } from "@/components/ui/label"
@@ -11,17 +10,13 @@ import {
 } from "@/components/ui/popover"
 import { Button } from '@/components/ui/button'
 import { Settings as SettingsIcon } from 'lucide-react'
+import { useAppStore } from '@/stores/AppStore'
+import { useShallow } from 'zustand/react/shallow'
 export const SettingsPopover: React.FC = () => {
-  const {
-    renderFirst,
-    setRenderFirst,
-    live2DModelEnabled,
-    setLive2DModelEnabled,
-    colorTheme,
-    setColorTheme,
-    displayingSharedCode
-  } = useAppContext()
-
+  const [colorTheme, setColorTheme] = useAppStore(useShallow((state) => [state.colorTheme, state.setColorTheme]))
+  const [renderFirst, setRenderFirst] = useAppStore(useShallow((state) => [state.renderFirst, state.setRenderFirst]))
+  const [live2DModelEnabled, setLive2DModelEnabled] = useAppStore(useShallow((state) => [state.live2DModelEnabled, state.setLive2DModelEnabled]))
+  const displayingSharedCode = useAppStore((state) => state.displayingSharedCode)
   return (
     <Popover>
       <PopoverTrigger className="btn btn-primary" asChild>

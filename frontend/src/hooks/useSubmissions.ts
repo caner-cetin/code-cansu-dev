@@ -2,13 +2,8 @@ import { toast } from "react-hot-toast";
 import type ReactAce from "react-ace/lib/ace";
 import { LANGUAGE_CONFIG } from "@/config/languages";
 import { LanguageId, Settings } from "@/services/settings";
-import type { AppContextType } from "@/contexts/AppContext";
-import {
-	submitCode,
-	submitStdin,
-	submitSubmission,
-} from "@/actions/judge/calls";
-import { useLocalStorage } from "./useLocalStorage";
+import { submitStdin, submitSubmission } from "@/services/judge/calls";
+import { AppState, useAppStore } from "@/stores/AppStore";
 
 export interface StoredSubmission {
 	localId: number;
@@ -19,18 +14,15 @@ export interface StoredSubmission {
 
 export namespace Submissions {
 	export function getNextSubmissionId(): number {
-		const currentCounter = localStorage.getItem(
-			Settings.SUBMISSION_COUNTER_KEY,
-		);
-		const nextId = currentCounter ? Number.parseInt(currentCounter, 10) + 1 : 1;
-		localStorage.setItem(Settings.SUBMISSION_COUNTER_KEY, nextId.toString());
-		return nextId;
+		useAppStore.setState((state) => {
+			state.setSubmissionCounter(state.submissionCounter + 1);
+			return state;
+		});
+		return useAppStore.getState().submissionCounter;
 	}
 
-	export function saveSubmission(
-		submission: StoredSubmission,
-		ctx: AppContextType,
-	): void {
+	export function saveSubmission(submission: StoredSubmission) {
+		const ctx = useAppStore.getState();
 		if (!ctx.submissions) {
 			ctx.setSubmissions([]);
 		}
@@ -42,16 +34,15 @@ export namespace Submissions {
 			ctx.setOngoingCodeSubmissionId(-1);
 		}
 	}
-
-	export function clearStoredSubmissions(ctx: AppContextType): void {
-		ctx.setSubmissions([]);
-		localStorage.setItem(Settings.SUBMISSION_COUNTER_KEY, "0");
+	export function clearStoredSubmissions(): void {
+		useAppStore.setState((state) => {
+			state.setSubmissions([]);
+			state.setSubmissionCounter(0);
+			return state;
+		});
 	}
-
-	export async function handleSubmitCode(
-		withStdin: boolean,
-		ctx: AppContextType,
-	): Promise<void> {
+	export async function handleSubmitCode(withStdin: boolean): Promise<void> {
+		const ctx = useAppStore.getState();
 		if (ctx.languageId === LanguageId.Markdown) {
 			toast.error("what did you expect?");
 			return;
@@ -62,14 +53,8 @@ export namespace Submissions {
 			return;
 		}
 		try {
-			const result = await submitCode(src);
-			const subid = ctx.setOngoingCodeSubmissionId(result.id);
 			if (!withStdin) {
-				// if i set the id and call finalize submission afterwards, ongoing id is -1, but when i call the handle submit code again, its correct value.
-				// looking at local storage, i am correctly setting the sub id just in time in context
-				// so there is a small delay of god knows what to update the context, we need to pass the id seperately to finalize submission
-				// i hate this language so fucking much
-				await finalizeSubmission(ctx, subid);
+				await finalizeSubmission();
 			}
 		} catch (error) {
 			console.error(error);
@@ -77,10 +62,8 @@ export namespace Submissions {
 		}
 	}
 
-	export async function handleSubmitStdin(
-		stdin: string,
-		ctx: AppContextType,
-	): Promise<void> {
+	export async function handleSubmitStdin(stdin: string): Promise<void> {
+		const ctx = useAppStore.getState();
 		if (ctx.languageId === LanguageId.Markdown) {
 			toast.error("what did you expect?");
 			return;
@@ -94,17 +77,16 @@ export namespace Submissions {
 				await submitStdin(ctx.ongoingCodeSubmissionId, stdin);
 			}
 			// read the handlesubmitcode comment
-			await finalizeSubmission(ctx, ctx.ongoingCodeSubmissionId);
+			await finalizeSubmission();
 		} catch (error) {
 			toast.error("Processing submission failed");
 			console.error(error);
 		}
 	}
 
-	async function finalizeSubmission(
-		ctx: AppContextType,
-		id: number,
-	): Promise<void> {
+	async function finalizeSubmission(): Promise<void> {
+		const ctx = useAppStore.getState();
+		const id = ctx.ongoingCodeSubmissionId;
 		const result = await submitSubmission(id, ctx.languageId);
 		const localId = getNextSubmissionId();
 		const newSubmission = {
@@ -113,7 +95,7 @@ export namespace Submissions {
 			token: result.token,
 			iconClass: LANGUAGE_CONFIG[ctx.languageId]?.iconClass || "",
 		};
-		saveSubmission(newSubmission, ctx);
+		saveSubmission(newSubmission);
 		toast.loading("Submission in progress...", {
 			duration: 3000,
 		});
