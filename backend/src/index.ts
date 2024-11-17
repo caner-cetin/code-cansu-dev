@@ -203,7 +203,7 @@ app.post("/react/code", async (c) => {
 		Return the answer in json format, {
 			"message": "your reaction"
 		} after the Answer: part, so your response will look like Answer: {"message": "your reaction"}
-
+		 
     Context: ${code}
     Answer:
     `;
@@ -228,7 +228,12 @@ app.post("/react/code", async (c) => {
 		response = data[0].generated_text.split("Answer:\n")[1].trim();
 		// delete anything after last }
 		response = `${response.split("}")[0]}}`;
-		response = JSON.parse(response).message;
+		try {
+			response = JSON.parse(response).message;
+		} catch {
+			console.error(data);
+			return c.json({ message: "zzz..." });
+		}
 	});
 	if (response !== "") {
 		await db
@@ -313,7 +318,12 @@ app.post("/react/submission/:token", async (c) => {
 		response = data[0].generated_text.split("Answer:\n")[1].trim();
 		// delete anything after last }
 		response = `${response.split("}")[0]}}`;
-		response = JSON.parse(response).message;
+		try {
+			response = JSON.parse(response).message;
+		} catch {
+			console.error(response);
+			return c.json({ message: "zzz..." });
+		}
 	});
 	if (response !== "") {
 		await db
