@@ -1,8 +1,8 @@
-;
-
-import { useCallback, useEffect } from "react";
-import { useCodeEditor } from "@/hooks/useCodeEditor";
+import 'ace-builds/src-min-noconflict/ace';
 import AceEditorComponent from "react-ace";
+
+import { useCallback } from "react";
+import React from "react";
 // unfortunately, i cannot use dynamic import for ace-builds
 // i will find a way to do so, but initial load is around 1.6 MB, and with cached, network transfer is around 4 KB, so it is not a big deal. for now.
 // ========================
@@ -50,7 +50,7 @@ import "ace-builds/src-min-noconflict/mode-sql";
 import "ace-builds/src-min-noconflict/mode-swift";
 import "ace-builds/src-min-noconflict/mode-typescript";
 import "ace-builds/src-min-noconflict/mode-nim";
-// ========================
+// 8========================D
 import "ace-builds/src-min-noconflict/snippets/vbscript";
 import "ace-builds/src-min-noconflict/snippets/assembly_x86";
 import "ace-builds/src-min-noconflict/snippets/sh";
@@ -139,55 +139,48 @@ import { type CodeStorage, Settings } from "@/services/settings";
 import type { Ace } from "ace-builds";
 import { useAppStore } from "@/stores/AppStore";
 import { useShallow } from 'zustand/react/shallow'
+import { useEditorRef } from "@/stores/EditorStore";
+import { useCodeEditor } from "@/hooks/useCodeEditor";
 
 export interface AceEditorProps {
   displayingSharedCode?: boolean;
 }
-export const AceEditor: React.FC<AceEditorProps> = (props) => {
-  const ctx = useAppStore(useShallow((state) => ({
-    code: state.code,
+export const AceEditor: React.FC<{ displayingSharedCode?: boolean }> = ({
+  displayingSharedCode
+}) => {
+  const editorRef = useEditorRef();
+  useCodeEditor(editorRef);
+  const { languageId, colorTheme } = useAppStore(useShallow((state) => ({
     languageId: state.languageId,
-    colorTheme: state.colorTheme,
+    colorTheme: state.colorTheme
   })));
-  useCodeEditor();
 
+  const onEditorLoad = useCallback((editor: Ace.Editor) => {
+    const currentLanguage = LANGUAGE_CONFIG[languageId];
+    editor.session.setMode(`ace/mode/${currentLanguage?.mode}`);
+    editor.setTheme(`ace/theme/${colorTheme}`);
 
-  const onEditorLoad = useCallback(
-    (editor: Ace.Editor) => {
-      if (!ctx.code) return;
-      // @ts-ignore
-      ctx.code.current = editor;
+    // Load initial content
+    const savedCodes = JSON.parse(
+      localStorage.getItem(Settings.CODE_STORAGE) || "{}"
+    ) as CodeStorage;
+    const savedCode = currentLanguage?.mode ? savedCodes[currentLanguage.mode] : '';
+    const defaultText = currentLanguage?.defaultText || "";
+    const initialText = savedCode ? atob(savedCode) : defaultText;
 
-      const currentLanguage = LANGUAGE_CONFIG[ctx.languageId];
-      editor.session.setMode(`ace/mode/${currentLanguage?.mode}`);
-      editor.setTheme(`ace/theme/${ctx.colorTheme}`);
+    editor.session.setValue(initialText);
+    editor.clearSelection();
 
-      // Load initial content
-      const savedCodes = JSON.parse(
-        localStorage.getItem(Settings.CODE_STORAGE) || "{}",
-      ) as CodeStorage;
-      const savedCode = savedCodes[currentLanguage?.mode] || "";
-      const defaultText = currentLanguage?.defaultText || "";
-      const initialText = savedCode ? atob(savedCode) : defaultText;
-
-      editor.session.setValue(initialText);
-      editor.clearSelection();
-
-      setTimeout(() => {
-        editor.renderer.updateFull(true);
-      }, 100);
-    },
-    [ctx.languageId, ctx.colorTheme, ctx.code],
-  );
-
+    setTimeout(() => editor.renderer.updateFull(true), 100);
+  }, [languageId, colorTheme]);
 
   return (
     <AceEditorComponent
-      mode={LANGUAGE_CONFIG[ctx.languageId]?.mode || "python"}
-      ref={ctx.code}
-      readOnly={props.displayingSharedCode ?? false}
+      ref={editorRef}
       onLoad={onEditorLoad}
-      theme={ctx.colorTheme}
+      mode={LANGUAGE_CONFIG[languageId]?.mode || "python"}
+      theme={colorTheme}
+      readOnly={displayingSharedCode}
       name="ace-editor"
       enableBasicAutocompletion={true}
       enableLiveAutocompletion={true}
@@ -199,11 +192,7 @@ export const AceEditor: React.FC<AceEditorProps> = (props) => {
         enableSnippets: true,
         enableBasicAutocompletion: true,
       }}
-      style={{
-        width: "100%",
-        height: "100%",
-      }}
-      editorProps={{ $blockScrolling: true }}
+      style={{ width: "100%", height: "100%" }}
     />
   );
-}
+};

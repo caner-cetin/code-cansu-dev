@@ -2,6 +2,7 @@ import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRouter, RouterProvider } from '@tanstack/react-router'
 import { routeTree } from './routeTree.gen'
+import { EditorProvider } from './stores/EditorStore';
 // Create a new router instance
 const router = createRouter({ routeTree })
 
@@ -27,8 +28,10 @@ if (!rootElement) {
 if (!rootElement.innerHTML) {
   const root = createRoot(rootElement)
   root.render(
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>
+    <EditorProvider>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
+    </EditorProvider>
   )
 }

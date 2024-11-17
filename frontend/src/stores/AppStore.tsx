@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type AceEditor from "react-ace";
 import type { LanguagesResponse } from "@/services/judge/types";
 import type { StoredSubmission } from "@/hooks/useSubmissions";
 import {
@@ -12,9 +11,6 @@ import {
 } from "@/services/settings";
 
 export interface AppState {
-	// Editor
-	code: React.MutableRefObject<AceEditor> | undefined;
-	setCode: (ref: React.MutableRefObject<AceEditor>) => void;
 
 	// Language
 	languageId: number;
@@ -37,8 +33,6 @@ export interface AppState {
 	// Code and submissions
 	submissions: StoredSubmission[];
 	setSubmissions: (submissions: StoredSubmission[]) => void;
-	ongoingCodeSubmissionId: number;
-	setOngoingCodeSubmissionId: (id: number) => void;
 	codeStorage: CodeStorage;
 	setCodeStorage: (storage: CodeStorage) => void;
 	submissionCounter: number;
@@ -48,9 +42,6 @@ export interface AppState {
 export const useAppStore = create<AppState>()(
 	persist(
 		(set) => ({
-			// Editor
-			code: undefined,
-			setCode: (ref) => set({ code: ref }),
 
 			// Language
 			languageId: LanguageId.Markdown,
@@ -74,11 +65,9 @@ export const useAppStore = create<AppState>()(
 			// Code and submissions
 			submissions: [],
 			setSubmissions: (submissions) => set({ submissions }),
-			ongoingCodeSubmissionId: -1,
-			setOngoingCodeSubmissionId: (id) => set({ ongoingCodeSubmissionId: id }),
 			codeStorage: {},
 			setCodeStorage: (storage) => set({ codeStorage: storage }),
-			submissionCounter: 0,
+			submissionCounter: 1,
 			setSubmissionCounter: (key) => set({ submissionCounter: key }),
 		}),
 		{

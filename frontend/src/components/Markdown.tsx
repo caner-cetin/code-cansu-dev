@@ -11,7 +11,7 @@ const MarkdownView = () => {
   useEffect(() => {
     const readReadme = async () => {
       try {
-        const response = await fetch('/public/readme.md');
+        const response = await fetch('/readme.md');
         if (response.ok) {
           const text = await response.text();
           setReadme(text);
@@ -30,7 +30,7 @@ const MarkdownView = () => {
   return (
     <div className="h-screen p-4 flex flex-col">
       <div className="flex-1 overflow-y-auto">
-        {/* <Markdown
+        <Markdown
           remarkPlugins={[
             [remarkGfm],
             [remarkToc, {
@@ -43,7 +43,7 @@ const MarkdownView = () => {
           className="markdown max-w-full prose prose-slate"
         >
           {readme}
-        </Markdown> */}
+        </Markdown>
       </div>
     </div>
   );

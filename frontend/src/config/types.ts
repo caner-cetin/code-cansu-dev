@@ -1,6 +1,4 @@
 export interface LanguageConfig {
-	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-	extensionModule: () => Promise<any>;
 	defaultText: string;
 	mode: string;
 	runnerName: string;

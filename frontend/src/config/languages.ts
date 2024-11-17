@@ -6,12 +6,6 @@ import type { LanguageConfig } from "./types";
 // ctrl+f is your friend
 export const LANGUAGE_CONFIG: Record<number, LanguageConfig> = {
 	74: {
-		extensionModule: () => {
-			return Promise.all([
-				require("ace-builds/src-noconflict/snippets/typescript"),
-				require("ace-builds/src-noconflict/mode-typescript"),
-			]);
-		},
 		defaultText: `class Greeter {
 	greeting: string;
 	constructor (message: string) {
@@ -90,8 +84,6 @@ module Mankala {
 		languageName: "TypeScript",
 	},
 	45: {
-		extensionModule: () =>
-			import("ace-builds/src-noconflict/mode-assembly_x86"),
 		defaultText: `section .text
 global _start
 _start:
@@ -111,7 +103,6 @@ len equ $ - msg`,
 		languageName: "Assembly",
 	},
 	46: {
-		extensionModule: () => import("ace-builds/src-noconflict/mode-sh"),
 		defaultText: `echo "deniz abi kornaya bas"`,
 		runnerName: "Bash (5.0.0)",
 		mode: "sh",
@@ -127,7 +118,6 @@ len equ $ - msg`,
 	// },
 	75: {
 		// C (Clang 19.1.0)
-		extensionModule: () => import("ace-builds/src-noconflict/mode-c_cpp"),
 		defaultText: `#include <stdio.h>
 int main() {
     printf("deniz abi kornaya bas");
@@ -140,7 +130,6 @@ int main() {
 	},
 	76: {
 		// C++ (Clang 19.1.0)
-		extensionModule: () => import("ace-builds/src-noconflict/mode-c_cpp"),
 		defaultText: `#include <iostream>
 int main() {
     std::cout << "deniz abi kornaya bas";
@@ -153,7 +142,6 @@ int main() {
 	},
 	48: {
 		// C (GCC 7.4.0)
-		extensionModule: () => import("ace-builds/src-noconflict/mode-c_cpp"),
 		defaultText: `#include <stdio.h>
 int main() {
     printf("deniz abi kornaya bas");
@@ -166,7 +154,6 @@ int main() {
 	},
 	52: {
 		// C++ (GCC 10.2)
-		extensionModule: () => import("ace-builds/src-noconflict/mode-c_cpp"),
 		defaultText: `#include <iostream>
 int main() {
     std::cout << "deniz abi kornaya bas";
@@ -179,7 +166,6 @@ int main() {
 	},
 	49: {
 		// C (GCC 11.5)
-		extensionModule: () => import("ace-builds/src-noconflict/mode-c_cpp"),
 		defaultText: `#include <stdio.h>
 int main() {
     printf("deniz abi kornaya bas");
@@ -191,7 +177,6 @@ int main() {
 		languageName: "C",
 	},
 	53: {
-		extensionModule: () => import("ace-builds/src-noconflict/mode-c_cpp"),
 		defaultText: `#include <iostream>
 int main() {
     std::cout << "deniz abi kornaya bas";
@@ -203,7 +188,6 @@ int main() {
 		languageName: "CPP",
 	},
 	50: {
-		extensionModule: () => import("ace-builds/src-noconflict/mode-c_cpp"),
 		defaultText: `#include <stdio.h>
 int main() {
     printf("deniz abi kornaya bas");
@@ -215,7 +199,6 @@ int main() {
 		languageName: "C",
 	},
 	54: {
-		extensionModule: () => import("ace-builds/src-noconflict/mode-c_cpp"),
 		defaultText: `#include <iostream>
 int main() {
     std::cout << "deniz abi kornaya bas";
@@ -227,7 +210,6 @@ int main() {
 		languageName: "CPP",
 	},
 	86: {
-		extensionModule: () => import("ace-builds/src-noconflict/mode-clojure"),
 		defaultText: `(defn parting
   "returns a String parting in a given language"
   ([] (parting "World"))
@@ -256,7 +238,6 @@ int main() {
 		languageName: "Clojure",
 	},
 	77: {
-		extensionModule: () => import("ace-builds/src-noconflict/mode-cobol"),
 		defaultText: `*> ***************************************************************
        *> Purpose:   Say hello to GNU Cobol
        *> Tectonics: cobc -x bigworld.cob
@@ -305,7 +286,6 @@ int main() {
 		languageName: "COBOL",
 	},
 	55: {
-		extensionModule: () => import("ace-builds/src-noconflict/mode-lisp"),
 		defaultText: `(defun whitespacep (char)
   "Checks if the given character is a whitespace character."
   (member char '(#\Space #\Tab #\Newline #\Return)))
@@ -352,7 +332,6 @@ int main() {
 		languageName: "Lisp",
 	},
 	56: {
-		extensionModule: () => import("ace-builds/src-noconflict/mode-d"),
 		defaultText: `#!/usr/bin/env rdmd
 // Computes average line length for standard input.
 import std.stdio;
@@ -374,7 +353,6 @@ void main() {
 		languageName: "D",
 	},
 	57: {
-		extensionModule: () => import("ace-builds/src-noconflict/mode-elixir"),
 		defaultText: `IO.puts "deniz abi kornaya bas"`,
 		runnerName: "Elixir (1.17.3)",
 		mode: "elixir",
@@ -382,7 +360,6 @@ void main() {
 		languageName: "Elixir",
 	},
 	58: {
-		extensionModule: () => import("ace-builds/src-noconflict/mode-erlang"),
 		defaultText: `-module(word_counter).
 -export([main/1]).
 
@@ -430,7 +407,6 @@ word_frequency(Words) ->
 		languageName: "Erlang",
 	},
 	87: {
-		extensionModule: () => import("ace-builds/src-noconflict/mode-nim"),
 		defaultText: `from math import sqrt
 import strformat
 
@@ -491,7 +467,6 @@ for (n, s) in oddAbundant(1_000_000_000):
 		languageName: "Nim",
 	},
 	59: {
-		extensionModule: () => import("ace-builds/src-noconflict/mode-fortran"),
 		defaultText: `program main
     implicit none
 
@@ -534,7 +509,6 @@ end program main
 		languageName: "Fortran",
 	},
 	60: {
-		extensionModule: () => import("ace-builds/src-noconflict/mode-golang"),
 		defaultText: `package main
 import "fmt"
 func main() {
@@ -546,7 +520,6 @@ func main() {
 		languageName: "Go",
 	},
 	88: {
-		extensionModule: () => import("ace-builds/src-noconflict/mode-groovy"),
 		defaultText: `println "deniz abi kornaya bas"`,
 		runnerName: "Groovy (4.0.23)",
 		mode: "groovy",
@@ -554,7 +527,6 @@ func main() {
 		languageName: "Groovy",
 	},
 	61: {
-		extensionModule: () => import("ace-builds/src-noconflict/mode-haskell"),
 		defaultText: `-- Type annotation (optional)
 fib :: Int -> Integer
 
@@ -589,7 +561,6 @@ main = do
 		languageName: "Haskell",
 	},
 	62: {
-		extensionModule: () => import("ace-builds/src-noconflict/mode-java"),
 		defaultText: `public class Main {
     public static void main(String[] args) {
         System.out.println("deniz abi kornaya bas");
@@ -601,7 +572,6 @@ main = do
 		languageName: "Java",
 	},
 	63: {
-		extensionModule: () => import("ace-builds/src-noconflict/mode-javascript"),
 		defaultText: `console.log("deniz abi kornaya bas")`,
 		runnerName: "JavaScript (Bun 1.1.33)",
 		mode: "javascript",
@@ -609,7 +579,6 @@ main = do
 		languageName: "JavaScript",
 	},
 	78: {
-		extensionModule: () => import("ace-builds/src-noconflict/mode-kotlin"),
 		defaultText: `fun main() {
     println("deniz abi kornaya bas")
 }`,
@@ -619,7 +588,6 @@ main = do
 		languageName: "Kotlin",
 	},
 	64: {
-		extensionModule: () => import("ace-builds/src-noconflict/mode-lua"),
 		defaultText: `--[[--
 num_args takes in 5.1 byte code and extracts the number of arguments
 from its function header.
@@ -665,7 +633,6 @@ print(5 --[[ blah ]])`,
 	},
 	79: {
 		// Objective-C (Clang 7.0.1)
-		extensionModule: () => import("ace-builds/src-noconflict/mode-objectivec"),
 		defaultText: `#import <Foundation/Foundation.h>
 
 // Define a protocol named Printing
@@ -757,7 +724,6 @@ int main(int argc, const char *argv[]) {
 		languageName: "Objective-C",
 	},
 	65: {
-		extensionModule: () => import("ace-builds/src-noconflict/mode-ocaml"),
 		defaultText: `(* Define a type for the return record, making it polymorphic *)
 type 'a return_t = { return: 'a -> 'a }
 
@@ -786,7 +752,6 @@ let () =
 		languageName: "OCaml",
 	},
 	66: {
-		extensionModule: () => import("ace-builds/src-noconflict/mode-text"),
 		defaultText: `disp("deniz abi kornaya bas")`,
 		runnerName: "Octave (9.2.0)",
 		mode: "text",
@@ -794,7 +759,6 @@ let () =
 		languageName: "Octave",
 	},
 	67: {
-		extensionModule: () => import("ace-builds/src-noconflict/mode-pascal"),
 		defaultText: `(*****************************************************************************
  * A simple bubble sort program.  Reads integers, one per line, and prints   *
  * them out in sorted order.  Blows up if there are more than 49.            *
@@ -849,7 +813,6 @@ PROGRAM Sort(input, output);
 		languageName: "Pascal",
 	},
 	85: {
-		extensionModule: () => import("ace-builds/src-noconflict/mode-perl"),
 		defaultText: `#!perl
 # https://rosettacode.org/wiki/Bernoulli_numbers#Perl
 use strict;
@@ -882,7 +845,6 @@ bernoulli_print();
 		languageName: "Perl",
 	},
 	68: {
-		extensionModule: () => import("ace-builds/src-noconflict/mode-php"),
 		defaultText: `<?php
 // https://rosettacode.org/wiki/99_bottles_of_beer#PHP
 $plural = 's';
@@ -905,7 +867,6 @@ foreach (range(99, 1) as $i) {
 		languageName: "PHP",
 	},
 	69: {
-		extensionModule: () => import("ace-builds/src-noconflict/mode-prolog"),
 		defaultText: `partition([], _, [], []).
 partition([X|Xs], Pivot, Smalls, Bigs) :-
     (   X @< Pivot ->
@@ -930,12 +891,6 @@ perfect(N) :-
 		languageName: "Prolog",
 	},
 	70: {
-		extensionModule: () =>
-			Promise.all([
-				import("ace-builds/src-noconflict/mode-python"),
-				import("ace-builds/src-noconflict/snippets/python"),
-			]),
-
 		defaultText: `print("deniz abi kornaya bas")`,
 		runnerName: "Python (2.7.17)",
 		mode: "python",
@@ -943,7 +898,6 @@ perfect(N) :-
 		languageName: "Python",
 	},
 	71: {
-		extensionModule: () => import("ace-builds/src-noconflict/mode-python"),
 		defaultText: `print("deniz abi kornaya bas")`,
 		runnerName: "Python (3.12.7)",
 		mode: "python",
@@ -951,7 +905,6 @@ perfect(N) :-
 		languageName: "Python",
 	},
 	80: {
-		extensionModule: () => import("ace-builds/src-noconflict/mode-r"),
 		defaultText: `Call:
 lm(formula = y ~ x)
  
@@ -978,7 +931,6 @@ F-statistic: 91.88 on 1 and 4 DF,  p-value: 0.000662
 		languageName: "R",
 	},
 	72: {
-		extensionModule: () => import("ace-builds/src-noconflict/mode-ruby"),
 		defaultText: `puts "deniz abi kornaya bas"`,
 		runnerName: "Ruby (2.7.0)",
 		mode: "ruby",
@@ -986,7 +938,6 @@ F-statistic: 91.88 on 1 and 4 DF,  p-value: 0.000662
 		languageName: "Ruby",
 	},
 	73: {
-		extensionModule: () => import("ace-builds/src-noconflict/mode-rust"),
 		defaultText: `use std::thread; // Import the thread module
 
 fn main() {
@@ -1055,7 +1006,6 @@ macro_rules! mac_variant {
 		languageName: "Rust",
 	},
 	81: {
-		extensionModule: () => import("ace-builds/src-noconflict/mode-scala"),
 		defaultText: `object Main {
   @volatile var pingCount = 0
   @volatile var pongCount = 0
@@ -1106,7 +1056,6 @@ macro_rules! mac_variant {
 		languageName: "Scala",
 	},
 	82: {
-		extensionModule: () => import("ace-builds/src-noconflict/mode-sql"),
 		defaultText: `SELECT "deniz abi kornaya bas"`,
 		runnerName: "SQL (SQLite 3.46.1.1)",
 		mode: "sql",
@@ -1114,7 +1063,6 @@ macro_rules! mac_variant {
 		languageName: "SQL",
 	},
 	83: {
-		extensionModule: () => import("ace-builds/src-noconflict/mode-swift"),
 		defaultText: `print("deniz abi kornaya bas")`,
 		runnerName: "Swift (6.0.1)",
 		mode: "swift",
@@ -1122,7 +1070,6 @@ macro_rules! mac_variant {
 		languageName: "Swift",
 	},
 	84: {
-		extensionModule: () => import("ace-builds/src-noconflict/mode-text"),
 		defaultText: `Imports System
 
 Public Module Hello
@@ -1137,7 +1084,6 @@ End Module`,
 	},
 	90: {
 		//  C (GCC 13.3)
-		extensionModule: () => import("ace-builds/src-noconflict/mode-c_cpp"),
 		defaultText: `#include <stdio.h>
 int main() {
     printf("deniz abi kornaya bas");
@@ -1150,7 +1096,6 @@ int main() {
 	},
 	91: {
 		// C++ (GCC 13.3)
-		extensionModule: () => import("ace-builds/src-noconflict/mode-c_cpp"),
 		defaultText: `#include <iostream>
 int main() {
     std::cout << "deniz abi kornaya bas";
@@ -1162,7 +1107,6 @@ int main() {
 		languageName: "CPP",
 	},
 	[LanguageId.Unknown]: {
-		extensionModule: () => import("ace-builds/src-noconflict/mode-text"),
 		defaultText: "// uh oh",
 		runnerName: "Unknown",
 		mode: "text",

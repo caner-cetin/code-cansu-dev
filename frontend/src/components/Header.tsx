@@ -1,4 +1,4 @@
-'use client'
+import React from 'react'
 
 import { LanguageId, RenderFirst } from '@/services/settings'
 import { Button } from '@/components/ui/button'
@@ -10,6 +10,7 @@ import { LanguageSelectionPopover } from './LanguageSelectionPopover'
 import { LANGUAGE_CONFIG } from '@/config/languages'
 import { useAppStore } from '@/stores/AppStore'
 import { useShallow } from 'zustand/react/shallow'
+import { useEditorRef } from '@/stores/EditorStore'
 
 export default function Header() {
   const ctx = useAppStore(useShallow((state) => ({
@@ -22,6 +23,7 @@ export default function Header() {
     setSubmissionCounter: state.setSubmissionCounter
   })))
   const [displayStdin, setDisplayStdin] = useState(false)
+  const code = useEditorRef();
 
   return (
     <header className="w-full bg-[#211e20] border-b border-[#555568] p-2">
@@ -38,7 +40,7 @@ export default function Header() {
                 variant="link"
                 style={{ color: "#e9efec" }}
                 className="hover:bg-[#504945] transition-colors duration-200"
-                onClick={() => Submissions.handleSubmitCode(false)}
+                onClick={() => Submissions.handleSubmitCode(undefined, code.current?.editor)}
               >
                 Execute
               </Button>

@@ -1,3 +1,4 @@
+import React from "react";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -5,13 +6,22 @@ import { Textarea } from "@/components/ui/textarea"
 import { Submissions } from "@/hooks/useSubmissions";
 import { useAppStore } from "@/stores/AppStore";
 import { useShallow } from "zustand/react/shallow";
+import { useEditorRef } from "@/stores/EditorStore";
+
 export interface StdinModalProps {
 	display: boolean,
 	setDisplay: (display: boolean) => void,
 }
+
 const StdinModal: React.FC<StdinModalProps> = ({ display, setDisplay }) => {
 	const languageId = useAppStore(useShallow((state) => state.languageId));
 	const [stdin, setStdin] = useState("");
+	const code = useEditorRef();
+
+	// Add this handler to prevent event propagation
+	const handleTextareaClick = (e: React.MouseEvent) => {
+		e.stopPropagation();
+	};
 
 	return (
 		<Dialog open={display} onOpenChange={() => setDisplay(false)}>
@@ -26,6 +36,7 @@ const StdinModal: React.FC<StdinModalProps> = ({ display, setDisplay }) => {
 						placeholder="can be submitted blank"
 						className="text-[#a0a08b] border border-[#555568] placeholder-[#a0a08b] placeholder-opacity-50 focus:ring-0 focus:border-[#555568]"
 						rows={3}
+						onClick={handleTextareaClick}
 					/>
 				</div>
 				<DialogFooter className="bg-[#211e20] border-t border-[#555568] p-4">
@@ -37,7 +48,7 @@ const StdinModal: React.FC<StdinModalProps> = ({ display, setDisplay }) => {
 						Cancel
 					</Button>
 					<Button
-						onClick={() => { Submissions.handleSubmitCode(true); Submissions.handleSubmitStdin(stdin) }}
+						onClick={() => { Submissions.handleSubmitCode(stdin, code.current?.editor); }}
 						className="bg-[#3c3836] text-[#e9efec] border border-[#555568] hover:bg-[#211e20]"
 					>
 						Submit

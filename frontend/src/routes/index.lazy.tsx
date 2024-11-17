@@ -1,3 +1,4 @@
+import React from 'react'
 import { useEffect, useState } from 'react'
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 
@@ -58,7 +59,6 @@ function CodeEditorPage() {
             <Header />
             <PanelGroup direction="horizontal" className="flex-1">
               <Panel defaultSize={70} minSize={30}>
-                {ctx.live2DModelEnabled && <WaifuWidget />}
                 {((ctx.renderFirst === RenderFirst.WelcomeMarkdown && ctx.languageId === LanguageId.Markdown) ||
                   (ctx.renderFirst === RenderFirst.Unset &&
                     ctx.languageId === LanguageId.Markdown)) ? (
@@ -69,12 +69,14 @@ function CodeEditorPage() {
                 )}
               </Panel>
               <PanelResizeHandle className="w-2 bg-[#3c3836] hover:bg-[#504945] cursor-col-resize" />
+
               <Panel defaultSize={30} minSize={20}>
                 <div className="h-full bg-[#2c2a2a] p-4 overflow-y-auto">
                   <OutputModal displayingSharedCode={false} />
                 </div>
               </Panel>
             </PanelGroup>
+            {ctx.live2DModelEnabled && <WaifuWidget />}
           </div>
         </>
       )}

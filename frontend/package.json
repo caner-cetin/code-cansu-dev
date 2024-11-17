@@ -5,19 +5,12 @@
 	"license": "WTFPL",
 	"source": "src/index.html",
 	"scripts": {
-		"generate-routes": "tsr generate",
-		"watch-routes": "tsr watch",
-		"build": "yarn run generate-routes && parcel build src/index.html",
-		"dev": "parcel src/index.html --port 3000",
-		"clean": "rm -rf dist .parcel-cache",
-		"start": "yarn serve dist"
+		"dev": "vite",
+		"build": "vite build",
+		"lint": "eslint .",
+		"preview": "vite preview"
 	},
-	"alias": {
-		"ace": "./node_modules/ace-builds/src-min-noconflict"
-	},
-	"staticFiles": {
-		"staticPath": "public"
-	},
+	"type": "module",
 	"dependencies": {
 		"@phosphor-icons/react": "^2.1.7",
 		"@radix-ui/react-checkbox": "^1.1.2",
@@ -37,6 +30,7 @@
 		"class-variance-authority": "^0.7.0",
 		"clsx": "^2.1.1",
 		"lucide-react": "^0.456.0",
+		"pixi.js": "^8.5.2",
 		"react": "^18.3.1",
 		"react-ace": "10.1.0",
 		"react-dom": "^18.3.1",
@@ -48,31 +42,33 @@
 		"rehype-slug": "^6.0.0",
 		"remark-gfm": "4.0.0",
 		"remark-toc": "^9.0.0",
-		"serve": "^14.2.4",
 		"tailwind-merge": "^2.5.4",
 		"tailwindcss-animate": "^1.0.7",
+		"vite-plugin-commonjs": "^0.10.3",
+		"vite-tsconfig-paths": "^5.0.1",
 		"zustand": "^5.0.1"
 	},
 	"devDependencies": {
-		"@parcel/config-default": "^2.13.0",
-		"@parcel/core": "^2.13.0",
-		"@parcel/optimizer-terser": "^2.13.0",
-		"@parcel/transformer-raw": "^2.13.0",
-		"@parcel/transformer-typescript-tsc": "^2.13.0",
-		"@tanstack/router-cli": "^1.81.9",
+		"@eslint/js": "^9.13.0",
+		"@tanstack/router-plugin": "^1.76.0",
+		"@vitejs/plugin-react": "^4.3.3",
+		"dependency-cruiser": "^16.4.2",
+		"eslint": "^9.13.0",
+		"eslint-plugin-react-hooks": "^5.1.0-rc-fb9a90fa48-20240614",
+		"eslint-plugin-react-refresh": "^0.4.13",
 		"@types/node": "^20",
 		"@types/react": "^18",
 		"@types/react-dom": "^18",
 		"autoprefixer": "^10.4.20",
-		"parcel": "^2.13.0",
 		"parcel-reporter-static-files-copy": "^1.5.3",
 		"path-browserify": "^1.0.0",
-		"postcss": "^8.4.49",
+		"globals": "^15.11.0",
+		"postcss": "^8.4.47",
 		"process": "^0.11.10",
 		"tailwindcss": "^3.4.15",
-		"typescript": "^5"
-	},
-	"@parcel/resolver-default": {
-		"packageExports": true
+		"to-vfile": "^8.0.0",
+		"typescript": "^5.6.3",
+		"typescript-eslint": "^8.11.0",
+		"vite": "^5.4.10"
 	}
 }
