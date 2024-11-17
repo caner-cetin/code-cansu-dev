@@ -36,6 +36,7 @@ for loading all languages. Language switch takes almost nothing, where as JDoodl
 Cached initial network transfer is only 4 KB, and executions, submissions, etc. takes only a few kilobytes per query.
 more to come, wip.
 
+
 ## supported languages
 
 * [Assembly (NASM 2.16.03)](https://code.cansu.dev/language/redirect/assembly)
@@ -73,5 +74,7 @@ more to come, wip.
 * [Clojure (1.11.2)](https://code.cansu.dev/language/redirect/clojure)
 * [Nim (2.2.0)](https://code.cansu.dev/language/redirect/nim)
 * [Groovy (4.0.23)](https://code.cansu.dev/language/redirect/groovy)
+
+changelog, contact, etc is in the `public/readme.md`.
 
 palette: #211e20 #504945 #2c2a2a #3c3836, for text, either #e9efec or #9ca3af

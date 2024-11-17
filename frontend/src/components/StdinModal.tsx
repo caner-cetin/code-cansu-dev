@@ -4,8 +4,6 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Submissions } from "@/hooks/useSubmissions";
-import { useAppStore } from "@/stores/AppStore";
-import { useShallow } from "zustand/react/shallow";
 import { useEditorRef } from "@/stores/EditorStore";
 
 export interface StdinModalProps {
@@ -14,7 +12,6 @@ export interface StdinModalProps {
 }
 
 const StdinModal: React.FC<StdinModalProps> = ({ display, setDisplay }) => {
-	const languageId = useAppStore(useShallow((state) => state.languageId));
 	const [stdin, setStdin] = useState("");
 	const code = useEditorRef();
 

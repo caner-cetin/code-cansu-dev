@@ -1,4 +1,4 @@
-
+import React from "react"
 import {
   Select,
   SelectContent,
@@ -7,7 +7,6 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Themes } from "@/services/settings"
 
 export interface ColorThemeSelection {
