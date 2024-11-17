@@ -1,4 +1,4 @@
-'use client'
+import React from 'react'
 import { ColorThemeSelection } from './ColorThemeSelection'
 import { RenderFirstSelection } from './RenderFirstSelection'
 import { Label } from "@/components/ui/label"
@@ -34,12 +34,12 @@ export const SettingsPopover: React.FC = () => {
             <div className="grid grid-cols-3 items-center gap-4">
               <ColorThemeSelection colorTheme={colorTheme} setColorTheme={setColorTheme} />
             </div>
-            {displayingSharedCode &&
+            {!displayingSharedCode &&
               <div className="grid grid-cols-3 items-center gap-4">
                 <RenderFirstSelection renderFirst={renderFirst} setRenderFirst={setRenderFirst} />
               </div>
             }
-            {displayingSharedCode &&
+            {!displayingSharedCode &&
               <div className="grid grid-cols-3 items-center gap-4">
                 <Label>
                   Live2D Model

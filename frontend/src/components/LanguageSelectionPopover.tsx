@@ -1,5 +1,4 @@
-'use client'
-
+import React from 'react'
 import { Check } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import {
@@ -8,7 +7,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
-import type { LanguageConfig } from '../../../frontend/config/types'
+import type { LanguageConfig } from '@/config/types'
 import { useAppStore } from '@/stores/AppStore'
 import { useShallow } from 'zustand/react/shallow'
 
