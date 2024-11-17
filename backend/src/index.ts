@@ -33,7 +33,9 @@ app.use(
 		origin: [
 			"https://code.cansu.dev",
 			"http://localhost:5173",
-			"http://localhost:4321",
+			"http://localhost:4173",
+			"https://haul.code-cansu-dev.pages.dev",
+			"http://localhost:3000",
 		],
 		credentials: false,
 		maxAge: 600,
@@ -213,7 +215,7 @@ app.post("/react/code", async (c) => {
 		},
 		body: JSON.stringify({
 			inputs: prompt,
-			parameteres: {
+			parameters: {
 				do_sample: true,
 				top_k: 50,
 				top_p: 0.95,
@@ -258,15 +260,10 @@ app.post("/react/submission/:token", async (c) => {
 		.selectFrom("submissions")
 		.select([
 			"source_code",
-			"cpu_time_limit",
-			"cpu_extra_time",
+			"wall_time",
 			"wall_time_limit",
+			"memory",
 			"memory_limit",
-			"stack_limit",
-			"max_file_size",
-			"compile_output",
-			"message",
-			"exit_code",
 			"wall_time",
 		])
 		.where("token", "=", token)
@@ -274,16 +271,24 @@ app.post("/react/submission/:token", async (c) => {
 	if (!submission) {
 		throw new HTTPException(400, { message: "Submission not found" });
 	}
-	const prompt = `You are an enthusiastic fan of programming,professional cheerleader, and a cute anime girl. Following context is run detail of a source code, react to the source code and everything about the run in a cute way. Source code is in base64 encoded format.
+	const prompt = `You are an enthusiastic fan of programming,professional cheerleader, and a cute anime girl. Following context is a source code, react to the source code in a cute way.
 		Keep it very short, limit yourself to maximum 2 sentences and limit the sentences to very short, this reaction is intended to show in a dialogue box. 
 		Try to be as creative as possible, don't be afraid to be funny or silly (except misinformation or offensive content),
 		you are free to say whatever you want, just do not repeat yourself. Do not use emojis. Do not make assumptions like "this must be a complex program, this must be X" only react to what you see. Do not be too ordinary, such
 		as "Yeah! I see the code is running, good job!" or artifical sounding reactions "Oh my gosh", be more creative, be yourself, you are a cute anime girl. Do not comment on the thinking process, such as "i am busy encoding the source code", just react to the source code and the run.
 
+		Source code is finished running, so here are some more details in addition to the source code that might help you:
+		- Wall Time: ${submission.wall_time}
+		- Wall Time Limit: ${submission.wall_time_limit}
+		- Memory: ${submission.memory}
+		- Memory Limit: ${submission.memory}
+		Do not use them forcefully, only use them when you see fit.
+		
 		Return the answer in json format, {
 			"message": "your reaction"
 		} after the Answer: part, so your response will look like Answer: {"message": "your reaction"}
-		Context: ${submission.source_code} ${submission.cpu_time_limit} ${submission.cpu_extra_time} ${submission.wall_time_limit} ${submission.memory_limit} ${submission.stack_limit} ${submission.max_file_size} ${submission.compile_output} ${submission.message} ${submission.exit_code} ${submission.wall_time}
+
+		Context: ${submission.source_code}
 		Answer:
 		`;
 
@@ -295,7 +300,7 @@ app.post("/react/submission/:token", async (c) => {
 		},
 		body: JSON.stringify({
 			inputs: prompt,
-			parameteres: {
+			parameters: {
 				do_sample: true,
 				top_k: 50,
 				top_p: 0.95,

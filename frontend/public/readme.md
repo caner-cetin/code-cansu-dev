@@ -53,11 +53,18 @@ wip
 mail [hello@cansu.dev](mailto:hello@cansu.dev) for all feedbacks, questions, suggestions, anything.
 
 ## changelog
+### 2024-11-15
+- updated
+  - languages and settings menu ui
+- fixed
+  - live2d model now appears with no visual glitches. 
 ### 2024-11-7
 - added
   - anime girl companion, can be disabled from settings.
   - she will always react to your submissions, and will react to your code upon one second inactivity in typing.
   - planning text to speech
+- updated
+  - language list is in now alphabetical order
 - removed
   - my own sanity
 ### 2024-11-1

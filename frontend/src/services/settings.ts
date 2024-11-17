@@ -1,34 +1,18 @@
-// i am going to pile up everything in file and you cannot stop me
-
-import { useState } from "react";
-
 export type CodeStorage = Record<string, string | undefined>;
 export enum Settings {
 	COLOR_THEME = "colorTheme",
 	CODE_STORAGE = "codeStorage",
 	DEFAULT_LANGUAGE_ID = "defaultLanguageID",
 	RENDER_FIRST = "renderFirst",
+	LANGUAGES = "languages",
 	LIVE_2D_MODEL_ENABLED = "live2DModelEnabled",
+	SUBMISSION_COUNTER_KEY = "submissionCounter",
+	SUBMISSIONS_KEY = "submissions",
+	ONGOING_CODE_SUBMISSION_ID = "ongoingCodeSubmissionId",
 }
-export const getStoredSetting = <T>(
-	key: string,
-	defaultValue: T,
-	parser: (value: string) => T,
-	validator?: (value: T) => boolean,
-): T => {
-	try {
-		const storedValue = localStorage.getItem(key);
-		if (!storedValue) return defaultValue;
-
-		const parsedValue = parser(storedValue);
-		if (validator && !validator(parsedValue)) return defaultValue;
-
-		return parsedValue;
-	} catch {
-		return defaultValue;
-	}
-};
-
+export enum States {
+	DISPLAYING_WAIFU_TIPS = "displaying-waifu-tips",
+}
 export enum Themes {
 	Chrome = "chrome",
 	Clouds = "clouds",
@@ -69,40 +53,11 @@ export enum Themes {
 	VibrantInk = "vibrant_ink",
 }
 
-const isValidTheme = (value: string): value is Themes => {
-	return Object.values(Themes).includes(value as Themes);
-};
-export const useColorTheme = () => {
-	return useState(
-		getStoredSetting(
-			Settings.COLOR_THEME,
-			Themes.TomorrowNightEighties,
-			(value) => value,
-			isValidTheme,
-		),
-	);
-};
-
 export enum RenderFirst {
 	WelcomeMarkdown = 0,
 	CodeEditor = 1,
 	Unset = 2,
 }
-
-export const isValidRenderFirst = (value: number): value is RenderFirst => {
-	return Object.values(RenderFirst).includes(value);
-};
-
-export const useRenderFirst = () => {
-	return useState(
-		getStoredSetting(
-			Settings.RENDER_FIRST,
-			RenderFirst.Unset,
-			(value) => Number.parseInt(value, 10),
-			isValidRenderFirst,
-		),
-	);
-};
 
 export enum LanguageId {
 	Markdown = 0,
@@ -153,15 +108,5 @@ export enum LanguageId {
 	Swift = 83,
 	TypeScript = 74,
 	VisualBasicNet = 84,
+	Unknown = 999,
 }
-
-export const Live2DModelEnabled = true;
-export const useLive2DModelEnabled = () => {
-	return useState(
-		getStoredSetting<boolean>(
-			Settings.LIVE_2D_MODEL_ENABLED,
-			true,
-			(value) => value.toLowerCase() === "true",
-		),
-	);
-};
