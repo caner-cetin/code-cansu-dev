@@ -1,6 +1,7 @@
+import React from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Helmet } from "react-helmet";
-import { LANGUAGE_CONFIG } from "../../../frontend/config/languages";
+import { LANGUAGE_CONFIG } from "@/config/languages";
 import { Settings } from "@/services/settings";
 import { useAppStore } from "@/stores/AppStore";
 
@@ -167,9 +168,6 @@ const LanguageLandingPage: React.FC<LanguageLandingPageProps> = ({
                   <span className="mr-2">⚡</span> Instant code execution
                 </li>
                 <li className="flex items-center">
-                  <span className="mr-2">🎨</span> Syntax highlighting
-                </li>
-                <li className="flex items-center">
                   <span className="mr-2">💾</span> Auto-save functionality
                 </li>
                 <li className="flex items-center">
@@ -186,7 +184,6 @@ const LanguageLandingPage: React.FC<LanguageLandingPageProps> = ({
                 <li>✓ No installation required</li>
                 <li>✓ Clean, distraction-free interface</li>
                 <li>✓ Perfect for learning {languageName}</li>
-                <li>✓ Mobile-friendly design</li>
               </ul>
             </div>
           </div>

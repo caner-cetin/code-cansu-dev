@@ -47,12 +47,12 @@ export namespace Submissions {
 		editor: IAceEditor | undefined,
 	): Promise<void> {
 		const ctx = useAppStore.getState();
-		if (!editor) {
-			toast.error("Editor not initialized, please refresh page");
-			return;
-		}
 		if (ctx.languageId === LanguageId.Markdown) {
 			toast.error("what did you expect?");
+			return;
+		}
+		if (!editor) {
+			toast.error("Editor not initialized, please refresh page");
 			return;
 		}
 		const src = editor.session.getValue();
