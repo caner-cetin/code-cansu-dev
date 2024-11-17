@@ -73,3 +73,5 @@ more to come, wip.
 * [Clojure (1.11.2)](https://code.cansu.dev/language/redirect/clojure)
 * [Nim (2.2.0)](https://code.cansu.dev/language/redirect/nim)
 * [Groovy (4.0.23)](https://code.cansu.dev/language/redirect/groovy)
+
+palette: #211e20 #504945 #2c2a2a #3c3836, for text, either #e9efec or #9ca3af
