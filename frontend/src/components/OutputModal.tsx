@@ -1,5 +1,5 @@
-'use client'
-import { useState, useRef, useEffect } from "react";
+import React from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import {
   useQuery,
   type UseQueryResult,
@@ -34,7 +34,6 @@ import toast from "react-hot-toast";
 import ShareButton from "./ShareButton";
 import { LANGUAGE_CONFIG } from "@/config/languages";
 import { Live2D } from "@/scripts/live2d.helpers";
-import { States } from "@/services/settings";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -43,124 +42,120 @@ import { getSubmission, reactSubmission } from "@/services/judge/calls";
 import { useAppStore } from "@/stores/AppStore";
 import { useEditorContent } from "@/hooks/useCodeEditor";
 import { useShallow } from "zustand/react/shallow";
+import { useEditorRef } from "@/stores/EditorStore";
 
 interface OutputModalProps {
   displayingSharedCode: boolean;
   query?: UseQueryResult<GetSubmissionResponse, unknown>;
 }
 
-const OutputModal: React.FC<OutputModalProps> = ({ displayingSharedCode, query }) => {
+const OutputModal: React.FC<OutputModalProps> = ({ displayingSharedCode, query: initialQuery }) => {
+  // First, all store/context hooks
   const ctx = useAppStore(useShallow((state) => ({
     submissions: state.submissions,
     setLanguageId: state.setLanguageId,
-    editor: state.code,
+    codeStorage: state.codeStorage,
+    setCodeStorage: state.setCodeStorage
   })));
 
-  // Don't set an initial active tab
-  const [activeTab, setActiveTab] = useState<string | undefined>(undefined);
-  const initialRenderRef = useRef(true);
-  // Keep track of the highest submission ID we've seen
-  const lastSeenSubmissionRef = useRef<number>(0);
-  const [refetchInterval, setRefetchInterval] = useState<number | false>(false);
-  // Function to get numeric ID from submission
-  const getSubmissionId = (submission: StoredSubmission): number =>
-    submission.localId;
-  const { saveContent, loadContent, setMode } = useEditorContent();
+  const code = useEditorRef();
+  const { saveContent, loadContent, setMode } = useEditorContent(code, ctx.codeStorage, ctx.setCodeStorage);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <no need to renrender each time getSubmissionID is updated>
+  // Then, all useRef hooks
+  const initialRenderRef = useRef(true);
+  const lastSeenSubmissionRef = useRef<number>(0);
+
+  // Then, all useState hooks
+  const [activeTab, setActiveTab] = useState<string | undefined>(undefined);
+  const [refetchInterval, setRefetchInterval] = useState<number | false>(false);
+  const [reacting, setReacting] = useState(false);
+
+  // Then, all useCallback hooks
+  const getSubmissionId = useCallback((submission: StoredSubmission): number =>
+    submission.localId, []);
+
+  const handleRefresh = useCallback((token: string) => {
+    if (token === activeTab) {
+      refetch();
+    }
+  }, [activeTab]);
+
+  // Then, query hooks
+  const query = initialQuery || useQuery({
+    queryKey: ["submission", activeTab],
+    queryFn: () => activeTab ? getSubmission(activeTab) : Promise.reject("No active tab"),
+    enabled: !!activeTab,
+    refetchInterval: (data) => {
+      if (
+        data.state.data?.status_id === 2 ||
+        data.state.data?.status_id === 1
+      ) {
+        setRefetchInterval(500);
+        return 500;
+      }
+      setRefetchInterval(false);
+      return false;
+    },
+  });
+  const { data: submissionResult, isLoading, isError, refetch } = query;
+
+  const restoreCode = useCallback(() => {
+    if (!submissionResult) {
+      toast.error("No submission result to restore code from");
+      return;
+    }
+    if (loadContent) loadContent(atob(submissionResult.source_code));
+    if (setMode) setMode(submissionResult.language_id);
+  }, [submissionResult, loadContent, setMode]);
+
+  // Finally, all useEffect hooks
   useEffect(() => {
-    // Skip the first render
     if (initialRenderRef.current) {
       initialRenderRef.current = false;
       return;
     }
     if (!ctx.submissions) return;
-    // Find the highest submission ID in the current list
+
     const currentMaxId = Math.max(...ctx.submissions.map(getSubmissionId));
-    // If we have submissions and found a new highest ID
     if (
       ctx.submissions.length > 0 &&
       currentMaxId > lastSeenSubmissionRef.current
     ) {
-      // Find the submission with the highest ID
       const latestSubmission = ctx.submissions.reduce((latest, current) => {
         const currentId = getSubmissionId(current);
         const latestId = getSubmissionId(latest);
         return currentId > latestId ? current : latest;
       });
-      // Update our reference and set the active tab
       lastSeenSubmissionRef.current = currentMaxId;
       setActiveTab(latestSubmission.token);
     }
-  }, [ctx.submissions]);
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <what?>
+  }, [ctx.submissions, getSubmissionId]);
+
   useEffect(() => {
     if (displayingSharedCode) {
-      const token = query?.data?.token;
+      const token = initialQuery?.data?.token;
       if (token) {
         setActiveTab(token);
       }
     }
-  }, [
-    displayingSharedCode,
-  ]);
-  if (!query) {
-    query = useQuery({
-      queryKey: ["submission", activeTab],
-      // biome-ignore lint/style/noNonNullAssertion: <explanation>
-      queryFn: () => getSubmission(activeTab!),
-      enabled: !!activeTab,
-      refetchInterval: (data) => {
-        if (
-          data.state.data?.status_id === 2 ||
-          data.state.data?.status_id === 1
-        ) {
-          setRefetchInterval(500);
-          return 500;
-        }
-        setRefetchInterval(false);
-        return false;
-      },
-    })
-  }
-  const { data: submissionResult, isLoading, isError, refetch } = query;
-  const [reacting, setReacting] = useState(false);
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <no need to rerun on submissionResult and reacted change>
+  }, [displayingSharedCode, initialQuery?.data?.token]);
+
   useEffect(() => {
-    console.log(activeTab)
-    if (submissionResult !== undefined && reacting === false) {
-      try {
-        setReacting(true);
-        reactSubmission(submissionResult.token)?.then((res) => {
-          if (!res) return;
-          if (res.message) {
-            Live2D.showMessage({
-              text: res.message,
-              timeout: 3000,
-            });
-          }
-        })
-      } finally {
+    if (submissionResult !== undefined && !reacting) {
+      setReacting(true);
+      reactSubmission(submissionResult.token)?.then((res) => {
+        if (!res) return;
+        if (res.message) {
+          Live2D.showMessage({
+            text: res.message,
+            timeout: 3000,
+          });
+        }
+      }).finally(() => {
         setReacting(false);
-
-      }
+      });
     }
-  }, [activeTab]);
-
-  const handleRefresh = (token: string) => {
-    if (token === activeTab) {
-      refetch();
-    }
-  };
-  const restoreCode = () => {
-    if (!submissionResult) {
-      toast.error("No submission result to restore code from");
-      return;
-    }
-    loadContent(atob(submissionResult.source_code));
-    setMode(submissionResult.language_id);
-  };
-
+  }, [submissionResult, reacting]);
   const getStatusIcon = (id: number) => {
     switch (id) {
       case 1:

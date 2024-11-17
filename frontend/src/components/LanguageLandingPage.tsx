@@ -1,6 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import { Helmet } from "react-helmet";
-import { LANGUAGE_CONFIG } from "@/config/languages";
+import { LANGUAGE_CONFIG } from "../../../frontend/config/languages";
 import { Settings } from "@/services/settings";
 import { useAppStore } from "@/stores/AppStore";
 

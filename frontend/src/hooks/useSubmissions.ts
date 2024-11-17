@@ -2,8 +2,14 @@ import { toast } from "react-hot-toast";
 import type ReactAce from "react-ace/lib/ace";
 import { LANGUAGE_CONFIG } from "@/config/languages";
 import { LanguageId, Settings } from "@/services/settings";
-import { submitStdin, submitSubmission } from "@/services/judge/calls";
-import { AppState, useAppStore } from "@/stores/AppStore";
+import {
+	submitCode,
+	submitStdin,
+	submitSubmission,
+} from "@/services/judge/calls";
+import { useAppStore } from "@/stores/AppStore";
+import { useEditorRef } from "@/stores/EditorStore";
+import type { IAceEditor } from "react-ace/lib/types";
 
 export interface StoredSubmission {
 	localId: number;
@@ -14,11 +20,9 @@ export interface StoredSubmission {
 
 export namespace Submissions {
 	export function getNextSubmissionId(): number {
-		useAppStore.setState((state) => {
-			state.setSubmissionCounter(state.submissionCounter + 1);
-			return state;
-		});
-		return useAppStore.getState().submissionCounter;
+		const state = useAppStore.getState();
+		state.setSubmissionCounter(state.submissionCounter + 1);
+		return state.submissionCounter;
 	}
 
 	export function saveSubmission(submission: StoredSubmission) {
@@ -31,62 +35,45 @@ export namespace Submissions {
 			ctx.setSubmissions(
 				[submission, ...ctx.submissions].sort((a, b) => b.localId - a.localId),
 			);
-			ctx.setOngoingCodeSubmissionId(-1);
 		}
 	}
 	export function clearStoredSubmissions(): void {
-		useAppStore.setState((state) => {
-			state.setSubmissions([]);
-			state.setSubmissionCounter(0);
-			return state;
-		});
+		const state = useAppStore.getState();
+		state.setSubmissions([]);
+		state.setSubmissionCounter(0);
 	}
-	export async function handleSubmitCode(withStdin: boolean): Promise<void> {
+	export async function handleSubmitCode(
+		stdin: string | undefined,
+		editor: IAceEditor | undefined,
+	): Promise<void> {
 		const ctx = useAppStore.getState();
+		if (!editor) {
+			toast.error("Editor not initialized, please refresh page");
+			return;
+		}
 		if (ctx.languageId === LanguageId.Markdown) {
 			toast.error("what did you expect?");
 			return;
 		}
-		const src = ctx.code?.current.editor.getValue();
+		const src = editor.session.getValue();
 		if (src === undefined || src.trim() === "") {
 			toast.error("Code cannot be empty");
 			return;
 		}
+		const subId = (await submitCode(src)).id;
 		try {
-			if (!withStdin) {
-				await finalizeSubmission();
+			if (stdin !== undefined) {
+				await submitStdin(subId, stdin);
 			}
+			await finalizeSubmission(subId);
 		} catch (error) {
 			console.error(error);
 			toast.error("Processing submission failed");
 		}
 	}
 
-	export async function handleSubmitStdin(stdin: string): Promise<void> {
+	async function finalizeSubmission(id: number): Promise<void> {
 		const ctx = useAppStore.getState();
-		if (ctx.languageId === LanguageId.Markdown) {
-			toast.error("what did you expect?");
-			return;
-		}
-		if (ctx.ongoingCodeSubmissionId === -1) {
-			toast.error("No submission available, submit code first");
-			return;
-		}
-		try {
-			if (stdin.trim() !== "") {
-				await submitStdin(ctx.ongoingCodeSubmissionId, stdin);
-			}
-			// read the handlesubmitcode comment
-			await finalizeSubmission();
-		} catch (error) {
-			toast.error("Processing submission failed");
-			console.error(error);
-		}
-	}
-
-	async function finalizeSubmission(): Promise<void> {
-		const ctx = useAppStore.getState();
-		const id = ctx.ongoingCodeSubmissionId;
 		const result = await submitSubmission(id, ctx.languageId);
 		const localId = getNextSubmissionId();
 		const newSubmission = {

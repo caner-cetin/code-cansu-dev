@@ -1,7 +1,7 @@
 import axios, { type AxiosError } from "axios";
 import toast from "react-hot-toast";
 const api = axios.create({
-	baseURL: `${process.env.NEXT_PUBLIC_BACKEND_PROTOCOL ?? "http"}://${process.env.NEXT_PUBLIC_BACKEND_URI}:${process.env.NEXT_PUBLIC_BACKEND_PORT ?? ""}`,
+	baseURL: `${import.meta.env.VITE_BACKEND_PROTOCOL ?? "http"}://${import.meta.env.VITE_BACKEND_URI}:${import.meta.env.VITE_BACKEND_PORT ?? ""}`,
 });
 api.interceptors.request.use((config) => {
 	const token = localStorage.getItem("accessToken");
