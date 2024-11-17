@@ -150,20 +150,17 @@ export const AceEditor: React.FC<{ displayingSharedCode?: boolean }> = ({
 }) => {
   const editorRef = useEditorRef();
   useCodeEditor(editorRef);
-  const { languageId, colorTheme } = useAppStore(useShallow((state) => ({
+  const { languageId, colorTheme, savedCodes } = useAppStore(useShallow((state) => ({
     languageId: state.languageId,
-    colorTheme: state.colorTheme
+    colorTheme: state.colorTheme,
+    savedCodes: state.codeStorage,
   })));
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   const onEditorLoad = useCallback((editor: Ace.Editor) => {
     const currentLanguage = LANGUAGE_CONFIG[languageId];
     editor.session.setMode(`ace/mode/${currentLanguage?.mode}`);
     editor.setTheme(`ace/theme/${colorTheme}`);
-
-    // Load initial content
-    const savedCodes = JSON.parse(
-      localStorage.getItem(Settings.CODE_STORAGE) || "{}"
-    ) as CodeStorage;
     const savedCode = currentLanguage?.mode ? savedCodes[currentLanguage.mode] : '';
     const defaultText = currentLanguage?.defaultText || "";
     const initialText = savedCode ? atob(savedCode) : defaultText;
