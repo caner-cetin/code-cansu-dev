@@ -11,6 +11,7 @@ import { LANGUAGE_CONFIG } from '@/config/languages'
 import { useAppStore } from '@/stores/AppStore'
 import { useShallow } from 'zustand/react/shallow'
 import { useEditorRef } from '@/stores/EditorStore'
+import { BookOpenText } from '@phosphor-icons/react'
 
 export default function Header() {
   const ctx = useAppStore(useShallow((state) => ({
@@ -66,6 +67,10 @@ export default function Header() {
           )}
         </div>
         <div className="flex items-center">
+          <Button variant="outline" size="icon" className='mr-4' onClick={() => ctx.setLanguageId(LanguageId.Markdown)}>
+            <BookOpenText className="h-4 w-4" />
+            <span className="sr-only">Open settings</span>
+          </Button>
           <SettingsPopover />
           <time className="text-[#a0a08b]" dateTime={new Date().toLocaleTimeString()} suppressHydrationWarning />
         </div>

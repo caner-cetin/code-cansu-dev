@@ -1,4 +1,4 @@
-import { LanguageId } from "@/services/settings";
+import { LanguageId } from "../services/settings";
 import type { LanguageConfig } from "./types";
 
 // https://github.com/ajaxorg/ace-builds/tree/cb4c7c3d105c92b04f45d78d329f5509b7098906/demo/kitchen-sink/docs
@@ -721,7 +721,7 @@ int main(int argc, const char *argv[]) {
 		runnerName: "Objective-C (Clang 7.0.1)",
 		mode: "objectivec",
 		iconClass: "devicon-objectivec-plain",
-		languageName: "Objective-C",
+		languageName: "ObjectiveC",
 	},
 	65: {
 		defaultText: `(* Define a type for the return record, making it polymorphic *)

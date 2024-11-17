@@ -59,9 +59,7 @@ function CodeEditorPage() {
             <Header />
             <PanelGroup direction="horizontal" className="flex-1">
               <Panel defaultSize={70} minSize={30}>
-                {((ctx.renderFirst === RenderFirst.WelcomeMarkdown && ctx.languageId === LanguageId.Markdown) ||
-                  (ctx.renderFirst === RenderFirst.Unset &&
-                    ctx.languageId === LanguageId.Markdown)) ? (
+                {(ctx.languageId === LanguageId.Markdown) ? (
                   <MarkdownView />
                 ) : (
 
