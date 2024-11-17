@@ -1,8 +1,7 @@
 
 [main branch](https://code.cansu.dev)
-[development branch](https://haul.code-cansu-dev.pages.dev) *unstable*
 
-im currently migrating to nextjs, refactor, redesign parts here and there, so any feedbacks on development branch is welcome.
+[development branch](https://haul.code-cansu-dev.pages.dev) *unstable*
 
 ## beep
 
@@ -14,8 +13,6 @@ Code playground with 38 different environments, all with autocompletes, snippets
 - [beep](#beep)
 - [features](#features)
 - [supported languages](#supported-languages)
-  - [available packages](#available-packages)
-  - [notes](#notes)
 
 ## features
 
@@ -29,12 +26,14 @@ Code playground with 38 different environments, all with autocompletes, snippets
 ![demo execution](static/exec.gif)
 - Network Friendly
 
-From Haskell to NASM to Prolog to Lua, run everything with under 2 MB of network, all autocompletes and snippets included.
+From Haskell to NASM to Prolog to Lua, run everything with under 2 MB of network (3.7 MB including anime girl), all autocompletes and snippets included.
 
 As a comparison, with no cache, from initial load to output, JDoodle consumes 3.05 megabytes for only loading COBOL. My precious darling loads needs only 1.6 MB of network initially, 
 for loading all languages. Language switch takes almost nothing, where as JDoodle transfers 6 MB of network just to switch from COBOL to Fortran. 
 
 Cached initial network transfer is only 4 KB, and executions, submissions, etc. takes only a few kilobytes per query.
+- anime girl
+live2d model that follows your mouse and reacts to your code / execution results. why? uh.
 
 more to come, wip.
 
@@ -80,19 +79,3 @@ more to come, wip.
 - TypeScript
 - Visual Basic.NET
 
-### available packages
-
-- python
-  - mlxtend
-  - numpy
-  - pandas
-  - scikit-learn
-  - pytest
-  - scipy
-
-wip
-
-### notes
-
-- Basic and Octave has no modes, so they are rendered as plain text.
-- readme.md in editor is the same as this file except there are no gifs.

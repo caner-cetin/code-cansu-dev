@@ -31,6 +31,9 @@
     "typeRoots": [
       "./node_modules/@types"
     ],
+    "paths": {
+      "@/*": ["./src/*"],
+    },
   },
-  "include": ["src", "vite.config.ts", "src/scripts/waifu-tips.js"]
+  "include": ["src", "vite.config.ts", "../frontend/config"]
 }

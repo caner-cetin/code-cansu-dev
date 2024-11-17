@@ -9,6 +9,7 @@ export default defineConfig({
 	plugins: [react(), tsconfigPaths(), TanStackRouterVite(), commonjs()],
 	resolve: {
 		alias: {
+			"@": path.resolve(__dirname, "src"),
 			ace: path.resolve(
 				__dirname,
 				"node_modules/ace-builds/src-min-noconflict",
@@ -35,8 +36,5 @@ export default defineConfig({
 		fs: {
 			allow: [".."],
 		},
-	},
-	define: {
-		"process.env.README_PATH": JSON.stringify("/readme.md"),
 	},
 });

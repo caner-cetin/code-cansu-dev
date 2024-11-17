@@ -30,3 +30,4 @@ deployments/monitoring/alertmanager/config.yml
 frontend/src/scripts/generateLanguageRoutes.ts
 frontend/src/scripts/generateSitemap.ts
 frontend/vite.config.ts.timestamp-1730626821061-c263d4368067c.mjs
+.parcel-cache/

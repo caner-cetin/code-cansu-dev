@@ -1,8 +1,8 @@
 import { useNavigate } from "@tanstack/react-router";
-import React from "react";
 import { Helmet } from "react-helmet";
-import { LANGUAGE_CONFIG } from "src/editor/languages";
-import { Settings } from "src/services/settings";
+import { LANGUAGE_CONFIG } from "../../../frontend/config/languages";
+import { Settings } from "@/services/settings";
+import { useAppStore } from "@/stores/AppStore";
 
 
 interface LanguageConfigType {
@@ -30,11 +30,10 @@ const getLanguageCategory = (name: string): string => {
   return "Specialized Languages";
 };
 
-const CrossLinks: React.FC<{ currentLanguageId: number }> = ({
-  currentLanguageId,
-}) => {
+const CrossLinks: React.FC = () => {
+  const languageId = useAppStore((state) => state.languageId);
   const categorizedLanguages = Object.entries(LANGUAGE_CONFIG)
-    .filter(([id]) => Number(id) !== currentLanguageId)
+    .filter(([id]) => Number(id) !== languageId)
     .reduce(
       (acc, [id, lang]) => {
         const category = getLanguageCategory(lang.runnerName);
@@ -205,7 +204,7 @@ const LanguageLandingPage: React.FC<LanguageLandingPageProps> = ({
               directly in your browser.
             </p>
           </div>
-          <CrossLinks currentLanguageId={languageId} />
+          <CrossLinks />
         </div>
       </div>
     </div>
