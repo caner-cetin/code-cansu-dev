@@ -1082,7 +1082,7 @@ End Module`,
 		iconClass: "devicon-visualbasic-plain",
 		languageName: "VBNC",
 	},
-	90: {
+	[LanguageId.CGCC13]: {
 		//  C (GCC 13.3)
 		defaultText: `#include <stdio.h>
 int main() {
@@ -1094,7 +1094,7 @@ int main() {
 		iconClass: "devicon-c-line",
 		languageName: "C",
 	},
-	91: {
+	[LanguageId.CPPGCC13]: {
 		// C++ (GCC 13.3)
 		defaultText: `#include <iostream>
 int main() {
@@ -1105,12 +1105,5 @@ int main() {
 		mode: "c_cpp",
 		iconClass: "devicon-cplusplus-plain",
 		languageName: "CPP",
-	},
-	[LanguageId.Unknown]: {
-		defaultText: "// uh oh",
-		runnerName: "Unknown",
-		mode: "text",
-		iconClass: undefined,
-		languageName: "Unknown",
 	},
 };
