@@ -147,7 +147,6 @@ export function useCodeEditor(
 			}
 		};
 
-		window.addEventListener("beforeunload", handleBeforeUnload);
-		return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+		window.onbeforeunload = handleBeforeUnload;
 	}, [editor, languageId, saveEditorContent]);
 }
