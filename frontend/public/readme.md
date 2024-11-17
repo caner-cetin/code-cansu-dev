@@ -53,6 +53,11 @@ wip
 mail [hello@cansu.dev](mailto:hello@cansu.dev) for all feedbacks, questions, suggestions, anything.
 
 ## changelog
+### 2024-11-17
+- fixed
+  - almost every bug (there might be still problems with execution of some languages, please let me know)
+- removed
+  - anime girl companion now only reacts to your code after execution (before: after execution and one second inactivity in typing). sowwy.
 ### 2024-11-15
 - updated
   - languages and settings menu ui

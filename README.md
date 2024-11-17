@@ -20,6 +20,8 @@ Code playground with 38 different environments, all with autocompletes, snippets
 ![demo autocomplete](static/autocomplete-1.gif)
 - Share Code Output
 ![demo share code](static/share.gif)
+- Live2D Model that reacts to your code after execution
+![alt text](static/live2d.png)
 - Stdin Support
 ![demo stdin](static/stdin.gif)
 - Execution and Loading Speed
@@ -32,9 +34,6 @@ As a comparison, with no cache, from initial load to output, JDoodle consumes 3.
 for loading all languages. Language switch takes almost nothing, where as JDoodle transfers 6 MB of network just to switch from COBOL to Fortran. 
 
 Cached initial network transfer is only 4 KB, and executions, submissions, etc. takes only a few kilobytes per query.
-- anime girl
-live2d model that follows your mouse and reacts to your code / execution results. why? uh.
-
 more to come, wip.
 
 ## supported languages
