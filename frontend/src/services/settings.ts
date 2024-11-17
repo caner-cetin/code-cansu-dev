@@ -72,6 +72,8 @@ export enum LanguageId {
 	CPPGCC8 = 53,
 	CGCC9 = 50,
 	CPPGCC9 = 54,
+	CPPGCC13 = 91,
+	CGCC13 = 90,
 	Clojure = 86,
 	CSharpMono = 51,
 	COBOL = 77,
