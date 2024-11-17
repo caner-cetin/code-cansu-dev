@@ -1,6 +1,4 @@
-'use client'
-
-import React, { useEffect, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import { useQuery } from '@tanstack/react-query'
 import CustomToast from '@/components/CustomToast'
@@ -12,6 +10,7 @@ import { AceEditor } from '@/components/AceEditor'
 import { createFileRoute } from '@tanstack/react-router'
 import { useAppStore } from '@/stores/AppStore'
 import { useShallow } from 'zustand/react/shallow'
+import { useEditorRef } from '@/stores/EditorStore'
 
 export const Route = createFileRoute('/share/$token/')({
   component: SharedCodePage,
@@ -20,8 +19,8 @@ export const Route = createFileRoute('/share/$token/')({
 function SharedCodePage() {
   const { token } = Route.useParams()
   const [mobile, setMobile] = useState(false)
+  const code = useEditorRef()
   const ctx = useAppStore(useShallow((state) => ({
-    code: state.code,
     displayingSharedCode: state.displayingSharedCode,
     setDisplayingSharedCode: state.setDisplayingSharedCode,
   })))
@@ -49,7 +48,7 @@ function SharedCodePage() {
   useEffect(() => {
     ctx.setDisplayingSharedCode(true)
     const sc = query.data?.source_code
-    ctx.code?.current.editor.session.setValue(sc ? atob(sc) : '// no source code found')
+    code.current?.editor.session.setValue(sc ? atob(sc) : '// no source code found')
   }, [query.data])
 
   return (
