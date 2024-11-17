@@ -93,16 +93,7 @@ const LanguageLandingPage: React.FC<LanguageLandingPageProps> = ({
   languageName,
 }) => {
   const navigate = useNavigate();
-
-  const handleStartCoding = () => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(Settings.DEFAULT_LANGUAGE_ID, languageId.toString());
-      navigate({
-        to: '/',
-        replace: true
-      });
-    }
-  };
+  const setLanguageId = useAppStore((state) => state.setLanguageId)
 
   const description = `Write, compile and run ${languageName} code online in our free, feature-rich playground. Perfect for learning ${languageName} with instant execution, syntax highlighting, and code sharing capabilities. No installation needed - start coding now!`;
 
@@ -152,7 +143,13 @@ const LanguageLandingPage: React.FC<LanguageLandingPageProps> = ({
             </p>
             {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
             <button
-              onClick={handleStartCoding}
+              onClick={() => {
+                setLanguageId(languageId);
+                navigate({
+                  to: '/',
+                  replace: true
+                })
+              }}
               className="bg-[#3c3836] hover:bg-[#504945] text-white font-bold py-3 px-6 rounded-lg transition-colors duration-200"
             >
               Start Coding Now
