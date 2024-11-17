@@ -59,7 +59,7 @@ const OutputModal: React.FC<OutputModalProps> = ({ displayingSharedCode, query: 
   })));
 
   const code = useEditorRef();
-  const { saveContent, loadContent, setMode } = useEditorContent(code, ctx.codeStorage, ctx.setCodeStorage);
+  const { loadContent, setMode } = useEditorContent(code, ctx.codeStorage, ctx.setCodeStorage);
 
   // Then, all useRef hooks
   const initialRenderRef = useRef(true);

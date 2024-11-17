@@ -5,7 +5,7 @@ import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels'
 import Header from '@/components/Header'
 import CustomToast from '@/components/CustomToast'
 import OutputModal from '@/components/OutputModal'
-import { LanguageId, RenderFirst } from '@/services/settings'
+import { LanguageId } from '@/services/settings'
 import { isMobile } from '@/hooks/useMobile'
 import WaifuWidget from '@/components/WaifuWidget';
 import { getLanguages } from '@/services/judge/calls';
@@ -25,8 +25,7 @@ function CodeEditorPage() {
   const ctx = useAppStore(useShallow((state) => ({
     live2DModelEnabled: state.live2DModelEnabled,
     languageId: state.languageId,
-    renderFirst: state.renderFirst,
-  })))
+})))
   useEffect(() => {
     setMobile(isMobile())
     window.addEventListener('resize', () => {

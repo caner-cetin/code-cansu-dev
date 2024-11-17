@@ -53,12 +53,6 @@ export enum Themes {
 	VibrantInk = "vibrant_ink",
 }
 
-export enum RenderFirst {
-	WelcomeMarkdown = 0,
-	CodeEditor = 1,
-	Unset = 2,
-}
-
 export enum LanguageId {
 	Markdown = 0,
 	AssemblyNASM = 45,

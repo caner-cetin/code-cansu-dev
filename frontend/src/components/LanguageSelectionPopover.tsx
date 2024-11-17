@@ -35,10 +35,10 @@ export const LanguageSelectionPopover: React.FC<LanguageSelectionPopoverProps> =
           role="combobox"
           className="w-82 justify-between bg-[#1e1e1e] border-[#555568] text-[#a0a08b] hover:bg-[#504945] hover:text-[#e9efec]"
         >
-          {selectedLanguage ? (
+          {(selectedLanguage) ? (
             <span className="flex items-center">
-              {(languageCfg[selectedLanguage.id] && languageCfg[selectedLanguage.id].iconClass) && (
-                <i className={`${languageCfg[selectedLanguage.id].iconClass}  w-5 shrink-0`} />
+              {(languageCfg[selectedLanguage?.id]?.iconClass) && (
+                <i className={`${languageCfg[selectedLanguage?.id]?.iconClass}  w-5 shrink-0`} />
               )}
               <span className="ml-2">{selectedLanguage.name}</span>
             </span>
@@ -62,8 +62,8 @@ export const LanguageSelectionPopover: React.FC<LanguageSelectionPopoverProps> =
                   languageId === language.id && "bg-[#504945] text-[#e9efec]"
                 )}
               >
-                {(languageCfg[language.id] && languageCfg[language.id].iconClass) && (
-                  <i className={`${languageCfg[language.id].iconClass}  w-5 shrink-0`} />
+                {(languageCfg[language.id]?.iconClass) && (
+                  <i className={`${languageCfg[language.id]?.iconClass}  w-5 shrink-0`} />
                 )}
                 <span className="ml-2">{language.name}</span>
                 {languageId === language.id && (

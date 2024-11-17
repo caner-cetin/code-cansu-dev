@@ -135,7 +135,6 @@ import "ace-builds/src-min-noconflict/theme-chaos";
 import "ace-builds/src-min-noconflict/theme-ambiance";
 // ========================
 import { LANGUAGE_CONFIG } from "@/config/languages";
-import { type CodeStorage, Settings } from "@/services/settings";
 import type { Ace } from "ace-builds";
 import { useAppStore } from "@/stores/AppStore";
 import { useShallow } from 'zustand/react/shallow'

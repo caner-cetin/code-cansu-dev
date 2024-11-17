@@ -1,14 +1,12 @@
 import { toast } from "react-hot-toast";
-import type ReactAce from "react-ace/lib/ace";
 import { LANGUAGE_CONFIG } from "@/config/languages";
-import { LanguageId, Settings } from "@/services/settings";
+import { LanguageId } from "@/services/settings";
 import {
 	submitCode,
 	submitStdin,
 	submitSubmission,
 } from "@/services/judge/calls";
 import { useAppStore } from "@/stores/AppStore";
-import { useEditorRef } from "@/stores/EditorStore";
 import type { IAceEditor } from "react-ace/lib/types";
 
 export interface StoredSubmission {

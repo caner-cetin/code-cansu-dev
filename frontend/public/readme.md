@@ -53,10 +53,15 @@ mail [hello@cansu.dev](mailto:hello@cansu.dev) for all feedbacks, questions, sug
 
 ## changelog
 ### 2024-11-17
+- added
+  - instant redirect language pages, such as [https://code.cansu.dev/language/redirect/typescript](https://code.cansu.dev/language/redirect/typescript) old `/language/typescript` routes are still usable, but they are not recommended as their main purpose is to be SEO garbage.
+- updated
+  supported languages list with new redirect pages.
 - fixed
   - almost every bug (there might be still problems with execution of some languages, please let me know)
 - removed
   - anime girl companion now only reacts to your code after execution (before: after execution and one second inactivity in typing). sowwy.
+  - initial view setting, added `go to readme` button right next to the settings icon instead.
 ### 2024-11-15
 - updated
   - languages and settings menu ui
