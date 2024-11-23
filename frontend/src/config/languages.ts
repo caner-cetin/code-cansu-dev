@@ -1,4 +1,4 @@
-import { LanguageId } from "@/services/settings";
+import { LanguageId } from "../services/settings";
 import type { LanguageConfig } from "./types";
 
 // https://github.com/ajaxorg/ace-builds/tree/cb4c7c3d105c92b04f45d78d329f5509b7098906/demo/kitchen-sink/docs
@@ -721,7 +721,7 @@ int main(int argc, const char *argv[]) {
 		runnerName: "Objective-C (Clang 7.0.1)",
 		mode: "objectivec",
 		iconClass: "devicon-objectivec-plain",
-		languageName: "Objective-C",
+		languageName: "ObjectiveC",
 	},
 	65: {
 		defaultText: `(* Define a type for the return record, making it polymorphic *)
@@ -1082,7 +1082,7 @@ End Module`,
 		iconClass: "devicon-visualbasic-plain",
 		languageName: "VBNC",
 	},
-	90: {
+	[LanguageId.CGCC13]: {
 		//  C (GCC 13.3)
 		defaultText: `#include <stdio.h>
 int main() {
@@ -1094,7 +1094,7 @@ int main() {
 		iconClass: "devicon-c-line",
 		languageName: "C",
 	},
-	91: {
+	[LanguageId.CPPGCC13]: {
 		// C++ (GCC 13.3)
 		defaultText: `#include <iostream>
 int main() {
@@ -1105,12 +1105,5 @@ int main() {
 		mode: "c_cpp",
 		iconClass: "devicon-cplusplus-plain",
 		languageName: "CPP",
-	},
-	[LanguageId.Unknown]: {
-		defaultText: "// uh oh",
-		runnerName: "Unknown",
-		mode: "text",
-		iconClass: undefined,
-		languageName: "Unknown",
 	},
 };

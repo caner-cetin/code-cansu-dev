@@ -1,20 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Share, Copy } from 'lucide-react';
-import { Button } from '@/components//ui/button';
+import { Button } from '@/components/ui/button';
 
 interface ShareButtonProp {
-  token: string
+  uri: string
 }
 
 const ShareButton = (props: ShareButtonProp) => {
   const [isOpen, setIsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
-  const shareUrl = `${window.location.href}share?token=${props.token}`;
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(shareUrl);
+      await navigator.clipboard.writeText(props.uri);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
@@ -34,15 +33,8 @@ const ShareButton = (props: ShareButtonProp) => {
   }, []);
 
   return (
-    <span className="text-sm text-gray-400 ml-2 inline-flex items-center">
-      <Button
-        type='button'
-        variant='secondary'
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        <Share size={16} />
-      </Button>
-
+    <div className="text-sm text-[#a0a08b]">
+      <Share className='h-4 w-4 cursor-pointer' onClick={() => setIsOpen(!isOpen)} />
       {isOpen && (
         <div
           ref={popoverRef}
@@ -62,7 +54,7 @@ const ShareButton = (props: ShareButtonProp) => {
           <div className="d-flex gap-2" style={{ display: 'flex', gap: '8px' }}>
             <input
               type="text"
-              value={shareUrl}
+              value={props.uri}
               readOnly
               style={{
                 flex: 1,
@@ -101,7 +93,7 @@ const ShareButton = (props: ShareButtonProp) => {
           </div>
         </div>
       )}
-    </span>
+    </div>
   );
 };
 

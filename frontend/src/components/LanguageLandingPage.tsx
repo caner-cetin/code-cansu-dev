@@ -1,7 +1,7 @@
+import React from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Helmet } from "react-helmet";
-import { LANGUAGE_CONFIG } from "../../../frontend/config/languages";
-import { Settings } from "@/services/settings";
+import { LANGUAGE_CONFIG } from "@/config/languages";
 import { useAppStore } from "@/stores/AppStore";
 
 
@@ -92,16 +92,7 @@ const LanguageLandingPage: React.FC<LanguageLandingPageProps> = ({
   languageName,
 }) => {
   const navigate = useNavigate();
-
-  const handleStartCoding = () => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(Settings.DEFAULT_LANGUAGE_ID, languageId.toString());
-      navigate({
-        to: '/',
-        replace: true
-      });
-    }
-  };
+  const setLanguageId = useAppStore((state) => state.setLanguageId)
 
   const description = `Write, compile and run ${languageName} code online in our free, feature-rich playground. Perfect for learning ${languageName} with instant execution, syntax highlighting, and code sharing capabilities. No installation needed - start coding now!`;
 
@@ -151,7 +142,13 @@ const LanguageLandingPage: React.FC<LanguageLandingPageProps> = ({
             </p>
             {/* biome-ignore lint/a11y/useButtonType: <explanation> */}
             <button
-              onClick={handleStartCoding}
+              onClick={() => {
+                setLanguageId(languageId);
+                navigate({
+                  to: '/',
+                  replace: true
+                })
+              }}
               className="bg-[#3c3836] hover:bg-[#504945] text-white font-bold py-3 px-6 rounded-lg transition-colors duration-200"
             >
               Start Coding Now
@@ -165,9 +162,6 @@ const LanguageLandingPage: React.FC<LanguageLandingPageProps> = ({
               <ul className="space-y-2">
                 <li className="flex items-center">
                   <span className="mr-2">⚡</span> Instant code execution
-                </li>
-                <li className="flex items-center">
-                  <span className="mr-2">🎨</span> Syntax highlighting
                 </li>
                 <li className="flex items-center">
                   <span className="mr-2">💾</span> Auto-save functionality
@@ -186,7 +180,6 @@ const LanguageLandingPage: React.FC<LanguageLandingPageProps> = ({
                 <li>✓ No installation required</li>
                 <li>✓ Clean, distraction-free interface</li>
                 <li>✓ Perfect for learning {languageName}</li>
-                <li>✓ Mobile-friendly design</li>
               </ul>
             </div>
           </div>

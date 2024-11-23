@@ -35,5 +35,5 @@
       "@/*": ["./src/*"],
     },
   },
-  "include": ["src", "vite.config.ts", "../frontend/config"]
+  "include": ["src", "vite.config.ts", "../frontend/config", "redirect/assembly.lazy.tsx", "redirect/bash.lazy.tsx", "redirect/c.lazy.tsx", "redirect/clojure.lazy.tsx", "redirect/cobol.lazy.tsx", "redirect/cpp.lazy.tsx", "redirect/d.lazy.tsx", "redirect/elixir.lazy.tsx", "redirect/erlang.lazy.tsx", "redirect/fortran.lazy.tsx", "redirect/go.lazy.tsx", "redirect/groovy.lazy.tsx", "redirect/haskell.lazy.tsx", "redirect/java.lazy.tsx", "redirect/javascript.lazy.tsx", "redirect/kotlin.lazy.tsx", "redirect/lisp.lazy.tsx", "redirect/lua.lazy.tsx", "redirect/nim.lazy.tsx", "redirect/objectivec.lazy.tsx", "redirect/ocaml.lazy.tsx", "redirect/octave.lazy.tsx", "redirect/pascal.lazy.tsx", "redirect/perl.lazy.tsx", "redirect/php.lazy.tsx", "redirect/prolog.lazy.tsx", "redirect/python.lazy.tsx", "redirect/r.lazy.tsx", "redirect/ruby.lazy.tsx", "redirect/rust.lazy.tsx", "redirect/scala.lazy.tsx", "redirect/sql.lazy.tsx", "redirect/swift.lazy.tsx", "redirect/typescript.lazy.tsx", "redirect/vbnc.lazy.tsx"]
 }

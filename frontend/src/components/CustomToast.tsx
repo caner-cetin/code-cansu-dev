@@ -1,3 +1,4 @@
+import React from 'react';
 import toast, { Toaster, ToastBar } from 'react-hot-toast';
 const CustomToast: React.FC = () => {
   return (

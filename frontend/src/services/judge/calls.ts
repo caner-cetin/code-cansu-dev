@@ -79,9 +79,11 @@ export async function reactCode(
 export async function reactSubmission(
 	token: string,
 ): Promise<ReactSubmissionResponse | undefined> {
+	const ctx = useAppStore.getState();
 	if (
-		typeof window !== "undefined" &&
-		localStorage.getItem(States.DISPLAYING_WAIFU_TIPS) === "1"
+		(typeof window !== "undefined" &&
+		localStorage.getItem(States.DISPLAYING_WAIFU_TIPS) === "1") ||
+		ctx.displayingSharedCode === true
 	)
 		return;
 	const res = await api.post<ReactSubmissionResponse>(
