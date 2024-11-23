@@ -6,7 +6,12 @@ import commonjs from "vite-plugin-commonjs";
 import path from "node:path";
 
 export default defineConfig({
-	plugins: [react(), tsconfigPaths(), TanStackRouterVite(), commonjs()],
+	plugins: [
+		react(),
+		tsconfigPaths(),
+		TanStackRouterVite(),
+		commonjs(),
+	],
 	resolve: {
 		alias: {
 			"@": path.resolve(__dirname, "src"),

@@ -1,10 +1,10 @@
 import axios, { type AxiosError } from "axios";
 import toast from "react-hot-toast";
-const api = axios.create({
-	baseURL: `${import.meta.env.VITE_BACKEND_PROTOCOL ?? "http"}://${import.meta.env.VITE_BACKEND_URI}:${import.meta.env.VITE_BACKEND_PORT ?? ""}`,
+const signallerApi = axios.create({
+	baseURL: `${import.meta.env.VITE_RTC_SIGNALLER_BACKEND_PROTOCOL ?? "http"}://${import.meta.env.VITE_RTC_SIGNALLER_BACKEND_URI}:${import.meta.env.VITE_RTC_SIGNALLER_BACKEND_PORT ?? ""}`,
 });
 
-api.interceptors.response.use(
+signallerApi.interceptors.response.use(
 	(response) => response,
 	async (error: Error | AxiosError) => {
 		if (axios.isAxiosError(error)) {
@@ -18,4 +18,4 @@ api.interceptors.response.use(
 	},
 );
 
-export default api;
+export default signallerApi;

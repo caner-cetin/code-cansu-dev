@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebRTC Test</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .container {
+            display: grid;
+            width: 800px;
+            grid-template-columns: 50% 50%;
+            grid-template-rows: auto;
+            gap: 20px;
+        }
+
+        .client {
+            flex: 1;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+
+        .log {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        button {
+            padding: 8px 16px;
+            background: #0070f3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #0051b3;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>WebRTC Test Page</h1>
+    <div class="container">
+        <div class="client">
+            <h2>Client 1</h2>
+            <div>Status: <span id="client1-status">Initializing...</span></div>
+            <div>Room ID: <span id="client1-room">-</span></div>
+            <button id="client1-send">Send Test Message</button>
+            <div class="log" id="client1-log"></div>
+        </div>
+        <div class="client">
+            <h2>Client 2</h2>
+            <div>Status: <span id="client2-status">Initializing...</span></div>
+            <div>Room ID: <span id="client2-room">-</span></div>
+            <button id="client2-send">Send Test Message</button>
+            <div class="log" id="client2-log"></div>
+        </div>
+        <div class="client">
+            <h2>Client 3</h2>
+            <div>Status: <span id="client3-status">Initializing...</span></div>
+            <div>Room ID: <span id="client3-room">-</span></div>
+            <button id="client3-send">Send Test Message</button>
+            <div class="log" id="client3-log"></div>
+        </div>
+        <div class="client">
+            <h2>Client 4</h2>
+            <div>Status: <span id="client4-status">Initializing...</span></div>
+            <div>Room ID: <span id="client4-room">-</span></div>
+            <button id="client4-send">Send Test Message</button>
+            <div class="log" id="client4-log"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Using built-in crypto.randomUUID() instead of uuid package
+        const roomId = crypto.randomUUID();
+
+        // Import your RTCClient class
+        const module = await import('./client.js');
+        const RTCClient = module.default;
+
+        // Setup logging
+        function log(clientId, message) {
+            const logElement = document.getElementById(`${clientId}-log`);
+            const entry = document.createElement('div');
+            entry.textContent = `${new Date().toISOString().split('T')[1].split('.')[0]} ${message}`;
+            logElement.appendChild(entry);
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        // Initialize clients
+
+        const client1 = {
+            client: new RTCClient(roomId, "ws://localhost:8080/ws"),
+            clientId: 'client1'
+        }
+        const client2 = {
+            client: new RTCClient(roomId, "ws://localhost:8080/ws"),
+            clientId: 'client2'
+        }
+        const client3 = {
+            client: new RTCClient(roomId, "ws://localhost:8080/ws"),
+            clientId: 'client3'
+        }
+        const client4 = {
+            client: new RTCClient(roomId, "ws://localhost:8080/ws"),
+            clientId: 'client4'
+        }
+        const clientStates = [client1, client2, client3, client4];
+
+        function updateStatus(client, clientId) {
+            const statusElement = document.getElementById(`${clientId}-status`);
+            const states = ['CONNECTING', 'OPEN', 'CLOSING', 'CLOSED'];
+            setInterval(() => {
+                statusElement.textContent = states[client.ws.readyState];
+            }, 1000);
+        }
+        clientStates.forEach(client => {
+            document.getElementById(`${client.clientId}-room`).textContent = roomId;
+            updateStatus(client.client, client.clientId);
+            client.client.onDataChannel = (data) => {
+                log(client.clientId, `Received: ${JSON.stringify(data)}`);
+            };
+            document.getElementById(`${client.clientId}-send`).addEventListener('click', () => {
+                log(client.clientId, 'Broadcasting message...');
+                client.client.broadcast({ Type: "test", Delta: `Hello from ${client.clientId}!` });
+            });
+        });
+    </script>
+</body>
+
+</html>
