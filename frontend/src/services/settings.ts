@@ -53,12 +53,6 @@ export enum Themes {
 	VibrantInk = "vibrant_ink",
 }
 
-export enum RenderFirst {
-	WelcomeMarkdown = 0,
-	CodeEditor = 1,
-	Unset = 2,
-}
-
 export enum LanguageId {
 	Markdown = 0,
 	AssemblyNASM = 45,
@@ -72,6 +66,8 @@ export enum LanguageId {
 	CPPGCC8 = 53,
 	CGCC9 = 50,
 	CPPGCC9 = 54,
+	CPPGCC13 = 91,
+	CGCC13 = 90,
 	Clojure = 86,
 	CSharpMono = 51,
 	COBOL = 77,

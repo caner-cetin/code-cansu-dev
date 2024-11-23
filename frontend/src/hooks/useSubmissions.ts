@@ -1,14 +1,12 @@
 import { toast } from "react-hot-toast";
-import type ReactAce from "react-ace/lib/ace";
 import { LANGUAGE_CONFIG } from "@/config/languages";
-import { LanguageId, Settings } from "@/services/settings";
+import { LanguageId } from "@/services/settings";
 import {
 	submitCode,
 	submitStdin,
 	submitSubmission,
 } from "@/services/judge/calls";
 import { useAppStore } from "@/stores/AppStore";
-import { useEditorRef } from "@/stores/EditorStore";
 import type { IAceEditor } from "react-ace/lib/types";
 
 export interface StoredSubmission {
@@ -47,12 +45,12 @@ export namespace Submissions {
 		editor: IAceEditor | undefined,
 	): Promise<void> {
 		const ctx = useAppStore.getState();
-		if (!editor) {
-			toast.error("Editor not initialized, please refresh page");
-			return;
-		}
 		if (ctx.languageId === LanguageId.Markdown) {
 			toast.error("what did you expect?");
+			return;
+		}
+		if (!editor) {
+			toast.error("Editor not initialized, please refresh page");
 			return;
 		}
 		const src = editor.session.getValue();

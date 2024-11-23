@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from "uuid";
 import { type DataConnection, Peer } from "peerjs";
 import signallerApi from "@/services/rtc/api";
 import { c } from "node_modules/vite/dist/node/types.d-aGj9QkWt";
+import { Ace } from "ace-builds";
 
 enum MessageTypes {
     PEER_JOINED = "peer_joined",
@@ -13,12 +14,6 @@ interface WSMessage {
     type: MessageTypes;
     payload: string;
 }
-
-interface BroadcastData {
-    Type: string;
-    Delta: any;
-}
-
 interface DataChannelMessage {
     Delta: any;
 }
@@ -35,16 +30,13 @@ export default class RTCClient {
     private peerConnectionTimeout: number = 5000;
     private wsReconnectTimeout: number | null = null;
 
-    constructor(roomId?: string) {
+    constructor(roomId?: string, createRoom: boolean = false) {
         this.peers = new Map();
         this.clientId = uuidv4();
         this.peer = this.createPeer();
-        
-        if (roomId === undefined) {
-            this.roomId = uuidv4();
-            this.InitializeRoom().catch(console.error);
-        } else {
-            this.roomId = roomId;
+        if (roomId !== undefined) this.roomId = roomId; else this.roomId = uuidv4();
+        if (createRoom === true) {
+            this.CreateRoom().catch(console.error);
         }
         
         this.initializeWebSocket();
@@ -95,7 +87,6 @@ export default class RTCClient {
         });
 
         conn.on('data', (data) => {
-            console.debug(data)
             if (this.onDataChannel) {
                 try {
                     const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
@@ -121,7 +112,7 @@ export default class RTCClient {
         if (!this.ws) return;
 
         this.ws.addEventListener("open", () => {
-            console.log('WebSocket connection established');
+            console.debug('WebSocket connection established for: ', this.clientId);
             this.connectionRetryCount = 0;
         });
 
@@ -174,7 +165,7 @@ export default class RTCClient {
         }
     }
 
-    async InitializeRoom() {
+    async CreateRoom() {
         try {
             await signallerApi.post(`/rooms/${this.roomId}/create`);
             console.log('Room initialized successfully');
@@ -184,14 +175,17 @@ export default class RTCClient {
         }
     }
 
-    broadcast(data: BroadcastData) {
-        let sentTo = 1;
+    broadcast(data: Ace.Delta) {
+        let sentTo = 0;
         const totalPeers = this.peers.size;
 
         if (totalPeers === 0) {
             console.warn("No peers to broadcast to");
             return;
         }
+
+        console.debug(`Broadcasting data to ${totalPeers} peers from host ${this.clientId}`);
+        console.debug('Data:', data);
 
         for (const [peerId, peer] of this.peers) {
             if (!peer.dataChannel || peer.dataChannel.readyState !== "open") {
@@ -200,7 +194,7 @@ export default class RTCClient {
             }
 
             try {
-                console.debug(`Peer ${sentTo}/${totalPeers}: ${this.clientId}`);
+                console.debug(`Peer ${sentTo+1}/${totalPeers}: ${this.clientId}`);
                 peer.dataChannel.send(JSON.stringify(data));
                 sentTo++;
             } catch (error) {
@@ -366,7 +360,6 @@ export default class RTCClient {
 			}
 	}
 
-	// Optional callback setters for additional functionality
 	private onPeerDisconnect?: (peerId: string) => void;
 	private onFatalError?: (error: Error) => void;
 
@@ -378,7 +371,6 @@ export default class RTCClient {
 			this.onFatalError = callback;
 	}
 
-	// Add these methods to allow registering additional event handlers
 	public onPeerConnected(callback: (peerId: string) => void) {
 			this.peer.on('connection', (conn) => {
 					callback(conn.peer);

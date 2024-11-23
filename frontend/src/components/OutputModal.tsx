@@ -59,7 +59,7 @@ const OutputModal: React.FC<OutputModalProps> = ({ displayingSharedCode, query: 
   })));
 
   const code = useEditorRef();
-  const { saveContent, loadContent, setMode } = useEditorContent(code, ctx.codeStorage, ctx.setCodeStorage);
+  const { loadContent, setMode } = useEditorContent(code, ctx.codeStorage, ctx.setCodeStorage);
 
   // Then, all useRef hooks
   const initialRenderRef = useRef(true);
@@ -297,7 +297,7 @@ const OutputModal: React.FC<OutputModalProps> = ({ displayingSharedCode, query: 
             )}
             {(!refetchInterval && !displayingSharedCode) && (
               <div className="flex items-center ml-auto">
-                <span className="text-sm text-gray-400">
+                <span className="text-sm text-gray-400 mr-2">
                   <Button
                     variant="secondary"
                     onClick={() => restoreCode()}
@@ -305,7 +305,7 @@ const OutputModal: React.FC<OutputModalProps> = ({ displayingSharedCode, query: 
                     <ClockClockwise alt="Restore Code" />
                   </Button>
                 </span>
-                <ShareButton token={submissionResult.token} />
+                <ShareButton uri={`${import.meta.env.VITE_FRONTEND_URI}/share/${activeTab}`} />
               </div>
             )}
           </h4>

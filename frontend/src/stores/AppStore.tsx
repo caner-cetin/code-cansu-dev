@@ -3,9 +3,7 @@ import { persist } from "zustand/middleware";
 import type { LanguagesResponse } from "@/services/judge/types";
 import type { StoredSubmission } from "@/hooks/useSubmissions";
 import {
-	Settings,
 	LanguageId,
-	RenderFirst,
 	Themes,
 	type CodeStorage,
 } from "@/services/settings";
@@ -25,8 +23,6 @@ export interface AppState {
 	setLive2DModelEnabled: (enabled: boolean) => void;
 
 	// Rendering and theme
-	renderFirst: number;
-	setRenderFirst: (renderFirst: number) => void;
 	colorTheme: string;
 	setColorTheme: (theme: string) => void;
 
@@ -37,6 +33,11 @@ export interface AppState {
 	setCodeStorage: (storage: CodeStorage) => void;
 	submissionCounter: number;
 	setSubmissionCounter: (key: number) => void;
+
+	rtcEnabled: boolean;
+	setRtcEnabled: (enabled: boolean) => void;
+	roomId: string | undefined;
+	setRoomId: (roomId: string | undefined) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -56,9 +57,6 @@ export const useAppStore = create<AppState>()(
 			live2DModelEnabled: true,
 			setLive2DModelEnabled: (enabled) => set({ live2DModelEnabled: enabled }),
 
-			// Rendering and theme
-			renderFirst: RenderFirst.WelcomeMarkdown,
-			setRenderFirst: (renderFirst) => set({ renderFirst }),
 			colorTheme: Themes.TomorrowNightEighties,
 			setColorTheme: (theme) => set({ colorTheme: theme }),
 
@@ -69,6 +67,12 @@ export const useAppStore = create<AppState>()(
 			setCodeStorage: (storage) => set({ codeStorage: storage }),
 			submissionCounter: 1,
 			setSubmissionCounter: (key) => set({ submissionCounter: key }),
+
+			rtcEnabled: false,
+			setRtcEnabled: (enabled) => set({ rtcEnabled: enabled }),
+
+			roomId: "",
+			setRoomId: (roomId) => set({ roomId }),
 		}),
 		{
 			name: "app-storage",
@@ -76,10 +80,8 @@ export const useAppStore = create<AppState>()(
 				languageId: state.languageId,
 				languages: state.languages,
 				live2DModelEnabled: state.live2DModelEnabled,
-				renderFirst: state.renderFirst,
 				colorTheme: state.colorTheme,
 				submissions: state.submissions,
-				ongoingCodeSubmissionId: state.ongoingCodeSubmissionId,
 				codeStorage: state.codeStorage,
 				submissionCounterKey: state.submissionCounter,
 			}),

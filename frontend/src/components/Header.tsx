@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { LanguageId, RenderFirst } from '@/services/settings'
+import { LanguageId } from '@/services/settings'
 import { Button } from '@/components/ui/button'
 import { SettingsPopover } from './settings/SettingsModal'
 import { Submissions } from '@/hooks/useSubmissions'
@@ -11,6 +11,8 @@ import { LANGUAGE_CONFIG } from '@/config/languages'
 import { useAppStore } from '@/stores/AppStore'
 import { useShallow } from 'zustand/react/shallow'
 import { useEditorRef } from '@/stores/EditorStore'
+import { BookOpenText, ShareNetwork } from '@phosphor-icons/react'
+import { LiveShare } from '@/components/LiveShare'
 
 export default function Header() {
   const ctx = useAppStore(useShallow((state) => ({
@@ -18,7 +20,6 @@ export default function Header() {
     languages: state.languages,
     setLanguageId: state.setLanguageId,
     displayingSharedCode: state.displayingSharedCode,
-    renderFirst: state.renderFirst,
     setSubmissions: state.setSubmissions,
     setSubmissionCounter: state.setSubmissionCounter
   })))
@@ -30,7 +31,7 @@ export default function Header() {
       <div className="flex justify-between items-center">
         <div className="text-[#a0a08b]">
           PIP-OS v7.1.0.8
-          {((ctx.languageId === LanguageId.Markdown) && (ctx.renderFirst === RenderFirst.WelcomeMarkdown)) && " - README"}
+          {(ctx.languageId === LanguageId.Markdown) && " - README"}
           {ctx.displayingSharedCode ? ` - ${LANGUAGE_CONFIG[ctx.languageId]?.runnerName} - READ ONLY` : ""}
         </div>
         <div className="flex items-center space-x-2">
@@ -66,7 +67,12 @@ export default function Header() {
           )}
         </div>
         <div className="flex items-center">
+          <Button variant="outline" size="icon" className='mr-4' onClick={() => ctx.setLanguageId(LanguageId.Markdown)}>
+            <BookOpenText className="h-4 w-4" alt='go to readme' />
+            <span className="sr-only">go to readme</span>
+          </Button>
           <SettingsPopover />
+          {!ctx.displayingSharedCode && <LiveShare />}
           <time className="text-[#a0a08b]" dateTime={new Date().toLocaleTimeString()} suppressHydrationWarning />
         </div>
       </div>

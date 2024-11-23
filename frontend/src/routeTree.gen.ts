@@ -18,7 +18,7 @@ import { Route as ShareTokenImport } from './routes/share.$token.'
 // Create Virtual Routes
 
 const IndexLazyImport = createFileRoute('/')()
-const RtcTestLazyImport = createFileRoute('/rtc/test')()
+const RtcRoomIdLazyImport = createFileRoute('/rtc/$roomId')()
 const LanguageVbncLazyImport = createFileRoute('/language/vbnc')()
 const LanguageTypescriptLazyImport = createFileRoute('/language/typescript')()
 const LanguageSwiftLazyImport = createFileRoute('/language/swift')()
@@ -160,11 +160,11 @@ const IndexLazyRoute = IndexLazyImport.update({
   getParentRoute: () => rootRoute,
 } as any).lazy(() => import('./routes/index.lazy').then((d) => d.Route))
 
-const RtcTestLazyRoute = RtcTestLazyImport.update({
-  id: '/rtc/test',
-  path: '/rtc/test',
+const RtcRoomIdLazyRoute = RtcRoomIdLazyImport.update({
+  id: '/rtc/$roomId',
+  path: '/rtc/$roomId',
   getParentRoute: () => rootRoute,
-} as any).lazy(() => import('./routes/rtc/test.lazy').then((d) => d.Route))
+} as any).lazy(() => import('./routes/rtc/$roomId.lazy').then((d) => d.Route))
 
 const LanguageVbncLazyRoute = LanguageVbncLazyImport.update({
   id: '/language/vbnc',
@@ -979,11 +979,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LanguageVbncLazyImport
       parentRoute: typeof rootRoute
     }
-    '/rtc/test': {
-      id: '/rtc/test'
-      path: '/rtc/test'
-      fullPath: '/rtc/test'
-      preLoaderRoute: typeof RtcTestLazyImport
+    '/rtc/$roomId': {
+      id: '/rtc/$roomId'
+      path: '/rtc/$roomId'
+      fullPath: '/rtc/$roomId'
+      preLoaderRoute: typeof RtcRoomIdLazyImport
       parentRoute: typeof rootRoute
     }
     '/share/$token/': {
@@ -991,6 +991,251 @@ declare module '@tanstack/react-router' {
       path: '/share/$token'
       fullPath: '/share/$token'
       preLoaderRoute: typeof ShareTokenImport
+      parentRoute: typeof rootRoute
+    }
+    '/language/redirect/assembly': {
+      id: '/language/redirect/assembly'
+      path: '/language/redirect/assembly'
+      fullPath: '/language/redirect/assembly'
+      preLoaderRoute: typeof LanguageRedirectAssemblyLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/language/redirect/bash': {
+      id: '/language/redirect/bash'
+      path: '/language/redirect/bash'
+      fullPath: '/language/redirect/bash'
+      preLoaderRoute: typeof LanguageRedirectBashLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/language/redirect/c': {
+      id: '/language/redirect/c'
+      path: '/language/redirect/c'
+      fullPath: '/language/redirect/c'
+      preLoaderRoute: typeof LanguageRedirectCLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/language/redirect/clojure': {
+      id: '/language/redirect/clojure'
+      path: '/language/redirect/clojure'
+      fullPath: '/language/redirect/clojure'
+      preLoaderRoute: typeof LanguageRedirectClojureLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/language/redirect/cobol': {
+      id: '/language/redirect/cobol'
+      path: '/language/redirect/cobol'
+      fullPath: '/language/redirect/cobol'
+      preLoaderRoute: typeof LanguageRedirectCobolLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/language/redirect/cpp': {
+      id: '/language/redirect/cpp'
+      path: '/language/redirect/cpp'
+      fullPath: '/language/redirect/cpp'
+      preLoaderRoute: typeof LanguageRedirectCppLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/language/redirect/d': {
+      id: '/language/redirect/d'
+      path: '/language/redirect/d'
+      fullPath: '/language/redirect/d'
+      preLoaderRoute: typeof LanguageRedirectDLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/language/redirect/elixir': {
+      id: '/language/redirect/elixir'
+      path: '/language/redirect/elixir'
+      fullPath: '/language/redirect/elixir'
+      preLoaderRoute: typeof LanguageRedirectElixirLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/language/redirect/erlang': {
+      id: '/language/redirect/erlang'
+      path: '/language/redirect/erlang'
+      fullPath: '/language/redirect/erlang'
+      preLoaderRoute: typeof LanguageRedirectErlangLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/language/redirect/fortran': {
+      id: '/language/redirect/fortran'
+      path: '/language/redirect/fortran'
+      fullPath: '/language/redirect/fortran'
+      preLoaderRoute: typeof LanguageRedirectFortranLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/language/redirect/go': {
+      id: '/language/redirect/go'
+      path: '/language/redirect/go'
+      fullPath: '/language/redirect/go'
+      preLoaderRoute: typeof LanguageRedirectGoLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/language/redirect/groovy': {
+      id: '/language/redirect/groovy'
+      path: '/language/redirect/groovy'
+      fullPath: '/language/redirect/groovy'
+      preLoaderRoute: typeof LanguageRedirectGroovyLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/language/redirect/haskell': {
+      id: '/language/redirect/haskell'
+      path: '/language/redirect/haskell'
+      fullPath: '/language/redirect/haskell'
+      preLoaderRoute: typeof LanguageRedirectHaskellLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/language/redirect/java': {
+      id: '/language/redirect/java'
+      path: '/language/redirect/java'
+      fullPath: '/language/redirect/java'
+      preLoaderRoute: typeof LanguageRedirectJavaLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/language/redirect/javascript': {
+      id: '/language/redirect/javascript'
+      path: '/language/redirect/javascript'
+      fullPath: '/language/redirect/javascript'
+      preLoaderRoute: typeof LanguageRedirectJavascriptLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/language/redirect/kotlin': {
+      id: '/language/redirect/kotlin'
+      path: '/language/redirect/kotlin'
+      fullPath: '/language/redirect/kotlin'
+      preLoaderRoute: typeof LanguageRedirectKotlinLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/language/redirect/lisp': {
+      id: '/language/redirect/lisp'
+      path: '/language/redirect/lisp'
+      fullPath: '/language/redirect/lisp'
+      preLoaderRoute: typeof LanguageRedirectLispLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/language/redirect/lua': {
+      id: '/language/redirect/lua'
+      path: '/language/redirect/lua'
+      fullPath: '/language/redirect/lua'
+      preLoaderRoute: typeof LanguageRedirectLuaLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/language/redirect/nim': {
+      id: '/language/redirect/nim'
+      path: '/language/redirect/nim'
+      fullPath: '/language/redirect/nim'
+      preLoaderRoute: typeof LanguageRedirectNimLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/language/redirect/objectivec': {
+      id: '/language/redirect/objectivec'
+      path: '/language/redirect/objectivec'
+      fullPath: '/language/redirect/objectivec'
+      preLoaderRoute: typeof LanguageRedirectObjectivecLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/language/redirect/ocaml': {
+      id: '/language/redirect/ocaml'
+      path: '/language/redirect/ocaml'
+      fullPath: '/language/redirect/ocaml'
+      preLoaderRoute: typeof LanguageRedirectOcamlLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/language/redirect/octave': {
+      id: '/language/redirect/octave'
+      path: '/language/redirect/octave'
+      fullPath: '/language/redirect/octave'
+      preLoaderRoute: typeof LanguageRedirectOctaveLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/language/redirect/pascal': {
+      id: '/language/redirect/pascal'
+      path: '/language/redirect/pascal'
+      fullPath: '/language/redirect/pascal'
+      preLoaderRoute: typeof LanguageRedirectPascalLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/language/redirect/perl': {
+      id: '/language/redirect/perl'
+      path: '/language/redirect/perl'
+      fullPath: '/language/redirect/perl'
+      preLoaderRoute: typeof LanguageRedirectPerlLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/language/redirect/php': {
+      id: '/language/redirect/php'
+      path: '/language/redirect/php'
+      fullPath: '/language/redirect/php'
+      preLoaderRoute: typeof LanguageRedirectPhpLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/language/redirect/prolog': {
+      id: '/language/redirect/prolog'
+      path: '/language/redirect/prolog'
+      fullPath: '/language/redirect/prolog'
+      preLoaderRoute: typeof LanguageRedirectPrologLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/language/redirect/python': {
+      id: '/language/redirect/python'
+      path: '/language/redirect/python'
+      fullPath: '/language/redirect/python'
+      preLoaderRoute: typeof LanguageRedirectPythonLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/language/redirect/r': {
+      id: '/language/redirect/r'
+      path: '/language/redirect/r'
+      fullPath: '/language/redirect/r'
+      preLoaderRoute: typeof LanguageRedirectRLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/language/redirect/ruby': {
+      id: '/language/redirect/ruby'
+      path: '/language/redirect/ruby'
+      fullPath: '/language/redirect/ruby'
+      preLoaderRoute: typeof LanguageRedirectRubyLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/language/redirect/rust': {
+      id: '/language/redirect/rust'
+      path: '/language/redirect/rust'
+      fullPath: '/language/redirect/rust'
+      preLoaderRoute: typeof LanguageRedirectRustLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/language/redirect/scala': {
+      id: '/language/redirect/scala'
+      path: '/language/redirect/scala'
+      fullPath: '/language/redirect/scala'
+      preLoaderRoute: typeof LanguageRedirectScalaLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/language/redirect/sql': {
+      id: '/language/redirect/sql'
+      path: '/language/redirect/sql'
+      fullPath: '/language/redirect/sql'
+      preLoaderRoute: typeof LanguageRedirectSqlLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/language/redirect/swift': {
+      id: '/language/redirect/swift'
+      path: '/language/redirect/swift'
+      fullPath: '/language/redirect/swift'
+      preLoaderRoute: typeof LanguageRedirectSwiftLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/language/redirect/typescript': {
+      id: '/language/redirect/typescript'
+      path: '/language/redirect/typescript'
+      fullPath: '/language/redirect/typescript'
+      preLoaderRoute: typeof LanguageRedirectTypescriptLazyImport
+      parentRoute: typeof rootRoute
+    }
+    '/language/redirect/vbnc': {
+      id: '/language/redirect/vbnc'
+      path: '/language/redirect/vbnc'
+      fullPath: '/language/redirect/vbnc'
+      preLoaderRoute: typeof LanguageRedirectVbncLazyImport
       parentRoute: typeof rootRoute
     }
   }
@@ -1035,8 +1280,43 @@ export interface FileRoutesByFullPath {
   '/language/swift': typeof LanguageSwiftLazyRoute
   '/language/typescript': typeof LanguageTypescriptLazyRoute
   '/language/vbnc': typeof LanguageVbncLazyRoute
-  '/rtc/test': typeof RtcTestLazyRoute
+  '/rtc/$roomId': typeof RtcRoomIdLazyRoute
   '/share/$token': typeof ShareTokenRoute
+  '/language/redirect/assembly': typeof LanguageRedirectAssemblyLazyRoute
+  '/language/redirect/bash': typeof LanguageRedirectBashLazyRoute
+  '/language/redirect/c': typeof LanguageRedirectCLazyRoute
+  '/language/redirect/clojure': typeof LanguageRedirectClojureLazyRoute
+  '/language/redirect/cobol': typeof LanguageRedirectCobolLazyRoute
+  '/language/redirect/cpp': typeof LanguageRedirectCppLazyRoute
+  '/language/redirect/d': typeof LanguageRedirectDLazyRoute
+  '/language/redirect/elixir': typeof LanguageRedirectElixirLazyRoute
+  '/language/redirect/erlang': typeof LanguageRedirectErlangLazyRoute
+  '/language/redirect/fortran': typeof LanguageRedirectFortranLazyRoute
+  '/language/redirect/go': typeof LanguageRedirectGoLazyRoute
+  '/language/redirect/groovy': typeof LanguageRedirectGroovyLazyRoute
+  '/language/redirect/haskell': typeof LanguageRedirectHaskellLazyRoute
+  '/language/redirect/java': typeof LanguageRedirectJavaLazyRoute
+  '/language/redirect/javascript': typeof LanguageRedirectJavascriptLazyRoute
+  '/language/redirect/kotlin': typeof LanguageRedirectKotlinLazyRoute
+  '/language/redirect/lisp': typeof LanguageRedirectLispLazyRoute
+  '/language/redirect/lua': typeof LanguageRedirectLuaLazyRoute
+  '/language/redirect/nim': typeof LanguageRedirectNimLazyRoute
+  '/language/redirect/objectivec': typeof LanguageRedirectObjectivecLazyRoute
+  '/language/redirect/ocaml': typeof LanguageRedirectOcamlLazyRoute
+  '/language/redirect/octave': typeof LanguageRedirectOctaveLazyRoute
+  '/language/redirect/pascal': typeof LanguageRedirectPascalLazyRoute
+  '/language/redirect/perl': typeof LanguageRedirectPerlLazyRoute
+  '/language/redirect/php': typeof LanguageRedirectPhpLazyRoute
+  '/language/redirect/prolog': typeof LanguageRedirectPrologLazyRoute
+  '/language/redirect/python': typeof LanguageRedirectPythonLazyRoute
+  '/language/redirect/r': typeof LanguageRedirectRLazyRoute
+  '/language/redirect/ruby': typeof LanguageRedirectRubyLazyRoute
+  '/language/redirect/rust': typeof LanguageRedirectRustLazyRoute
+  '/language/redirect/scala': typeof LanguageRedirectScalaLazyRoute
+  '/language/redirect/sql': typeof LanguageRedirectSqlLazyRoute
+  '/language/redirect/swift': typeof LanguageRedirectSwiftLazyRoute
+  '/language/redirect/typescript': typeof LanguageRedirectTypescriptLazyRoute
+  '/language/redirect/vbnc': typeof LanguageRedirectVbncLazyRoute
 }
 
 export interface FileRoutesByTo {
@@ -1076,8 +1356,43 @@ export interface FileRoutesByTo {
   '/language/swift': typeof LanguageSwiftLazyRoute
   '/language/typescript': typeof LanguageTypescriptLazyRoute
   '/language/vbnc': typeof LanguageVbncLazyRoute
-  '/rtc/test': typeof RtcTestLazyRoute
+  '/rtc/$roomId': typeof RtcRoomIdLazyRoute
   '/share/$token': typeof ShareTokenRoute
+  '/language/redirect/assembly': typeof LanguageRedirectAssemblyLazyRoute
+  '/language/redirect/bash': typeof LanguageRedirectBashLazyRoute
+  '/language/redirect/c': typeof LanguageRedirectCLazyRoute
+  '/language/redirect/clojure': typeof LanguageRedirectClojureLazyRoute
+  '/language/redirect/cobol': typeof LanguageRedirectCobolLazyRoute
+  '/language/redirect/cpp': typeof LanguageRedirectCppLazyRoute
+  '/language/redirect/d': typeof LanguageRedirectDLazyRoute
+  '/language/redirect/elixir': typeof LanguageRedirectElixirLazyRoute
+  '/language/redirect/erlang': typeof LanguageRedirectErlangLazyRoute
+  '/language/redirect/fortran': typeof LanguageRedirectFortranLazyRoute
+  '/language/redirect/go': typeof LanguageRedirectGoLazyRoute
+  '/language/redirect/groovy': typeof LanguageRedirectGroovyLazyRoute
+  '/language/redirect/haskell': typeof LanguageRedirectHaskellLazyRoute
+  '/language/redirect/java': typeof LanguageRedirectJavaLazyRoute
+  '/language/redirect/javascript': typeof LanguageRedirectJavascriptLazyRoute
+  '/language/redirect/kotlin': typeof LanguageRedirectKotlinLazyRoute
+  '/language/redirect/lisp': typeof LanguageRedirectLispLazyRoute
+  '/language/redirect/lua': typeof LanguageRedirectLuaLazyRoute
+  '/language/redirect/nim': typeof LanguageRedirectNimLazyRoute
+  '/language/redirect/objectivec': typeof LanguageRedirectObjectivecLazyRoute
+  '/language/redirect/ocaml': typeof LanguageRedirectOcamlLazyRoute
+  '/language/redirect/octave': typeof LanguageRedirectOctaveLazyRoute
+  '/language/redirect/pascal': typeof LanguageRedirectPascalLazyRoute
+  '/language/redirect/perl': typeof LanguageRedirectPerlLazyRoute
+  '/language/redirect/php': typeof LanguageRedirectPhpLazyRoute
+  '/language/redirect/prolog': typeof LanguageRedirectPrologLazyRoute
+  '/language/redirect/python': typeof LanguageRedirectPythonLazyRoute
+  '/language/redirect/r': typeof LanguageRedirectRLazyRoute
+  '/language/redirect/ruby': typeof LanguageRedirectRubyLazyRoute
+  '/language/redirect/rust': typeof LanguageRedirectRustLazyRoute
+  '/language/redirect/scala': typeof LanguageRedirectScalaLazyRoute
+  '/language/redirect/sql': typeof LanguageRedirectSqlLazyRoute
+  '/language/redirect/swift': typeof LanguageRedirectSwiftLazyRoute
+  '/language/redirect/typescript': typeof LanguageRedirectTypescriptLazyRoute
+  '/language/redirect/vbnc': typeof LanguageRedirectVbncLazyRoute
 }
 
 export interface FileRoutesById {
@@ -1118,8 +1433,43 @@ export interface FileRoutesById {
   '/language/swift': typeof LanguageSwiftLazyRoute
   '/language/typescript': typeof LanguageTypescriptLazyRoute
   '/language/vbnc': typeof LanguageVbncLazyRoute
-  '/rtc/test': typeof RtcTestLazyRoute
+  '/rtc/$roomId': typeof RtcRoomIdLazyRoute
   '/share/$token/': typeof ShareTokenRoute
+  '/language/redirect/assembly': typeof LanguageRedirectAssemblyLazyRoute
+  '/language/redirect/bash': typeof LanguageRedirectBashLazyRoute
+  '/language/redirect/c': typeof LanguageRedirectCLazyRoute
+  '/language/redirect/clojure': typeof LanguageRedirectClojureLazyRoute
+  '/language/redirect/cobol': typeof LanguageRedirectCobolLazyRoute
+  '/language/redirect/cpp': typeof LanguageRedirectCppLazyRoute
+  '/language/redirect/d': typeof LanguageRedirectDLazyRoute
+  '/language/redirect/elixir': typeof LanguageRedirectElixirLazyRoute
+  '/language/redirect/erlang': typeof LanguageRedirectErlangLazyRoute
+  '/language/redirect/fortran': typeof LanguageRedirectFortranLazyRoute
+  '/language/redirect/go': typeof LanguageRedirectGoLazyRoute
+  '/language/redirect/groovy': typeof LanguageRedirectGroovyLazyRoute
+  '/language/redirect/haskell': typeof LanguageRedirectHaskellLazyRoute
+  '/language/redirect/java': typeof LanguageRedirectJavaLazyRoute
+  '/language/redirect/javascript': typeof LanguageRedirectJavascriptLazyRoute
+  '/language/redirect/kotlin': typeof LanguageRedirectKotlinLazyRoute
+  '/language/redirect/lisp': typeof LanguageRedirectLispLazyRoute
+  '/language/redirect/lua': typeof LanguageRedirectLuaLazyRoute
+  '/language/redirect/nim': typeof LanguageRedirectNimLazyRoute
+  '/language/redirect/objectivec': typeof LanguageRedirectObjectivecLazyRoute
+  '/language/redirect/ocaml': typeof LanguageRedirectOcamlLazyRoute
+  '/language/redirect/octave': typeof LanguageRedirectOctaveLazyRoute
+  '/language/redirect/pascal': typeof LanguageRedirectPascalLazyRoute
+  '/language/redirect/perl': typeof LanguageRedirectPerlLazyRoute
+  '/language/redirect/php': typeof LanguageRedirectPhpLazyRoute
+  '/language/redirect/prolog': typeof LanguageRedirectPrologLazyRoute
+  '/language/redirect/python': typeof LanguageRedirectPythonLazyRoute
+  '/language/redirect/r': typeof LanguageRedirectRLazyRoute
+  '/language/redirect/ruby': typeof LanguageRedirectRubyLazyRoute
+  '/language/redirect/rust': typeof LanguageRedirectRustLazyRoute
+  '/language/redirect/scala': typeof LanguageRedirectScalaLazyRoute
+  '/language/redirect/sql': typeof LanguageRedirectSqlLazyRoute
+  '/language/redirect/swift': typeof LanguageRedirectSwiftLazyRoute
+  '/language/redirect/typescript': typeof LanguageRedirectTypescriptLazyRoute
+  '/language/redirect/vbnc': typeof LanguageRedirectVbncLazyRoute
 }
 
 export interface FileRouteTypes {
@@ -1161,7 +1511,7 @@ export interface FileRouteTypes {
     | '/language/swift'
     | '/language/typescript'
     | '/language/vbnc'
-    | '/rtc/test'
+    | '/rtc/$roomId'
     | '/share/$token'
     | '/language/redirect/assembly'
     | '/language/redirect/bash'
@@ -1236,7 +1586,7 @@ export interface FileRouteTypes {
     | '/language/swift'
     | '/language/typescript'
     | '/language/vbnc'
-    | '/rtc/test'
+    | '/rtc/$roomId'
     | '/share/$token'
     | '/language/redirect/assembly'
     | '/language/redirect/bash'
@@ -1311,7 +1661,7 @@ export interface FileRouteTypes {
     | '/language/swift'
     | '/language/typescript'
     | '/language/vbnc'
-    | '/rtc/test'
+    | '/rtc/$roomId'
     | '/share/$token/'
     | '/language/redirect/assembly'
     | '/language/redirect/bash'
@@ -1388,8 +1738,43 @@ export interface RootRouteChildren {
   LanguageSwiftLazyRoute: typeof LanguageSwiftLazyRoute
   LanguageTypescriptLazyRoute: typeof LanguageTypescriptLazyRoute
   LanguageVbncLazyRoute: typeof LanguageVbncLazyRoute
-  RtcTestLazyRoute: typeof RtcTestLazyRoute
+  RtcRoomIdLazyRoute: typeof RtcRoomIdLazyRoute
   ShareTokenRoute: typeof ShareTokenRoute
+  LanguageRedirectAssemblyLazyRoute: typeof LanguageRedirectAssemblyLazyRoute
+  LanguageRedirectBashLazyRoute: typeof LanguageRedirectBashLazyRoute
+  LanguageRedirectCLazyRoute: typeof LanguageRedirectCLazyRoute
+  LanguageRedirectClojureLazyRoute: typeof LanguageRedirectClojureLazyRoute
+  LanguageRedirectCobolLazyRoute: typeof LanguageRedirectCobolLazyRoute
+  LanguageRedirectCppLazyRoute: typeof LanguageRedirectCppLazyRoute
+  LanguageRedirectDLazyRoute: typeof LanguageRedirectDLazyRoute
+  LanguageRedirectElixirLazyRoute: typeof LanguageRedirectElixirLazyRoute
+  LanguageRedirectErlangLazyRoute: typeof LanguageRedirectErlangLazyRoute
+  LanguageRedirectFortranLazyRoute: typeof LanguageRedirectFortranLazyRoute
+  LanguageRedirectGoLazyRoute: typeof LanguageRedirectGoLazyRoute
+  LanguageRedirectGroovyLazyRoute: typeof LanguageRedirectGroovyLazyRoute
+  LanguageRedirectHaskellLazyRoute: typeof LanguageRedirectHaskellLazyRoute
+  LanguageRedirectJavaLazyRoute: typeof LanguageRedirectJavaLazyRoute
+  LanguageRedirectJavascriptLazyRoute: typeof LanguageRedirectJavascriptLazyRoute
+  LanguageRedirectKotlinLazyRoute: typeof LanguageRedirectKotlinLazyRoute
+  LanguageRedirectLispLazyRoute: typeof LanguageRedirectLispLazyRoute
+  LanguageRedirectLuaLazyRoute: typeof LanguageRedirectLuaLazyRoute
+  LanguageRedirectNimLazyRoute: typeof LanguageRedirectNimLazyRoute
+  LanguageRedirectObjectivecLazyRoute: typeof LanguageRedirectObjectivecLazyRoute
+  LanguageRedirectOcamlLazyRoute: typeof LanguageRedirectOcamlLazyRoute
+  LanguageRedirectOctaveLazyRoute: typeof LanguageRedirectOctaveLazyRoute
+  LanguageRedirectPascalLazyRoute: typeof LanguageRedirectPascalLazyRoute
+  LanguageRedirectPerlLazyRoute: typeof LanguageRedirectPerlLazyRoute
+  LanguageRedirectPhpLazyRoute: typeof LanguageRedirectPhpLazyRoute
+  LanguageRedirectPrologLazyRoute: typeof LanguageRedirectPrologLazyRoute
+  LanguageRedirectPythonLazyRoute: typeof LanguageRedirectPythonLazyRoute
+  LanguageRedirectRLazyRoute: typeof LanguageRedirectRLazyRoute
+  LanguageRedirectRubyLazyRoute: typeof LanguageRedirectRubyLazyRoute
+  LanguageRedirectRustLazyRoute: typeof LanguageRedirectRustLazyRoute
+  LanguageRedirectScalaLazyRoute: typeof LanguageRedirectScalaLazyRoute
+  LanguageRedirectSqlLazyRoute: typeof LanguageRedirectSqlLazyRoute
+  LanguageRedirectSwiftLazyRoute: typeof LanguageRedirectSwiftLazyRoute
+  LanguageRedirectTypescriptLazyRoute: typeof LanguageRedirectTypescriptLazyRoute
+  LanguageRedirectVbncLazyRoute: typeof LanguageRedirectVbncLazyRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
@@ -1429,8 +1814,43 @@ const rootRouteChildren: RootRouteChildren = {
   LanguageSwiftLazyRoute: LanguageSwiftLazyRoute,
   LanguageTypescriptLazyRoute: LanguageTypescriptLazyRoute,
   LanguageVbncLazyRoute: LanguageVbncLazyRoute,
-  RtcTestLazyRoute: RtcTestLazyRoute,
+  RtcRoomIdLazyRoute: RtcRoomIdLazyRoute,
   ShareTokenRoute: ShareTokenRoute,
+  LanguageRedirectAssemblyLazyRoute: LanguageRedirectAssemblyLazyRoute,
+  LanguageRedirectBashLazyRoute: LanguageRedirectBashLazyRoute,
+  LanguageRedirectCLazyRoute: LanguageRedirectCLazyRoute,
+  LanguageRedirectClojureLazyRoute: LanguageRedirectClojureLazyRoute,
+  LanguageRedirectCobolLazyRoute: LanguageRedirectCobolLazyRoute,
+  LanguageRedirectCppLazyRoute: LanguageRedirectCppLazyRoute,
+  LanguageRedirectDLazyRoute: LanguageRedirectDLazyRoute,
+  LanguageRedirectElixirLazyRoute: LanguageRedirectElixirLazyRoute,
+  LanguageRedirectErlangLazyRoute: LanguageRedirectErlangLazyRoute,
+  LanguageRedirectFortranLazyRoute: LanguageRedirectFortranLazyRoute,
+  LanguageRedirectGoLazyRoute: LanguageRedirectGoLazyRoute,
+  LanguageRedirectGroovyLazyRoute: LanguageRedirectGroovyLazyRoute,
+  LanguageRedirectHaskellLazyRoute: LanguageRedirectHaskellLazyRoute,
+  LanguageRedirectJavaLazyRoute: LanguageRedirectJavaLazyRoute,
+  LanguageRedirectJavascriptLazyRoute: LanguageRedirectJavascriptLazyRoute,
+  LanguageRedirectKotlinLazyRoute: LanguageRedirectKotlinLazyRoute,
+  LanguageRedirectLispLazyRoute: LanguageRedirectLispLazyRoute,
+  LanguageRedirectLuaLazyRoute: LanguageRedirectLuaLazyRoute,
+  LanguageRedirectNimLazyRoute: LanguageRedirectNimLazyRoute,
+  LanguageRedirectObjectivecLazyRoute: LanguageRedirectObjectivecLazyRoute,
+  LanguageRedirectOcamlLazyRoute: LanguageRedirectOcamlLazyRoute,
+  LanguageRedirectOctaveLazyRoute: LanguageRedirectOctaveLazyRoute,
+  LanguageRedirectPascalLazyRoute: LanguageRedirectPascalLazyRoute,
+  LanguageRedirectPerlLazyRoute: LanguageRedirectPerlLazyRoute,
+  LanguageRedirectPhpLazyRoute: LanguageRedirectPhpLazyRoute,
+  LanguageRedirectPrologLazyRoute: LanguageRedirectPrologLazyRoute,
+  LanguageRedirectPythonLazyRoute: LanguageRedirectPythonLazyRoute,
+  LanguageRedirectRLazyRoute: LanguageRedirectRLazyRoute,
+  LanguageRedirectRubyLazyRoute: LanguageRedirectRubyLazyRoute,
+  LanguageRedirectRustLazyRoute: LanguageRedirectRustLazyRoute,
+  LanguageRedirectScalaLazyRoute: LanguageRedirectScalaLazyRoute,
+  LanguageRedirectSqlLazyRoute: LanguageRedirectSqlLazyRoute,
+  LanguageRedirectSwiftLazyRoute: LanguageRedirectSwiftLazyRoute,
+  LanguageRedirectTypescriptLazyRoute: LanguageRedirectTypescriptLazyRoute,
+  LanguageRedirectVbncLazyRoute: LanguageRedirectVbncLazyRoute,
 }
 
 export const routeTree = rootRoute
@@ -1479,7 +1899,7 @@ export const routeTree = rootRoute
         "/language/swift",
         "/language/typescript",
         "/language/vbnc",
-        "/rtc/test",
+        "/rtc/$roomId",
         "/share/$token/",
         "/language/redirect/assembly",
         "/language/redirect/bash",
@@ -1626,11 +2046,116 @@ export const routeTree = rootRoute
     "/language/vbnc": {
       "filePath": "language/vbnc.lazy.tsx"
     },
-    "/rtc/test": {
-      "filePath": "rtc/test.lazy.tsx"
+    "/rtc/$roomId": {
+      "filePath": "rtc/$roomId.lazy.tsx"
     },
     "/share/$token/": {
       "filePath": "share.$token..tsx"
+    },
+    "/language/redirect/assembly": {
+      "filePath": "language/redirect/assembly.lazy.tsx"
+    },
+    "/language/redirect/bash": {
+      "filePath": "language/redirect/bash.lazy.tsx"
+    },
+    "/language/redirect/c": {
+      "filePath": "language/redirect/c.lazy.tsx"
+    },
+    "/language/redirect/clojure": {
+      "filePath": "language/redirect/clojure.lazy.tsx"
+    },
+    "/language/redirect/cobol": {
+      "filePath": "language/redirect/cobol.lazy.tsx"
+    },
+    "/language/redirect/cpp": {
+      "filePath": "language/redirect/cpp.lazy.tsx"
+    },
+    "/language/redirect/d": {
+      "filePath": "language/redirect/d.lazy.tsx"
+    },
+    "/language/redirect/elixir": {
+      "filePath": "language/redirect/elixir.lazy.tsx"
+    },
+    "/language/redirect/erlang": {
+      "filePath": "language/redirect/erlang.lazy.tsx"
+    },
+    "/language/redirect/fortran": {
+      "filePath": "language/redirect/fortran.lazy.tsx"
+    },
+    "/language/redirect/go": {
+      "filePath": "language/redirect/go.lazy.tsx"
+    },
+    "/language/redirect/groovy": {
+      "filePath": "language/redirect/groovy.lazy.tsx"
+    },
+    "/language/redirect/haskell": {
+      "filePath": "language/redirect/haskell.lazy.tsx"
+    },
+    "/language/redirect/java": {
+      "filePath": "language/redirect/java.lazy.tsx"
+    },
+    "/language/redirect/javascript": {
+      "filePath": "language/redirect/javascript.lazy.tsx"
+    },
+    "/language/redirect/kotlin": {
+      "filePath": "language/redirect/kotlin.lazy.tsx"
+    },
+    "/language/redirect/lisp": {
+      "filePath": "language/redirect/lisp.lazy.tsx"
+    },
+    "/language/redirect/lua": {
+      "filePath": "language/redirect/lua.lazy.tsx"
+    },
+    "/language/redirect/nim": {
+      "filePath": "language/redirect/nim.lazy.tsx"
+    },
+    "/language/redirect/objectivec": {
+      "filePath": "language/redirect/objectivec.lazy.tsx"
+    },
+    "/language/redirect/ocaml": {
+      "filePath": "language/redirect/ocaml.lazy.tsx"
+    },
+    "/language/redirect/octave": {
+      "filePath": "language/redirect/octave.lazy.tsx"
+    },
+    "/language/redirect/pascal": {
+      "filePath": "language/redirect/pascal.lazy.tsx"
+    },
+    "/language/redirect/perl": {
+      "filePath": "language/redirect/perl.lazy.tsx"
+    },
+    "/language/redirect/php": {
+      "filePath": "language/redirect/php.lazy.tsx"
+    },
+    "/language/redirect/prolog": {
+      "filePath": "language/redirect/prolog.lazy.tsx"
+    },
+    "/language/redirect/python": {
+      "filePath": "language/redirect/python.lazy.tsx"
+    },
+    "/language/redirect/r": {
+      "filePath": "language/redirect/r.lazy.tsx"
+    },
+    "/language/redirect/ruby": {
+      "filePath": "language/redirect/ruby.lazy.tsx"
+    },
+    "/language/redirect/rust": {
+      "filePath": "language/redirect/rust.lazy.tsx"
+    },
+    "/language/redirect/scala": {
+      "filePath": "language/redirect/scala.lazy.tsx"
+    },
+    "/language/redirect/sql": {
+      "filePath": "language/redirect/sql.lazy.tsx"
+    },
+    "/language/redirect/swift": {
+      "filePath": "language/redirect/swift.lazy.tsx"
+    },
+    "/language/redirect/typescript": {
+      "filePath": "language/redirect/typescript.lazy.tsx"
+    },
+    "/language/redirect/vbnc": {
+      "filePath": "language/redirect/vbnc.lazy.tsx"
     }
   }
 }
