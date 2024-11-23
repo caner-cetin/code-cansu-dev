@@ -15,7 +15,7 @@ interface WSMessage {
     payload: string;
 }
 interface DataChannelMessage {
-    Delta: any;
+    Delta?: Ace.Delta;
 }
 
 export default class RTCClient {
@@ -88,12 +88,7 @@ export default class RTCClient {
 
         conn.on('data', (data) => {
             if (this.onDataChannel) {
-                try {
-                    const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
-                    this.onDataChannel(parsedData);
-                } catch (error) {
-                    console.error('Error parsing data:', error);
-                }
+              this.onDataChannel(data as DataChannelMessage);
             }
         });
 
@@ -175,7 +170,7 @@ export default class RTCClient {
         }
     }
 
-    broadcast(data: Ace.Delta) {
+    broadcast(data: DataChannelMessage) {
         let sentTo = 0;
         const totalPeers = this.peers.size;
 
@@ -195,7 +190,7 @@ export default class RTCClient {
 
             try {
                 console.debug(`Peer ${sentTo+1}/${totalPeers}: ${this.clientId}`);
-                peer.dataChannel.send(JSON.stringify(data));
+                peer.send(data);
                 sentTo++;
             } catch (error) {
                 console.error(`Error sending to peer ${peerId}:`, error);

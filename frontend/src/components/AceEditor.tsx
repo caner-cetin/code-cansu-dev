@@ -168,7 +168,6 @@ export const AceEditor: React.FC<{ displayingSharedCode?: boolean }> = ({
 
     setTimeout(() => editor.renderer.updateFull(true), 100);
   }, [languageId, colorTheme]);
-
   return (
     <AceEditorComponent
       ref={editorRef}
