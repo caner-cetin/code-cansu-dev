@@ -58,14 +58,11 @@ type Hub struct {
 }
 
 type Room struct {
-	ID string
-	// Registered clients in this room
-	clients map[string]*Client
-	// Maintains order of joined peers
-	peerList []string
-	// Broadcast messages to all clients in the room
-	broadcast chan []byte
-	mu        sync.RWMutex
+	ID            string
+	clients       map[string]*Client
+	peerList      []string
+	broadcast     chan []byte
+	mu            sync.RWMutex
 }
 
 func NewHub() *Hub {
@@ -91,6 +88,10 @@ func (h *Hub) Run() {
 		case client := <-h.register:
 			h.mu.Lock()
 			room, exists := h.rooms[client.roomID]
+			slog.Log(context.Background(), slog.LevelDebug, "registering client",
+				"room", client.roomID,
+				"client", client.ID,
+			)
 			if !exists {
 				room = NewRoom(client.roomID)
 				h.rooms[client.roomID] = room

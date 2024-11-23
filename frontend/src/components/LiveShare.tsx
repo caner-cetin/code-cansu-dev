@@ -1,4 +1,4 @@
-import React, { useEffect } from "react"
+import React, { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
@@ -7,8 +7,11 @@ import { useShallow } from "zustand/react/shallow"
 import { useRTCStore } from "@/stores/RTCStore"
 import ShareButton from "@/components/ShareButton"
 import { Circle, EyeSlash, ShareNetwork } from "@phosphor-icons/react"
-import { v4 as uuidv4 } from "uuid";
+import { v4 as uuidv4 } from "uuid"
 import RTCClient from "@/services/rtc/client"
+import { useEditorRef } from "@/stores/EditorStore"
+import { Ace } from "ace-builds"
+
 export function LiveShare() {
   const ctx = useRTCStore(
     useShallow((state) => ({
@@ -20,16 +23,51 @@ export function LiveShare() {
       setRoomId: state.setRoomId,
     }))
   )
+  const [isLocalChange, setIsLocalChange] = useState(false)
+  const editorRef = useEditorRef()
 
   useEffect(() => {
     if (ctx.rtcEnabled && ctx.rtcClient === undefined) {
-      ctx.setRoomId(uuidv4())
-      ctx.setRtcClient(new RTCClient(ctx.roomId, true))
+      const rid = uuidv4()
+      ctx.setRoomId(rid)
+      ctx.setRtcClient(new RTCClient(rid, true))
     } else if (!ctx.rtcEnabled) {
       ctx.setRtcClient(undefined)
     }
-
   }, [ctx.rtcEnabled])
+
+  useEffect(() => {
+    if (!ctx.rtcClient?.ws) return
+    if (ctx.rtcClient.ws.readyState === ctx.rtcClient.ws.OPEN) {
+      ctx.rtcClient.setOnDataChannel((data) => {
+        if (!editorRef.current || !data.Delta) return
+
+        setIsLocalChange(true) // Mark that this is a remote change
+        const editor = editorRef.current.editor
+        editor.getSession().getDocument().applyDelta(data.Delta)
+        setIsLocalChange(false) // Reset the flag after applying
+      })
+    }
+  }, [ctx.rtcClient?.ws?.readyState])
+
+  useEffect(() => {
+    if (!editorRef.current) return
+
+    const editor = editorRef.current.editor
+    const broadcastChanges = (delta: Ace.Delta) => {
+      // Only broadcast if the change was made locally
+      if (!isLocalChange && ctx.rtcClient?.ws?.readyState === ctx.rtcClient?.ws?.OPEN) {
+        ctx.rtcClient.broadcast({
+          Delta: delta,
+        })
+      }
+    }
+
+    editor.on("change", broadcastChanges)
+    return () => {
+      editor.off("change", broadcastChanges)
+    }
+  }, [editorRef.current, ctx.rtcClient, isLocalChange])
 
   return (
     <Popover>
@@ -87,4 +125,3 @@ export function LiveShare() {
     </Popover>
   )
 }
-

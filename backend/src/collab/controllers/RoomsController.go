@@ -1,7 +1,9 @@
 package controllers
 
 import (
+	"context"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -50,7 +52,11 @@ func SubscribeRoom(w http.ResponseWriter, r *http.Request) {
 	}
 
 	client.hub.register <- client
-
+	slog.Log(context.Background(), slog.LevelDebug,
+		"starting write and read pump",
+		"room", roomID,
+		"client", clientID,
+	)
 	// Start goroutines for reading and writing
 	go client.writePump()
 	go client.readPump()
