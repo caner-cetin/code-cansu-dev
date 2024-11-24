@@ -19,7 +19,7 @@ var (
 )
 
 func init() {
-	go controllers.MainHub.Run()
+	controllers.SetupWSHandlers()
 }
 
 func main() {
@@ -29,11 +29,13 @@ func main() {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins: []string{"https://code.cansu.dev",
+		AllowedOrigins: []string{
+			"https://code.cansu.dev",
 			"http://localhost:5173",
 			"http://localhost:4173",
 			"https://haul.code-cansu-dev.pages.dev",
-			"http://localhost:3000"},
+			"http://localhost:3000",
+		},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token", "Upgrade", "Sec-WebSocket-Key", "Sec-WebSocket-Version", "Sec-WebSocket-Extensions"},
 		ExposedHeaders:   []string{"Link"},
@@ -41,15 +43,11 @@ func main() {
 		MaxAge:           300,
 	}))
 
-	r.Route("/rooms", func(r chi.Router) {
-		r.Route("/{roomId}", func(r chi.Router) {
-			r.Post("/create", controllers.CreateRoom)
-			r.Route("/{clientId}", func(r chi.Router) {
-				r.Get("/subscribe", controllers.SubscribeRoom)
-				r.Get("/rooms/{roomId}/peers", controllers.GetRoomPeers)
-			})
-		})
+	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "https://www.youtube.com/watch?v=eAaGYwBR38I", http.StatusSeeOther)
 	})
+	r.Post("/rooms/create", controllers.CreateRoom)
+	r.Get("/rooms/subscribe", controllers.SubscribeRoom)
 	chi.Walk(r, func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
 		fmt.Printf("[%s]: '%s' \n", method, route)
 		return nil

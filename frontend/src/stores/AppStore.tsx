@@ -34,10 +34,6 @@ export interface AppState {
 	submissionCounter: number;
 	setSubmissionCounter: (key: number) => void;
 
-	rtcEnabled: boolean;
-	setRtcEnabled: (enabled: boolean) => void;
-	roomId: string | undefined;
-	setRoomId: (roomId: string | undefined) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -67,12 +63,6 @@ export const useAppStore = create<AppState>()(
 			setCodeStorage: (storage) => set({ codeStorage: storage }),
 			submissionCounter: 1,
 			setSubmissionCounter: (key) => set({ submissionCounter: key }),
-
-			rtcEnabled: false,
-			setRtcEnabled: (enabled) => set({ rtcEnabled: enabled }),
-
-			roomId: "",
-			setRoomId: (roomId) => set({ roomId }),
 		}),
 		{
 			name: "app-storage",

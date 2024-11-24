@@ -19,55 +19,30 @@ export function LiveShare() {
       setRtcClient: state.setRtcClient,
       rtcEnabled: state.rtcEnabled,
       setRtcEnabled: state.setRtcEnabled,
-      roomId: state.roomId,
-      setRoomId: state.setRoomId,
+      proxyToken: state.proxyToken,
     }))
   )
-  const [isLocalChange, setIsLocalChange] = useState(false)
   const editorRef = useEditorRef()
-
   useEffect(() => {
     if (ctx.rtcEnabled && ctx.rtcClient === undefined) {
-      const rid = uuidv4()
-      ctx.setRoomId(rid)
-      ctx.setRtcClient(new RTCClient(rid, true))
+      const client = new RTCClient(true)
+      if (editorRef.current) {
+        client.editorRef = editorRef
+        client.setupEditorBroadcasts();
+      }
+      ctx.setRtcClient(client)
     } else if (!ctx.rtcEnabled) {
       ctx.setRtcClient(undefined)
     }
   }, [ctx.rtcEnabled])
 
   useEffect(() => {
-    if (!ctx.rtcClient?.ws) return
-    if (ctx.rtcClient.ws.readyState === ctx.rtcClient.ws.OPEN) {
-      ctx.rtcClient.setOnDataChannel((data) => {
-        if (!editorRef.current || !data.Delta) return
-
-        setIsLocalChange(true) // Mark that this is a remote change
-        const editor = editorRef.current.editor
-        editor.getSession().getDocument().applyDelta(data.Delta)
-        setIsLocalChange(false) // Reset the flag after applying
-      })
+    if (ctx.rtcEnabled) {
+      if (!ctx.rtcClient) return;
+      ctx.rtcClient.editorRef = editorRef;
+      ctx.rtcClient.setupEditorBroadcasts();
     }
-  }, [ctx.rtcClient?.ws?.readyState])
-
-  useEffect(() => {
-    if (!editorRef.current) return
-
-    const editor = editorRef.current.editor
-    const broadcastChanges = (delta: Ace.Delta) => {
-      // Only broadcast if the change was made locally
-      if (!isLocalChange && ctx.rtcClient?.ws?.readyState === ctx.rtcClient?.ws?.OPEN) {
-        ctx.rtcClient.broadcast({
-          Delta: delta,
-        })
-      }
-    }
-
-    editor.on("change", broadcastChanges)
-    return () => {
-      editor.off("change", broadcastChanges)
-    }
-  }, [editorRef.current, ctx.rtcClient, isLocalChange])
+  }, [editorRef])
 
   return (
     <Popover>
@@ -99,19 +74,19 @@ export function LiveShare() {
               </div>
 
               <div className="flex space-x-2">
-                {ctx.rtcClient?.peers && Array.from(ctx.rtcClient.peers.keys()).map((seat, index) => (
+                {/* {ctx.rtcClient?.peers && Array.from(ctx.rtcClient.peers.keys()).map((seat, index) => (
                   <div key={index} className="flex items-center space-x-1">
                     <Circle
                       className="h-4 w-4"
                       weight={ctx.rtcClient?.peers.get(seat)?.dataChannel.readyState === "open" ? 'fill' : 'regular'}
                     />
                   </div>
-                ))}
+                ))} */}
               </div>
             </div>
 
             <div className="flex items-center space-x-2">
-              <ShareButton uri={`${import.meta.env.VITE_FRONTEND_URI}/rtc/${ctx.roomId}`} />
+              <ShareButton uri={`${import.meta.env.VITE_FRONTEND_URI}/rtc/${ctx.proxyToken}`} />
               <Label>Invite Link</Label>
             </div>
           </div>

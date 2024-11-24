@@ -18,7 +18,7 @@ import { Route as ShareTokenImport } from './routes/share.$token.'
 // Create Virtual Routes
 
 const IndexLazyImport = createFileRoute('/')()
-const RtcRoomIdLazyImport = createFileRoute('/rtc/$roomId')()
+const RtcProxyLazyImport = createFileRoute('/rtc/$proxy')()
 const LanguageVbncLazyImport = createFileRoute('/language/vbnc')()
 const LanguageTypescriptLazyImport = createFileRoute('/language/typescript')()
 const LanguageSwiftLazyImport = createFileRoute('/language/swift')()
@@ -160,11 +160,11 @@ const IndexLazyRoute = IndexLazyImport.update({
   getParentRoute: () => rootRoute,
 } as any).lazy(() => import('./routes/index.lazy').then((d) => d.Route))
 
-const RtcRoomIdLazyRoute = RtcRoomIdLazyImport.update({
-  id: '/rtc/$roomId',
-  path: '/rtc/$roomId',
+const RtcProxyLazyRoute = RtcProxyLazyImport.update({
+  id: '/rtc/$proxy',
+  path: '/rtc/$proxy',
   getParentRoute: () => rootRoute,
-} as any).lazy(() => import('./routes/rtc/$roomId.lazy').then((d) => d.Route))
+} as any).lazy(() => import('./routes/rtc/$proxy.lazy').then((d) => d.Route))
 
 const LanguageVbncLazyRoute = LanguageVbncLazyImport.update({
   id: '/language/vbnc',
@@ -979,11 +979,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LanguageVbncLazyImport
       parentRoute: typeof rootRoute
     }
-    '/rtc/$roomId': {
-      id: '/rtc/$roomId'
-      path: '/rtc/$roomId'
-      fullPath: '/rtc/$roomId'
-      preLoaderRoute: typeof RtcRoomIdLazyImport
+    '/rtc/$proxy': {
+      id: '/rtc/$proxy'
+      path: '/rtc/$proxy'
+      fullPath: '/rtc/$proxy'
+      preLoaderRoute: typeof RtcProxyLazyImport
       parentRoute: typeof rootRoute
     }
     '/share/$token/': {
@@ -1280,7 +1280,7 @@ export interface FileRoutesByFullPath {
   '/language/swift': typeof LanguageSwiftLazyRoute
   '/language/typescript': typeof LanguageTypescriptLazyRoute
   '/language/vbnc': typeof LanguageVbncLazyRoute
-  '/rtc/$roomId': typeof RtcRoomIdLazyRoute
+  '/rtc/$proxy': typeof RtcProxyLazyRoute
   '/share/$token': typeof ShareTokenRoute
   '/language/redirect/assembly': typeof LanguageRedirectAssemblyLazyRoute
   '/language/redirect/bash': typeof LanguageRedirectBashLazyRoute
@@ -1356,7 +1356,7 @@ export interface FileRoutesByTo {
   '/language/swift': typeof LanguageSwiftLazyRoute
   '/language/typescript': typeof LanguageTypescriptLazyRoute
   '/language/vbnc': typeof LanguageVbncLazyRoute
-  '/rtc/$roomId': typeof RtcRoomIdLazyRoute
+  '/rtc/$proxy': typeof RtcProxyLazyRoute
   '/share/$token': typeof ShareTokenRoute
   '/language/redirect/assembly': typeof LanguageRedirectAssemblyLazyRoute
   '/language/redirect/bash': typeof LanguageRedirectBashLazyRoute
@@ -1433,7 +1433,7 @@ export interface FileRoutesById {
   '/language/swift': typeof LanguageSwiftLazyRoute
   '/language/typescript': typeof LanguageTypescriptLazyRoute
   '/language/vbnc': typeof LanguageVbncLazyRoute
-  '/rtc/$roomId': typeof RtcRoomIdLazyRoute
+  '/rtc/$proxy': typeof RtcProxyLazyRoute
   '/share/$token/': typeof ShareTokenRoute
   '/language/redirect/assembly': typeof LanguageRedirectAssemblyLazyRoute
   '/language/redirect/bash': typeof LanguageRedirectBashLazyRoute
@@ -1511,7 +1511,7 @@ export interface FileRouteTypes {
     | '/language/swift'
     | '/language/typescript'
     | '/language/vbnc'
-    | '/rtc/$roomId'
+    | '/rtc/$proxy'
     | '/share/$token'
     | '/language/redirect/assembly'
     | '/language/redirect/bash'
@@ -1586,7 +1586,7 @@ export interface FileRouteTypes {
     | '/language/swift'
     | '/language/typescript'
     | '/language/vbnc'
-    | '/rtc/$roomId'
+    | '/rtc/$proxy'
     | '/share/$token'
     | '/language/redirect/assembly'
     | '/language/redirect/bash'
@@ -1661,7 +1661,7 @@ export interface FileRouteTypes {
     | '/language/swift'
     | '/language/typescript'
     | '/language/vbnc'
-    | '/rtc/$roomId'
+    | '/rtc/$proxy'
     | '/share/$token/'
     | '/language/redirect/assembly'
     | '/language/redirect/bash'
@@ -1738,7 +1738,7 @@ export interface RootRouteChildren {
   LanguageSwiftLazyRoute: typeof LanguageSwiftLazyRoute
   LanguageTypescriptLazyRoute: typeof LanguageTypescriptLazyRoute
   LanguageVbncLazyRoute: typeof LanguageVbncLazyRoute
-  RtcRoomIdLazyRoute: typeof RtcRoomIdLazyRoute
+  RtcProxyLazyRoute: typeof RtcProxyLazyRoute
   ShareTokenRoute: typeof ShareTokenRoute
   LanguageRedirectAssemblyLazyRoute: typeof LanguageRedirectAssemblyLazyRoute
   LanguageRedirectBashLazyRoute: typeof LanguageRedirectBashLazyRoute
@@ -1814,7 +1814,7 @@ const rootRouteChildren: RootRouteChildren = {
   LanguageSwiftLazyRoute: LanguageSwiftLazyRoute,
   LanguageTypescriptLazyRoute: LanguageTypescriptLazyRoute,
   LanguageVbncLazyRoute: LanguageVbncLazyRoute,
-  RtcRoomIdLazyRoute: RtcRoomIdLazyRoute,
+  RtcProxyLazyRoute: RtcProxyLazyRoute,
   ShareTokenRoute: ShareTokenRoute,
   LanguageRedirectAssemblyLazyRoute: LanguageRedirectAssemblyLazyRoute,
   LanguageRedirectBashLazyRoute: LanguageRedirectBashLazyRoute,
@@ -1899,7 +1899,7 @@ export const routeTree = rootRoute
         "/language/swift",
         "/language/typescript",
         "/language/vbnc",
-        "/rtc/$roomId",
+        "/rtc/$proxy",
         "/share/$token/",
         "/language/redirect/assembly",
         "/language/redirect/bash",
@@ -2046,8 +2046,8 @@ export const routeTree = rootRoute
     "/language/vbnc": {
       "filePath": "language/vbnc.lazy.tsx"
     },
-    "/rtc/$roomId": {
-      "filePath": "rtc/$roomId.lazy.tsx"
+    "/rtc/$proxy": {
+      "filePath": "rtc/$proxy.lazy.tsx"
     },
     "/share/$token/": {
       "filePath": "share.$token..tsx"
