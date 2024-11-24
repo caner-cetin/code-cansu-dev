@@ -5,14 +5,14 @@ import { useRTCStore } from '@/stores/RTCStore'
 import { useShallow } from 'zustand/react/shallow'
 import RTCClient from '@/services/rtc/client'
 
-export const Route = createLazyFileRoute('/rtc/$roomId')({
+export const Route = createLazyFileRoute('/rtc/$proxy')({
   component: RouteComponent,
 })
 
 function RouteComponent() {
-  const { roomId } = Route.useParams()
+  const { proxy } = Route.useParams()
   const ctx = useRTCStore(useShallow((state) => ({
-    setRoomId: state.setRoomId,
+    setProxyToken: state.setProxyToken,
     setRtcEnabled: state.setRtcEnabled,
     rtcClient: state.rtcClient,
     setRtcClient: state.setRtcClient,
@@ -23,8 +23,8 @@ function RouteComponent() {
       <Link
         to="/"
         onClick={() => {
-          ctx.setRoomId(roomId);
-          ctx.setRtcClient(new RTCClient(roomId, false));
+          ctx.setProxyToken(proxy);
+          ctx.setRtcClient(new RTCClient(false));
           ctx.setRtcEnabled(true);
         }}
         className='ml-4'>Enter</Link>

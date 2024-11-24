@@ -10,9 +10,11 @@ export interface RTCState {
   rtcClient: RTCClient | undefined;
   setRtcClient: (client: RTCClient | undefined) => void;
 
-  roomId: string | undefined;
-  setRoomId: (roomId: string | undefined) => void;
+  proxyToken: string | undefined;
+  setProxyToken: (roomId: string | undefined) => void;
 
+  backendId: string | undefined;
+  setBackendId: (backendId: string | undefined) => void;
 }
 
 export const useRTCStore = create<RTCState>()(
@@ -24,14 +26,18 @@ export const useRTCStore = create<RTCState>()(
       rtcClient: undefined,
       setRtcClient: (client) => set({ rtcClient: client }),
 
-      roomId: undefined,
-      setRoomId: (roomId) => set({ roomId }),
+      proxyToken: undefined,
+      setProxyToken: (token) => set({ proxyToken: token }),
+
+      backendId: undefined,
+      setBackendId: (backendId) => set({ backendId: backendId }),
     }),
     {
       name: "app-storage",
       partialize: (state) => ({
         rtcEnabled: state.rtcEnabled,
-        roomId: state.roomId,
+        proxyToken: state.proxyToken,
+        backendId: state.backendId,
       }),
     },
   ),
