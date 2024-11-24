@@ -9,20 +9,12 @@ import { useState } from 'react'
 import { LanguageSelectionPopover } from './LanguageSelectionPopover'
 import { LANGUAGE_CONFIG } from '@/config/languages'
 import { useAppStore } from '@/stores/AppStore'
-import { useShallow } from 'zustand/react/shallow'
 import { useEditorRef } from '@/stores/EditorStore'
-import { BookOpenText, ShareNetwork } from '@phosphor-icons/react'
+import { BookOpenText } from '@phosphor-icons/react'
 import { LiveShare } from '@/components/LiveShare'
 
 export default function Header() {
-  const ctx = useAppStore(useShallow((state) => ({
-    languageId: state.languageId,
-    languages: state.languages,
-    setLanguageId: state.setLanguageId,
-    displayingSharedCode: state.displayingSharedCode,
-    setSubmissions: state.setSubmissions,
-    setSubmissionCounter: state.setSubmissionCounter
-  })))
+  const ctx = useAppStore()
   const [displayStdin, setDisplayStdin] = useState(false)
   const code = useEditorRef();
 

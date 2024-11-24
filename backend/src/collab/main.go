@@ -46,8 +46,10 @@ func main() {
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "https://www.youtube.com/watch?v=eAaGYwBR38I", http.StatusSeeOther)
 	})
-	r.Post("/rooms/create", controllers.CreateRoom)
-	r.Get("/rooms/subscribe", controllers.SubscribeRoom)
+	r.Route("/rooms", func(r chi.Router) {
+		r.Post("/create", controllers.CreateRoom)
+		r.Get("/subscribe", controllers.SubscribeRoom)
+	})
 	chi.Walk(r, func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
 		fmt.Printf("[%s]: '%s' \n", method, route)
 		return nil

@@ -4,6 +4,8 @@ import type { CodeStorage } from "@/services/settings";
 import { config } from "ace-builds";
 import { useAppStore } from "@/stores/AppStore";
 import type ReactAce from "react-ace/lib/ace";
+import { useRTCStore } from "@/stores/RTCStore";
+import { LanguageIdPayload, MessageTypes } from "@/services/rtc/client";
 
 config.set(
 	"basePath",
@@ -15,6 +17,7 @@ export const useEditorContent = (
 	codeStorage: CodeStorage,
 	setCodeStorage: (storage: CodeStorage) => void,
 ) => {
+	const { rtcEnabled, rtcClient } = useRTCStore();
 	// Get the current language mode using useMemo to prevent unnecessary recalculations
 	const languageMode = useMemo(() => {
 		if (!editorRef.current?.editor) return null;
@@ -42,6 +45,14 @@ export const useEditorContent = (
 			editorRef.current.editor.setValue(""); // Clear first
 			editorRef.current.editor.session.setValue(newContent);
 			editorRef.current.editor.clearSelection();
+			if (rtcEnabled) {
+				rtcClient?.ws?.send(
+					JSON.stringify({
+						type: MessageTypes.EDITOR_CONTENT,
+						payload: btoa(newContent),
+					}),
+				);
+			}
 		},
 		[editorRef, languageMode, codeStorage],
 	);
@@ -64,8 +75,10 @@ export function useCodeEditor(
 	editorRef: React.MutableRefObject<ReactAce | null>,
 ) {
 	const { languageId, colorTheme, codeStorage, setCodeStorage } = useAppStore();
+	const {rtcEnabled, rtcClient} = useRTCStore();
 	const isFirstRender = useRef(true);
 	const previousLanguageRef = useRef<number>(languageId);
+	const isLocalChange = useRef(true);
 
 	// Memoize editor instance
 	const editor = useMemo(() => editorRef.current?.editor, [editorRef.current]);
@@ -93,6 +106,13 @@ export function useCodeEditor(
 			const newContent = savedCode ? atob(savedCode) : defaultText;
 			editor.session.setValue(newContent);
 			editor.clearSelection();
+
+			if (rtcEnabled) {
+				rtcClient?.ws?.send(JSON.stringify({
+					type: MessageTypes.EDITOR_CONTENT,
+					payload: btoa(newContent),
+				}))
+			}
 		},
 		[editor, codeStorage],
 	);
@@ -122,10 +142,16 @@ export function useCodeEditor(
 
 			previousLanguageRef.current = languageId;
 
-			// Force refresh with a slight delay
-			setTimeout(() => {
-				editor.renderer.updateFull(true);
-			}, 50);
+			if (rtcEnabled) {
+				rtcClient?.ws?.send(JSON.stringify({
+						type: MessageTypes.CURRENT_LANGUAGE_ID,
+						payload: {
+								id: languageId,
+								issuedBy: rtcClient.metadata.id,
+						}
+				}));
+		}
+
 		}
 	}, [languageId, editor, saveEditorContent, loadEditorContent]);
 

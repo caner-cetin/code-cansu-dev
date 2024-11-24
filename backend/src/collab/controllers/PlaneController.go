@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -91,7 +90,7 @@ const (
 func SpawnBackend() (*ControlConnectResponse, error) {
 	rid, err := uuid.NewRandom()
 	if err != nil {
-		slog.Log(context.Background(), slog.LevelError, "Failed to generate UUID", "error", err)
+		slog.Error("Failed to generate UUID", "error", err)
 		return nil, err
 	}
 	var request ControlConnectRequest
@@ -101,33 +100,33 @@ func SpawnBackend() (*ControlConnectResponse, error) {
 	request.Spawn.Executable.Image = "code-cansu-dev-backend"
 	body, err := json.Marshal(request)
 	if err != nil {
-		slog.Log(context.Background(), slog.LevelError, "Failed to marshal JSON", "error", err)
+		slog.Error("Failed to marshal JSON", "error", err)
 		return nil, err
 	}
 	reader := bytes.NewReader(body)
 	resp, err := http.DefaultClient.Post("http://localhost:8787/ctrl/connect", "application/json", reader)
 	if err != nil {
-		slog.Log(context.Background(), slog.LevelError, "Failed to connect to Plane controller", "error", err)
+		slog.Error("Failed to connect to Plane controller", "error", err)
 		return nil, err
 	}
 	if resp.StatusCode != http.StatusOK {
 		err = fmt.Errorf("failed to create room, status: %d", resp.StatusCode)
 		if resp.StatusCode == http.StatusNotFound {
-			slog.Log(context.Background(), slog.LevelError, "Plane controller is down", "status", resp.StatusCode)
+			slog.Error("Plane controller not found", "error", err)
 			return nil, err
 		}
 		failedResponse, err := io.ReadAll(resp.Body)
 		if err != nil {
-			slog.Log(context.Background(), slog.LevelError, "Failed to read response body", "error", err)
+			slog.Error("Failed to read response body", "error", err)
 			return nil, err
 		}
-		slog.Log(context.Background(), slog.LevelError, "Failed to spawn backend", "status", resp.StatusCode, "response", failedResponse)
+		slog.Error("Failed to spawn backend", "status", resp.StatusCode, "response", string(failedResponse))
 		return nil, err
 	}
 	defer resp.Body.Close()
 	var response ControlConnectResponse
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		slog.Log(context.Background(), slog.LevelError, "Failed to decode JSON", "error", err)
+		slog.Error("Failed to decode JSON", "error", err)
 		return nil, err
 	}
 	return &response, err

@@ -8,6 +8,8 @@ import {
 } from "@/services/judge/calls";
 import { useAppStore } from "@/stores/AppStore";
 import type { IAceEditor } from "react-ace/lib/types";
+import { useRTCStore } from "@/stores/RTCStore";
+import { MessageTypes } from "@/services/rtc/client";
 
 export interface StoredSubmission {
 	localId: number;
@@ -25,6 +27,7 @@ export namespace Submissions {
 
 	export function saveSubmission(submission: StoredSubmission) {
 		const ctx = useAppStore.getState();
+		const rtcCtx = useRTCStore.getState();
 		if (!ctx.submissions) {
 			ctx.setSubmissions([]);
 		}
@@ -32,6 +35,15 @@ export namespace Submissions {
 		if (ctx.submissions) {
 			ctx.setSubmissions(
 				[submission, ...ctx.submissions].sort((a, b) => b.localId - a.localId),
+			);
+		}
+
+		if (rtcCtx.host) {
+			rtcCtx.rtcClient?.ws?.send(
+				JSON.stringify({
+					type: MessageTypes.NEW_SUBMISSION,
+					payload: submission,
+				}),
 			);
 		}
 	}

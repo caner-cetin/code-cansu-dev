@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils"
 import type { LanguageConfig } from '@/config/types'
 import { useAppStore } from '@/stores/AppStore'
 import { useShallow } from 'zustand/react/shallow'
+import { useRTCStore } from '@/stores/RTCStore'
 
 export interface LanguageSelectionPopoverProps {
   // header is also using the language config
@@ -22,6 +23,10 @@ export const LanguageSelectionPopover: React.FC<LanguageSelectionPopoverProps> =
     setLanguageId: state.setLanguageId,
     languages: state.languages,
   })))
+  const { rtcEnabled, host } = useRTCStore(useShallow((state) => ({
+    rtcEnabled: state.rtcEnabled,
+    host: state.host,
+  })))
   const { languageId, setLanguageId, languages } = ctx;
   if (!languages) return;
   const selectedLanguage = languages.find(lang => lang.id === languageId)
@@ -30,6 +35,7 @@ export const LanguageSelectionPopover: React.FC<LanguageSelectionPopoverProps> =
     <Popover>
       <PopoverTrigger asChild>
         <Button
+          disabled={rtcEnabled && !host}
           variant="outline"
           // biome-ignore lint/a11y/useSemanticElements: <explanation>
           role="combobox"
