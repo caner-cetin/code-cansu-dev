@@ -34,6 +34,17 @@ As a comparison, with no cache, from initial load to output, JDoodle consumes 3.
 for loading all languages. Language switch takes almost nothing, where as JDoodle transfers 6 MB of network just to switch from COBOL to Fortran. 
 
 Cached initial network transfer is only 4 KB, and executions, submissions, etc. takes only a few kilobytes per query.
+
+- Real time collaboration
+
+this feature is heavily work in progress, its nowhere near being finished, im just adding here to tell you that i am working on it. there are still many features // UI changes planned to implement (such as but not limited to multiple cursor tracking, chat rooms, seperate code tabs, etc.) so this may take a while. if you want to look at progress of code, check for `haul` branch.
+
+here is very rough preview of how it looks with two clients (not demonstrated but all edits are broadcasted and every connected peer is able to edit unless otherwise configured)
+
+https://github.com/user-attachments/assets/09df660f-f7d0-4071-b084-aa6ff81d1ceb
+
+
+
 more to come, wip.
 
 
