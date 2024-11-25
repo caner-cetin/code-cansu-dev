@@ -8,17 +8,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-type ArInternalMetadatum struct {
-	Key       string
-	Value     pgtype.Text
-	CreatedAt pgtype.Timestamp
-	UpdatedAt pgtype.Timestamp
-}
-
-type Client struct {
-	ID string
-}
-
 type CodeAiReaction struct {
 	ID        int32
 	Code      pgtype.Text
@@ -28,69 +17,38 @@ type CodeAiReaction struct {
 	DeletedAt pgtype.Timestamptz
 }
 
-type DraftSubmission struct {
-	ID         int32
-	Sourcecode string
-	Stdin      pgtype.Text
-	Sent       bool
-	Createdat  pgtype.Timestamptz
-	Updatedat  pgtype.Timestamptz
-	Deletedat  pgtype.Timestamptz
-}
-
-type Language struct {
-	ID         int32
-	Name       pgtype.Text
-	CompileCmd pgtype.Text
-	RunCmd     pgtype.Text
-	SourceFile pgtype.Text
-	IsArchived pgtype.Bool
-}
-
-type SchemaMigration struct {
-	Version string
-}
-
 type Submission struct {
-	ID                                   int32
-	SourceCode                           pgtype.Text
-	LanguageID                           pgtype.Int4
-	Stdin                                pgtype.Text
-	ExpectedOutput                       pgtype.Text
-	Stdout                               pgtype.Text
-	StatusID                             pgtype.Int4
-	CreatedAt                            pgtype.Timestamp
-	FinishedAt                           pgtype.Timestamp
-	Time                                 pgtype.Numeric
-	Memory                               pgtype.Int4
-	Stderr                               pgtype.Text
-	Token                                pgtype.Text
-	NumberOfRuns                         pgtype.Int4
-	CpuTimeLimit                         pgtype.Numeric
-	CpuExtraTime                         pgtype.Numeric
-	WallTimeLimit                        pgtype.Numeric
-	MemoryLimit                          pgtype.Int4
-	StackLimit                           pgtype.Int4
-	MaxProcessesAndOrThreads             pgtype.Int4
-	EnablePerProcessAndThreadTimeLimit   pgtype.Bool
-	EnablePerProcessAndThreadMemoryLimit pgtype.Bool
-	MaxFileSize                          pgtype.Int4
-	CompileOutput                        pgtype.Text
-	ExitCode                             pgtype.Int4
-	ExitSignal                           pgtype.Int4
-	Message                              pgtype.Text
-	WallTime                             pgtype.Numeric
-	CompilerOptions                      pgtype.Text
-	CommandLineArguments                 pgtype.Text
-	RedirectStderrToStdout               pgtype.Bool
-	CallbackUrl                          pgtype.Text
-	AdditionalFiles                      []byte
-	EnableNetwork                        pgtype.Bool
-	StartedAt                            pgtype.Timestamp
-	QueuedAt                             pgtype.Timestamp
-	UpdatedAt                            pgtype.Timestamp
-	QueueHost                            pgtype.Text
-	ExecutionHost                        pgtype.Text
+	ID                       int32
+	SourceCode               pgtype.Text
+	LanguageID               pgtype.Int4
+	Stdin                    pgtype.Text
+	Stdout                   pgtype.Text
+	StatusID                 pgtype.Int4
+	Time                     pgtype.Float4
+	Memory                   pgtype.Int4
+	MemoryHistory            []int32
+	MemoryMin                pgtype.Int4
+	MemoryMax                pgtype.Int4
+	KernelStackBytes         pgtype.Int4
+	PageFaults               pgtype.Int4
+	MajorPageFaults          pgtype.Int4
+	IoReadBytes              pgtype.Int4
+	IoWriteBytes             pgtype.Int4
+	IoReadCount              pgtype.Int4
+	IoWriteCount             pgtype.Int4
+	Oom                      pgtype.Int4
+	OomKill                  pgtype.Int4
+	VoluntaryContextSwitch   pgtype.Int4
+	InvoluntaryContextSwitch pgtype.Int4
+	Token                    pgtype.Text
+	MaxFileSize              pgtype.Int4
+	ExitCode                 pgtype.Int4
+	WallTime                 pgtype.Float4
+	CompilerOptions          pgtype.Text
+	CommandLineArguments     pgtype.Text
+	AdditionalFiles          []byte
+	CreatedAt                pgtype.Timestamp
+	UpdatedAt                pgtype.Timestamp
 }
 
 type SubmissionAiReaction struct {

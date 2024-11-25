@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
-	"os"
-	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/containerd/cgroups/v2/cgroup2"
+	"github.com/containerd/cgroups/v2/cgroup2/stats"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
@@ -69,9 +69,9 @@ func UpdateContainerResources(containerID string, config ContainerResourceConfig
 }
 
 type ExecutionResult struct {
-	ExitCode int             `json:"exitCode"`
+	ExitCode int64           `json:"exitCode"`
 	Stdout   string          `json:"stdout"`
-	Stderr   string          `json:"stderr"`
+	Stderr   string          `json:"-"`
 	Duration time.Duration   `json:"duration"`
 	Error    error           `json:"error"`
 	Metrics  ResourceMetrics `json:"metrics"`
@@ -118,9 +118,8 @@ func ExecuteInContainer(ctx context.Context, imageName string, cmd []string, std
 	hostConfig := &container.HostConfig{
 		Resources: container.Resources{
 			Memory:     512 * 1024 * 1024, // 512MB limit
-			MemorySwap: -1,                // Disable swap
+			MemorySwap: -1,
 			CPUPeriod:  100000,
-			CPUQuota:   100000, // Limit to 1 CPU
 		},
 	}
 
@@ -168,31 +167,33 @@ func ExecuteInContainer(ctx context.Context, imageName string, cmd []string, std
 		}
 	}()
 
-	memoryMetrics := make(chan *MemoryMetrics)
+	var mem *MemoryMetrics
+	var maxMem uint64
+	var lowMem uint64
+	var allMem []int32
+	var iom = IOMetrics{}
 	go func() {
-		defer close(memoryMetrics)
-		ticker := time.NewTicker(100 * time.Millisecond)
-		defer ticker.Stop()
-
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				if metrics, err := getCgroupMetrics(resp.ID); err == nil {
-					memoryMetrics <- metrics
+		tick := time.NewTicker(50 * time.Millisecond)
+		for range tick.C {
+			memtmp, iotmp, _ := getCgroupMetrics(resp.ID)
+			if memtmp != nil {
+				maxMem = max(memtmp.Latest, maxMem)
+				if lowMem == 0 {
+					lowMem = memtmp.Latest
+				} else {
+					lowMem = min(memtmp.Latest, lowMem)
 				}
+				allMem = append(allMem, int32(memtmp.Latest))
+				mem = memtmp
 			}
-		}
-	}()
-
-	// Track peak memory usage
-	var peakMemoryMetrics *MemoryMetrics
-	go func() {
-		for metrics := range memoryMetrics {
-			if peakMemoryMetrics == nil || metrics.CurrentUsageBytes > peakMemoryMetrics.CurrentUsageBytes {
-				peakMemoryMetrics = metrics
+			if len(iotmp) > 0 {
+				var lat = iotmp[len(iotmp)-1]
+				iom.ReadBytes = lat.Rbytes
+				iom.WriteBytes = lat.Wbytes
+				iom.ReadCount = lat.Rios
+				iom.WriteCount = lat.Wios
 			}
+			tick.Reset(50 * time.Millisecond)
 		}
 	}()
 
@@ -216,107 +217,95 @@ func ExecuteInContainer(ctx context.Context, imageName string, cmd []string, std
 
 	// Wait for container to finish
 	statusCh, errCh := Docker.ContainerWait(ctx, resp.ID, container.WaitConditionNotRunning)
-
 	var result ExecutionResult
 	var metrics ResourceMetrics
-
 	select {
 	case err := <-errCh:
 		result.Error = fmt.Errorf("error waiting for container: %v", err)
 	case status := <-statusCh:
-		result.ExitCode = int(status.StatusCode)
+		result.ExitCode = status.StatusCode
 		result.Duration = time.Since(startTime)
 		result.Stdout = stdoutBuf.String()
 		result.Stderr = stderrBuf.String()
-
 		metrics = parseMetrics(result.Stderr)
 		result.Metrics = metrics
+		if mem != nil {
+			result.Metrics.Memory = mem
+			result.Metrics.Memory.Max = maxMem
+			result.Metrics.Memory.Min = lowMem
+			result.Metrics.Memory.All = allMem
+		}
+		result.Metrics.IO = iom
 
 		if err := <-outputDone; err != nil {
 			result.Error = fmt.Errorf("error reading output: %v", err)
 		}
 	}
 
-	if peakMemoryMetrics != nil {
-		result.Metrics.Memory = *peakMemoryMetrics
-	}
-
 	return &result, nil
 }
 
 func parseMetrics(timeOutput string) ResourceMetrics {
+	var err error
 	metrics := ResourceMetrics{}
 
 	// Parse /usr/bin/time output
 	lines := strings.Split(timeOutput, "\n")
 	for _, line := range lines {
+		line = strings.TrimSpace(line)
 		switch {
-		case strings.Contains(line, "Maximum resident set size"):
-			fmt.Sscanf(line, "%d", &metrics.MaxRSSKb)
-		case strings.Contains(line, "User time"):
-			fmt.Sscanf(line, "%f", &metrics.UserTime)
+		case strings.Contains(line, "(wall clock)"):
+			tmp, err := parseDuration(strings.TrimSpace(strings.Split(line, "Elapsed (wall clock) time (h:mm:ss or m:ss):")[1]))
+			if err != nil {
+				slog.Warn("wall clock parsing failed", "error", err)
+				metrics.Wall = 0
+			}
+			metrics.Wall = tmp.Seconds()
 		case strings.Contains(line, "System time"):
-			fmt.Sscanf(line, "%f", &metrics.SystemTime)
+			metrics.CPUTime, err = strconv.ParseFloat(strings.TrimSpace(strings.Split(line, "System time (seconds):")[1]), 64)
+			if err != nil {
+				slog.Warn("converting system time to float failed", "error", err)
+				metrics.CPUTime = 0
+			}
 		case strings.Contains(line, "Voluntary context switches"):
-			fmt.Sscanf(line, "%d", &metrics.VoluntaryCtxt)
+			metrics.VoluntaryCtxt, err = strconv.ParseUint(strings.TrimSpace(strings.Split(line, "Voluntary context switches:")[1]), 10, 64)
+			if err != nil {
+				slog.Warn("converting voluntary ctxt to uint failed", "error", err)
+				metrics.VoluntaryCtxt = 0
+			}
 		case strings.Contains(line, "Involuntary context switches"):
-			fmt.Sscanf(line, "%d", &metrics.InvoluntaryCtxt)
+			metrics.InvoluntaryCtxt, err = strconv.ParseUint(strings.TrimSpace(strings.Split(line, "Involuntary context switches:")[1]), 10, 64)
+			if err != nil {
+				slog.Warn("converting involuntary ctxt to uint failed", "error", err)
+				metrics.InvoluntaryCtxt = 0
+			}
 		}
 	}
 
 	return metrics
 }
 
-func getCgroupMetrics(containerID string) (*MemoryMetrics, error) {
-	cgroupPath := filepath.Join("/sys/fs/cgroup/system.slice", fmt.Sprintf("docker-%s.scope", containerID))
+func getCgroupMetrics(containerID string) (*MemoryMetrics, []*stats.IOEntry, error) {
 	// Load cgroup manager
 	manager, err := cgroup2.LoadSystemd("system.slice", fmt.Sprintf("docker-%s.scope", containerID))
 	if err != nil {
-		return nil, fmt.Errorf("failed to load cgroup manager: %v", err)
+		return nil, nil, fmt.Errorf("failed to load cgroup manager: %v", err)
 	}
 
 	metrics, err := manager.Stat()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get cgroup stats: %v", err)
+		return nil, nil, fmt.Errorf("failed to get cgroup stats: %v", err)
 	}
 
 	// Get memory pressure
-	pressurePath := filepath.Join(cgroupPath, "memory.pressure")
-	pressureLevel := IOPressureUnknown
-	if pressure, err := os.ReadFile(pressurePath); err == nil {
-		// Parse pressure level from the PSI metrics
-		pressureLevel = parsePressureLevel(string(pressure))
-	}
 
 	memMetrics := &MemoryMetrics{
-		CurrentUsageBytes: metrics.Memory.Usage,
-		MaxUsageBytes:     metrics.Memory.UsageLimit,
-		SwapBytes:         metrics.Memory.SwapUsage,
-		KernelStackBytes:  metrics.Memory.KernelStack,
-		PageFaults:        metrics.Memory.Pgfault,
-		MajorPageFaults:   metrics.Memory.Pgmajfault,
-		LimitBytes:        metrics.Memory.UsageLimit,
-		SoftLimitBytes:    metrics.Memory.UsageLimit,
-		PressureLevel:     pressureLevel,
+		Latest:           metrics.Memory.Usage,
+		KernelStackBytes: metrics.Memory.KernelStack,
+		PageFaults:       metrics.Memory.Pgfault,
+		MajorPageFaults:  metrics.Memory.Pgmajfault,
+		OOM:              metrics.MemoryEvents.Oom,
+		OOMKill:          metrics.MemoryEvents.OomKill,
 	}
-
-	return memMetrics, nil
-}
-
-func parsePressureLevel(pressure string) IOPressureEnum {
-	// Parse PSI (Pressure Stall Information) metrics
-	// Format: some avg10=0.00 avg60=0.00 avg300=0.00 total=0
-	if strings.Contains(pressure, "avg60=0.00") {
-		return IOPressureNone
-	} else if strings.Contains(pressure, "avg60=") {
-		avg60 := 0.0
-		fmt.Sscanf(pressure, "some avg10=%f", &avg60)
-		if avg60 < 30 {
-			return IOPressureLow
-		} else if avg60 < 70 {
-			return IOPressureMedium
-		}
-		return IOPressureCritical
-	}
-	return IOPressureUnknown
+	return memMetrics, metrics.Io.Usage, nil
 }
