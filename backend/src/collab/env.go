@@ -1,9 +1,11 @@
-package env
+package main
 
 import (
 	"log/slog"
 	"os"
 	"strconv"
+
+	_ "github.com/joho/godotenv/autoload"
 )
 
 type EnvVar[T any] struct {
@@ -42,8 +44,8 @@ func (e EnvVar[T]) Get() T {
 	return result.(T)
 }
 
-// New creates a new environment variable with a default value
-func New[T any](key string, fallback T) EnvVar[T] {
+// NewEnv creates a new environment variable with a default value
+func NewEnv[T any](key string, fallback T) EnvVar[T] {
 	return EnvVar[T]{
 		key:      key,
 		fallback: fallback,

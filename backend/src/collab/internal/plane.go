@@ -1,4 +1,4 @@
-package controllers
+package internal
 
 import (
 	"bytes"
@@ -7,8 +7,6 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
-
-	"github.com/google/uuid"
 )
 
 // https://plane.dev/plane-api#connect-api
@@ -61,6 +59,7 @@ type ControlConnectRequest struct {
 
 type ControlConnectResponse struct {
 	// use this to query status of the backend from plane controller, e.g "plane-controller:8080/pub/b/backendid/status"
+	// this is also the container id, plane-BACKENDID is the container name
 	BackendID string `json:"backend_id"`
 	Spawned   bool   `json:"spawned"`
 	Status    string `json:"status"`
@@ -88,14 +87,7 @@ const (
 )
 
 func SpawnBackend() (*ControlConnectResponse, error) {
-	rid, err := uuid.NewRandom()
-	if err != nil {
-		slog.Error("Failed to generate UUID", "error", err)
-		return nil, err
-	}
 	var request ControlConnectRequest
-	request.Key.Name = fmt.Sprintf("room-%s", rid)
-	request.Key.Namespace = "code-cansu-dev-rtc"
 	request.Spawn.MaxIdleSeconds = 60
 	request.Spawn.Executable.Image = "code-cansu-dev-backend"
 	body, err := json.Marshal(request)

@@ -2,27 +2,50 @@ package main
 
 import (
 	"code-cansu-dev-collab/controllers"
-	"code-cansu-dev-collab/env"
+	"code-cansu-dev-collab/db"
+	"code-cansu-dev-collab/internal"
+	"context"
 	"fmt"
 	"log"
 	"log/slog"
 	"net/http"
+	"time"
 
+	"github.com/docker/docker/client"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 var (
-	LogLevel = env.New("LOG_LEVEL", slog.LevelInfo).Get()
-	Port     = env.New("PORT", "6767").Get()
+	LogLevel = NewEnv("LOG_LEVEL", slog.LevelInfo).Get()
+	Port     = NewEnv("PORT", "6767").Get()
+	DBUrl    = NewEnv("DATABASE_URL", "").Get()
 )
 
 func init() {
 	controllers.SetupWSHandlers()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		log.Fatal(err)
+	}
+	internal.Docker = cli
 }
 
 func main() {
+	if DBUrl == "" {
+		log.Fatal("Database connection URL is not set")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	conn, err := pgxpool.New(ctx, DBUrl)
+	if err != nil {
+		log.Fatal(err)
+	}
+	controllers.DB = conn
+	queries := db.New(conn)
+	controllers.Queries = queries
+	cancel()
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
@@ -49,6 +72,10 @@ func main() {
 	r.Route("/rooms", func(r chi.Router) {
 		r.Post("/create", controllers.CreateRoom)
 		r.Get("/subscribe", controllers.SubscribeRoom)
+	})
+	r.Route("/judge", func(r chi.Router) {
+		r.Get("/languages", controllers.GetLanguages)
+		r.Post("/execute", controllers.ExecuteCode)
 	})
 	chi.Walk(r, func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
 		fmt.Printf("[%s]: '%s' \n", method, route)
