@@ -1,14 +1,14 @@
 package internal
 
 type Language struct {
-	Id         int8   `json:"id"`
+	Id         int32  `json:"id"`
 	Name       string `json:"name"`
 	SourceFile string `json:"-"`
 	RunCmd     string `json:"-"`
 	CompileCmd string `json:"-"`
 }
 
-var Languages = map[int8]Language{
+var Languages = map[int32]Language{
 	45: {
 		Id:         45,
 		Name:       "Assembly (NASM 2.16.03)",

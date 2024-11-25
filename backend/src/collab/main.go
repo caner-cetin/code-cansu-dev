@@ -76,6 +76,7 @@ func main() {
 	r.Route("/judge", func(r chi.Router) {
 		r.Get("/languages", controllers.GetLanguages)
 		r.Post("/execute", controllers.ExecuteCode)
+		r.Get("/{token}", controllers.GetSubmission)
 	})
 	chi.Walk(r, func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
 		fmt.Printf("[%s]: '%s' \n", method, route)
