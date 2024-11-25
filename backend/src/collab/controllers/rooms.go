@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"code-cansu-dev-collab/internal"
 	"encoding/json"
 	"net/http"
 )
@@ -15,7 +16,7 @@ type CreateRoomResponse struct {
 }
 
 func CreateRoom(w http.ResponseWriter, r *http.Request) {
-	spawnResult, err := SpawnBackend()
+	spawnResult, err := internal.SpawnBackend()
 	if err != nil {
 		http.Error(w, "Failed to create room", http.StatusInternalServerError)
 		return
