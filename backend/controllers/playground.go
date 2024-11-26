@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -45,8 +47,6 @@ func ExecuteCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var lang = internal.Languages[request.Language]
-	to, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
 	commands := []string{}
 	commands = append(commands, fmt.Sprintf("touch %s", lang.SourceFile))
 	commands = append(commands, fmt.Sprintf("echo %s | base64 -d > %s", request.Code, lang.SourceFile))
@@ -61,23 +61,23 @@ func ExecuteCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var subId = uuid.New()
+	to, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	var submission = db.CreateSubmissionParams{
+		SourceCode: pgtype.Text{String: request.Code, Valid: true},
+		LanguageID: pgtype.Int4{Int32: request.Language, Valid: true},
+		StatusID:   pgtype.Int4{Int32: int32(Processing), Valid: true},
+		Token:      pgtype.Text{String: subId.String(), Valid: true},
+		CreatedAt:  pgtype.Timestamp{Time: time.Now(), Valid: true},
+		UpdatedAt:  pgtype.Timestamp{Time: time.Now(), Valid: true},
+	}
+	err = Queries.CreateSubmission(to, submission)
+	if err != nil {
+		slog.Error("submission insert to db failed", "error", err)
+		http.Error(w, "oops", http.StatusInternalServerError) // todo: ?
+		return
+	}
 	go func() {
-		to, cancel = context.WithTimeout(context.Background(), 10 * time.Second)
-		defer cancel()
-		var submission = db.CreateSubmissionParams{
-			SourceCode: pgtype.Text{String: request.Code, Valid: true},
-			LanguageID: pgtype.Int4{Int32: request.Language, Valid: true},
-			StatusID:   pgtype.Int4{Int32: int32(Processing), Valid: true},
-			Token:      pgtype.Text{String: subId.String(), Valid: true},
-			CreatedAt:  pgtype.Timestamp{Time: time.Now(), Valid: true},
-			UpdatedAt:  pgtype.Timestamp{Time: time.Now(), Valid: true},
-		}
-		err := Queries.CreateSubmission(to, submission)
-		if err != nil {
-			slog.Error("submission insert to db failed", "error", err)
-			http.Error(w, "oops", http.StatusInternalServerError) // todo: ?
-			return;
-		}
 		to, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		result, err := internal.ExecuteInContainer(to, "code-cansu-dev-runner", commands, &stdin)
@@ -130,11 +130,11 @@ func ExecuteCode(w http.ResponseWriter, r *http.Request) {
 
 func GetSubmission(w http.ResponseWriter, r *http.Request) {
 	var token = chi.URLParam(r, "token")
-	if (token == "") {
+	if token == "" {
 		http.Error(w, "submission token is required", http.StatusBadRequest)
 		return
 	}
-	to, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	to, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	sub, err := Queries.GetSubmission(to, pgtype.Text{String: token, Valid: true})
 	if err != nil {
@@ -143,4 +143,52 @@ func GetSubmission(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	json.NewEncoder(w).Encode(sub)
+}
+
+func ReactSubmission(w http.ResponseWriter, r *http.Request) {
+	var token = chi.URLParam(r, "token")
+	if token == "" {
+		http.Error(w, "submission token is required", http.StatusBadRequest)
+		return
+	}
+	to, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	react, err := Queries.QuerySubmissionAiReaction(to, token)
+	found := true
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		slog.Error("error querying ai reaction", "error", err)
+		http.Error(w, "error querying ai reaction", http.StatusInternalServerError)
+		return
+	} else if err != nil && errors.Is(err, pgx.ErrNoRows) {
+		found = false
+	}
+	if found {
+		json.NewEncoder(w).Encode(react.Reaction)
+		return
+	}
+	sub, err := Queries.GetSubmission(to, pgtype.Text{String: token, Valid: true})
+	if err != nil {
+		slog.Error("error querying submission", "error", err)
+		http.Error(w, "error querying submission", http.StatusInternalServerError)
+		return
+	}
+	resp, err := internal.ReactToSubmission(sub)
+	if err != nil {
+		slog.Error("error reacting to code", "error", err)
+		http.Error(w, "error reacting to code", http.StatusInternalServerError)
+		return
+	}
+	go func() {
+		to, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		err := Queries.InsertSubmissionAiReaction(to, db.InsertSubmissionAiReactionParams{
+			Reaction:   *resp,
+			Judgetoken: token,
+		})
+		if err != nil {
+			slog.Error("error inserting ai reaction", "error", err)
+		}
+
+	}()
+	json.NewEncoder(w).Encode(*resp)
 }

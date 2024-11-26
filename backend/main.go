@@ -19,33 +19,43 @@ import (
 )
 
 var (
-	LogLevel = NewEnv("LOG_LEVEL", slog.LevelInfo).Get()
-	Port     = NewEnv("PORT", "6767").Get()
-	DBUrl    = NewEnv("DATABASE_URL", "").Get()
+	LogLevel            = NewEnv("LOG_LEVEL", slog.LevelInfo).Get()
+	Port                = NewEnv("PORT", "6767").Get()
+	DBUrl               = NewEnv("DATABASE_URL", "").Get()
+	HuggingFaceModelUrl = NewEnv("HF_MODEL_URL", "").Get()
+	HuggingFaceToken    = NewEnv("HF_TOKEN", "").Get()
+	RedisUrl            = NewEnv("REDIS_URL", "").Get()
+	RedisPassword       = NewEnv("REDIS_PASSWORD", "").Get()
 )
 
 func init() {
+	if DBUrl == "" {
+		log.Fatal("Database connection URL is not set")
+	}
+	if RedisUrl == "" {
+		log.Fatal("Redis connection URL is not set")
+	}
+	internal.REDIS_URL = RedisUrl
+	internal.REDIS_PASSWORD = RedisPassword
 	controllers.SetupWSHandlers()
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		log.Fatal(err)
 	}
 	internal.Docker = cli
-}
-
-func main() {
-	if DBUrl == "" {
-		log.Fatal("Database connection URL is not set")
-	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	conn, err := pgxpool.New(ctx, DBUrl)
+	defer cancel()
+	pool, err := pgxpool.New(ctx, DBUrl)
 	if err != nil {
 		log.Fatal(err)
 	}
-	controllers.DB = conn
-	queries := db.New(conn)
-	controllers.Queries = queries
-	cancel()
+	controllers.DB = pool
+	controllers.Queries = db.New(pool)
+	internal.HF_MODEL_URL = HuggingFaceModelUrl
+	internal.HF_TOKEN = HuggingFaceToken
+}
+
+func main() {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
@@ -75,8 +85,11 @@ func main() {
 	})
 	r.Route("/judge", func(r chi.Router) {
 		r.Get("/languages", controllers.GetLanguages)
-		r.Post("/execute", controllers.ExecuteCode)
-		r.Get("/{token}", controllers.GetSubmission)
+		r.Post("/execute", internal.Limiter(internal.CodeExecuteLimit, "code_execution_limit").Handler(http.HandlerFunc(controllers.ExecuteCode)).ServeHTTP)
+		r.Route("/{token}", func(r chi.Router) {
+			r.Get("/", controllers.GetSubmission)
+			r.Get("/react", controllers.ReactSubmission)
+		})
 	})
 	chi.Walk(r, func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
 		fmt.Printf("[%s]: '%s' \n", method, route)

@@ -47,3 +47,13 @@ WHERE
 SELECT id, source_code, language_id, "stdin", "stdout", status_id, "time", memory, memory_history, memory_min, memory_max, kernel_stack_bytes, page_faults, major_page_faults, io_read_bytes, io_write_bytes, io_read_count, io_write_count, oom, oom_kill, voluntary_context_switch, involuntary_context_switch, "token", max_file_size, exit_code, wall_time, compiler_options, command_line_arguments, additional_files, created_at, updated_at
 FROM public.submissions
 WHERE token = $1;
+
+-- name: InsertSubmissionAiReaction :exec
+INSERT INTO public.submission_ai_reactions
+(id, reaction, created_at, updated_at, judgetoken)
+VALUES(nextval('submission_ai_reactions_id_seq'::regclass), $1, now(), now(), $2);
+
+-- name: QuerySubmissionAiReaction :one
+SELECT id, reaction, created_at, updated_at, deleted_at, judgetoken
+FROM public.submission_ai_reactions
+WHERE judgetoken = $1;
