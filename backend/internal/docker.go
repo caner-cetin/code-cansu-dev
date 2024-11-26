@@ -14,6 +14,7 @@ import (
 	"github.com/containerd/cgroups/v2/cgroup2/stats"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
 )
@@ -114,13 +115,19 @@ func ExecuteInContainer(ctx context.Context, imageName string, cmd []string, std
 		OpenStdin:    true,
 		StdinOnce:    true,
 	}
-
+	res := cgroup2.Resources{}
+	_, err := cgroup2.NewSystemd("/", "sandbox.slice", -1, &res)
+	if err != nil {
+		return nil, err
+	}
 	hostConfig := &container.HostConfig{
 		Resources: container.Resources{
-			Memory:     512 * 1024 * 1024, // 512MB limit
-			MemorySwap: -1,
-			CPUPeriod:  100000,
+			Memory:       512 * 1024 * 1024, // 512MB limit
+			MemorySwap:   -1,
+			CPUPeriod:    100000,
+			CgroupParent: "sandbox.slice",
 		},
+		NetworkMode: network.NetworkNone,
 	}
 
 	// Create container
@@ -223,6 +230,10 @@ func ExecuteInContainer(ctx context.Context, imageName string, cmd []string, std
 	case err := <-errCh:
 		result.Error = fmt.Errorf("error waiting for container: %v", err)
 	case status := <-statusCh:
+		if status.Error != nil {
+			slog.Error("error in docker container: %s", "error", status.Error.Message)
+			return nil, fmt.Errorf(status.Error.Message)
+		}
 		result.ExitCode = status.StatusCode
 		result.Duration = time.Since(startTime)
 		result.Stdout = stdoutBuf.String()
@@ -284,20 +295,19 @@ func parseMetrics(timeOutput string) ResourceMetrics {
 
 	return metrics
 }
-
 func getCgroupMetrics(containerID string) (*MemoryMetrics, []*stats.IOEntry, error) {
-	// Load cgroup manager
-	manager, err := cgroup2.LoadSystemd("system.slice", fmt.Sprintf("docker-%s.scope", containerID))
+
+	// Try loading with cgroup2 manager
+	manager, err := cgroup2.LoadSystemd("sandbox.slice", fmt.Sprintf("docker-%s.scope", containerID))
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to load cgroup manager: %v", err)
+		slog.Error("failed to load systemd cgroup", "error", err)
+		return &MemoryMetrics{}, nil, err
 	}
 
 	metrics, err := manager.Stat()
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get cgroup stats: %v", err)
+		return &MemoryMetrics{}, nil, err
 	}
-
-	// Get memory pressure
 
 	memMetrics := &MemoryMetrics{
 		Latest:           metrics.Memory.Usage,
@@ -307,5 +317,6 @@ func getCgroupMetrics(containerID string) (*MemoryMetrics, []*stats.IOEntry, err
 		OOM:              metrics.MemoryEvents.Oom,
 		OOMKill:          metrics.MemoryEvents.OomKill,
 	}
+
 	return memMetrics, metrics.Io.Usage, nil
 }

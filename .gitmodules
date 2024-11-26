@@ -1,3 +1,0 @@
-[submodule "backend/plane"]
-	path = backend/plane
-	url = https://github.com/jamsocket/plane.git
