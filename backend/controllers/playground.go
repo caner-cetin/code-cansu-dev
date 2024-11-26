@@ -81,7 +81,7 @@ func ExecuteCode(w http.ResponseWriter, r *http.Request) {
 		to, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		result, err := internal.ExecuteInContainer(to, "code-cansu-dev-runner", commands, &stdin)
-		if err != nil {
+		if err != nil || result.Error != nil {
 			Queries.UpdateSubmissionStatus(to, db.UpdateSubmissionStatusParams{
 				StatusID: pgtype.Int4{Int32: int32(Failed), Valid: true},
 				Token:    pgtype.Text{String: subId.String(), Valid: true},

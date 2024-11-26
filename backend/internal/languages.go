@@ -13,7 +13,7 @@ var Languages = map[int32]Language{
 		Id:         45,
 		Name:       "Assembly (NASM 2.16.03)",
 		SourceFile: "main.asm",
-		CompileCmd: "/usr/local/nasm-2.16.03/bin/nasmld -f elf64 %s main.asm",
+		CompileCmd: "/usr/local/nasm-2.16.03/bin/nasm -f elf64 %s main.asm",
 		RunCmd:     "./a.out",
 	},
 	48: {
