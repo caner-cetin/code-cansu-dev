@@ -9,13 +9,18 @@ import (
 	"log"
 	"log/slog"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/docker/docker/client"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/grafana/loki-client-go/loki"
 	"github.com/jackc/pgx/v5/pgxpool"
+	slogchi "github.com/samber/slog-chi"
+	slogloki "github.com/samber/slog-loki/v3"
+	slogmulti "github.com/samber/slog-multi"
 )
 
 var (
@@ -59,7 +64,6 @@ func main() {
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
-	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins: []string{
@@ -75,7 +79,24 @@ func main() {
 		AllowCredentials: false,
 		MaxAge:           300,
 	}))
+	// todo: change this to env
+	config, err := loki.NewDefaultConfig("http://loki:3169/loki/api/v1/push")
+	if err != nil {
+		log.Fatal(err)
+	}
+	config.TenantID = "code-cansu-dev"
+	config.ExternalLabels.Set("service_name=code-cansu-dev-backend")
+	client, err := loki.New(config)
+	if err != nil {
+		log.Fatal(err)
+	}
 
+	logger := slog.New(slogmulti.Fanout(
+		slog.NewTextHandler(os.Stdout, nil),
+		slogloki.Option{Level: slog.LevelDebug, Client: client}.NewLokiHandler(),
+	))
+	slog.SetDefault(logger)
+	r.Use(slogchi.New(logger))
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "https://www.youtube.com/watch?v=eAaGYwBR38I", http.StatusSeeOther)
 	})
