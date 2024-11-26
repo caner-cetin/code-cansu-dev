@@ -23,9 +23,11 @@ func GetLanguages(w http.ResponseWriter, r *http.Request) {
 }
 
 type ExecuteCodeRequest struct {
-	Language int32   `json:"language"`
-	Code     string  `json:"code"`
-	Stdin    *string `json:"stdin"`
+	Language             int32   `json:"language"`
+	Code                 string  `json:"code"`
+	Stdin                *string `json:"stdin"`
+	CompilerOptions      *string `json:"compilerOptions"`
+	CommandLineArguments *string `json:"commandLineArguments"`
 }
 
 type ExecuteCodeResponse struct {
@@ -38,6 +40,7 @@ const (
 	Processing SubmissionStatus = iota
 	Executed
 	Failed
+	TimeLimitExceeded
 )
 
 func ExecuteCode(w http.ResponseWriter, r *http.Request) {
@@ -51,9 +54,17 @@ func ExecuteCode(w http.ResponseWriter, r *http.Request) {
 	commands = append(commands, fmt.Sprintf("touch %s", lang.SourceFile))
 	commands = append(commands, fmt.Sprintf("echo %s | base64 -d > %s", request.Code, lang.SourceFile))
 	if lang.CompileCmd != "" {
-		commands = append(commands, lang.CompileCmd)
+		var cmpcmd = lang.CompileCmd
+		if request.CompilerOptions != nil {
+			cmpcmd = fmt.Sprintf(lang.CompileCmd, request.CompilerOptions)
+		}
+		commands = append(commands, cmpcmd)
 	}
-	commands = append(commands, lang.RunCmd)
+	var runcmd = lang.RunCmd
+	if request.CommandLineArguments != nil {
+		runcmd = fmt.Sprintf("%s %s", lang.RunCmd, *request.CommandLineArguments)
+	}
+	commands = append(commands, runcmd)
 
 	stdin, err := base64.StdEncoding.DecodeString(*request.Stdin)
 	if err != nil {
@@ -81,13 +92,16 @@ func ExecuteCode(w http.ResponseWriter, r *http.Request) {
 		to, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		result, err := internal.ExecuteInContainer(to, "code-cansu-dev-runner", commands, &stdin)
-		if err != nil || result.Error != nil {
+		if err != nil {
+			var sid = int32(Failed)
+			if (errors.Is(err, internal.ExecutionTimeoutError{})) {
+				sid = int32(TimeLimitExceeded)
+			}
+			// todo: handle error (im tired)
 			Queries.UpdateSubmissionStatus(to, db.UpdateSubmissionStatusParams{
-				StatusID: pgtype.Int4{Int32: int32(Failed), Valid: true},
+				StatusID: pgtype.Int4{Int32: sid, Valid: true},
 				Token:    pgtype.Text{String: subId.String(), Valid: true},
 			})
-			slog.Error("code execution failed", "error", err)
-			http.Error(w, "code execution failed", http.StatusInternalServerError)
 			return
 		}
 		var encStdout = base64.StdEncoding.EncodeToString([]byte(result.Stdout))

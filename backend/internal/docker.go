@@ -13,68 +13,27 @@ import (
 	"github.com/containerd/cgroups/v2/cgroup2"
 	"github.com/containerd/cgroups/v2/cgroup2/stats"
 	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
 )
 
 var Docker *client.Client
-
-func GetContainerId(name string) (*string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	opts := container.ListOptions{
-		Filters: filters.NewArgs(filters.Arg("name", name)),
-	}
-	containers, err := Docker.ContainerList(ctx, opts)
-	if err != nil {
-		slog.Error("Failed to list containers", "error", err)
-		return nil, err
-	}
-	return &containers[0].ID, nil
+var ContainerHostConfig = &container.HostConfig{
+	Resources: container.Resources{
+		Memory:       512 * 1024 * 1024,
+		MemorySwap:   64 * 1024 * 1024,
+		CPUPeriod:    100000,
+		CgroupParent: "sandbox.slice",
+	},
+	NetworkMode: network.NetworkNone,
 }
-
-// ContainerResourceConfig holds the resource limits for a container
-type ContainerResourceConfig struct {
-	CPUQuota  int64 // CPU quota in microseconds per CPU period
-	CPUPeriod int64 // CPU period in microseconds
-	Memory    int64 // Memory limit in bytes
-}
-
-// UpdateContainerResources updates CPU and memory limits of a running container
-func UpdateContainerResources(containerID string, config ContainerResourceConfig) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	updateConfig := container.UpdateConfig{
-		Resources: container.Resources{
-			CPUQuota:  config.CPUQuota,
-			CPUPeriod: config.CPUPeriod,
-			Memory:    config.Memory,
-		},
-	}
-
-	// Update container resources
-	response, err := Docker.ContainerUpdate(ctx, containerID, updateConfig)
-	if err != nil {
-		slog.Error("Failed to update container resources", "error", err)
-		return err
-	}
-
-	// Check for warnings
-	if len(response.Warnings) > 0 {
-		slog.Warn("container update returned warnings", "warnings", response.Warnings)
-	}
-
-	return nil
-}
+var DefaultExecutionTimeLimit = time.Second * 20 // wall time
 
 type ExecutionResult struct {
 	ExitCode int64           `json:"exitCode"`
 	Stdout   string          `json:"stdout"`
 	Stderr   string          `json:"-"`
-	Duration time.Duration   `json:"duration"`
-	Error    error           `json:"error"`
 	Metrics  ResourceMetrics `json:"metrics"`
 }
 
@@ -120,19 +79,8 @@ func ExecuteInContainer(ctx context.Context, imageName string, cmd []string, std
 	if err != nil {
 		return nil, err
 	}
-	hostConfig := &container.HostConfig{
-		Resources: container.Resources{
-			Memory:       512 * 1024 * 1024, // 512MB limit
-			MemorySwap:   -1,
-			CPUPeriod:    100000,
-			CgroupParent: "sandbox.slice",
-		},
-		NetworkMode: network.NetworkNone,
-	}
 
-	// Create container
-	startTime := time.Now()
-	resp, err := Docker.ContainerCreate(ctx, config, hostConfig, nil, nil, "")
+	resp, err := Docker.ContainerCreate(ctx, config, ContainerHostConfig, nil, nil, "")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create container: %v", err)
 	}
@@ -156,58 +104,6 @@ func ExecuteInContainer(ctx context.Context, imageName string, cmd []string, std
 	}
 	defer attachResp.Close()
 
-	// Start container
-	if err := Docker.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
-		return nil, fmt.Errorf("failed to start container: %v", err)
-	}
-
-	stats := make(chan container.StatsResponseReader)
-	go func() {
-		defer close(stats)
-		for {
-			stat, err := Docker.ContainerStats(ctx, resp.ID, false)
-			if err != nil {
-				return
-			}
-			stats <- stat
-			time.Sleep(100 * time.Millisecond)
-		}
-	}()
-
-	var mem *MemoryMetrics
-	var maxMem uint64
-	var lowMem uint64
-	var allMem []int32
-	var iom = IOMetrics{}
-	go func() {
-		tick := time.NewTicker(50 * time.Millisecond)
-		for range tick.C {
-			memtmp, iotmp, _ := getCgroupMetrics(resp.ID)
-			if memtmp != nil {
-				maxMem = max(memtmp.Latest, maxMem)
-				if lowMem == 0 {
-					lowMem = memtmp.Latest
-				} else {
-					lowMem = min(memtmp.Latest, lowMem)
-				}
-				allMem = append(allMem, int32(memtmp.Latest))
-				mem = memtmp
-			}
-			if len(iotmp) > 0 {
-				var lat = iotmp[len(iotmp)-1]
-				iom.ReadBytes = lat.Rbytes
-				iom.WriteBytes = lat.Wbytes
-				iom.ReadCount = lat.Rios
-				iom.WriteCount = lat.Wios
-			}
-			tick.Reset(50 * time.Millisecond)
-		}
-	}()
-
-	// Create buffers for stdout and stderr
-	stdoutBuf := new(bytes.Buffer)
-	stderrBuf := new(bytes.Buffer)
-
 	go func() {
 		defer attachResp.CloseWrite()
 		if stdin != nil {
@@ -215,6 +111,49 @@ func ExecuteInContainer(ctx context.Context, imageName string, cmd []string, std
 		}
 	}()
 
+	// Start container
+	if err := Docker.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
+		return nil, fmt.Errorf("failed to start container: %v", err)
+	}
+
+	var mem *MemoryMetrics
+	var maxMem uint64
+	var lowMem uint64
+	var allMem []int32
+	var iom = IOMetrics{}
+	var timeoutSignal = make(chan bool)
+	go func() {
+		tick := time.NewTicker(50 * time.Millisecond)
+		for {
+			select {
+			case <-tick.C:
+				memtmp, iotmp, _ := getCgroupMetrics(resp.ID)
+				if memtmp != nil {
+					maxMem = max(memtmp.Latest, maxMem)
+					if lowMem == 0 {
+						lowMem = memtmp.Latest
+					} else {
+						lowMem = min(memtmp.Latest, lowMem)
+					}
+					allMem = append(allMem, int32(memtmp.Latest))
+					mem = memtmp
+				}
+				if len(iotmp) > 0 {
+					var lat = iotmp[len(iotmp)-1]
+					iom.ReadBytes = lat.Rbytes
+					iom.WriteBytes = lat.Wbytes
+					iom.ReadCount = lat.Rios
+					iom.WriteCount = lat.Wios
+				}
+				tick.Reset(50 * time.Millisecond)
+			case <-timeoutSignal:
+				return
+			}
+		}
+	}()
+	// Create buffers for stdout and stderr
+	stdoutBuf := new(bytes.Buffer)
+	stderrBuf := new(bytes.Buffer)
 	// Copy container output to buffers
 	outputDone := make(chan error)
 	go func() {
@@ -228,14 +167,19 @@ func ExecuteInContainer(ctx context.Context, imageName string, cmd []string, std
 	var metrics ResourceMetrics
 	select {
 	case err := <-errCh:
-		result.Error = fmt.Errorf("error waiting for container: %v", err)
+		slog.Error("error waiting for container startup: %v", "error", err)
+		return nil, err
 	case status := <-statusCh:
 		if status.Error != nil {
 			slog.Error("error in docker container: %s", "error", status.Error.Message)
 			return nil, fmt.Errorf(status.Error.Message)
 		}
+		if err := <-outputDone; err != nil {
+			slog.Error("error reading submission output", "error", status.Error.Message)
+			return nil, fmt.Errorf("error reading output: %v", err)
+		}
+
 		result.ExitCode = status.StatusCode
-		result.Duration = time.Since(startTime)
 		result.Stdout = stdoutBuf.String()
 		result.Stderr = stderrBuf.String()
 		metrics = parseMetrics(result.Stderr)
@@ -247,10 +191,9 @@ func ExecuteInContainer(ctx context.Context, imageName string, cmd []string, std
 			result.Metrics.Memory.All = allMem
 		}
 		result.Metrics.IO = iom
-
-		if err := <-outputDone; err != nil {
-			result.Error = fmt.Errorf("error reading output: %v", err)
-		}
+	case <-time.After(DefaultExecutionTimeLimit):
+		timeoutSignal <- true
+		return nil, ExecutionTimeoutError{}
 	}
 
 	return &result, nil
@@ -297,7 +240,6 @@ func parseMetrics(timeOutput string) ResourceMetrics {
 }
 func getCgroupMetrics(containerID string) (*MemoryMetrics, []*stats.IOEntry, error) {
 
-	// Try loading with cgroup2 manager
 	manager, err := cgroup2.LoadSystemd("sandbox.slice", fmt.Sprintf("docker-%s.scope", containerID))
 	if err != nil {
 		slog.Error("failed to load systemd cgroup", "error", err)
