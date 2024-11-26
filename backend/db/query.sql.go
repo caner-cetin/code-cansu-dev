@@ -131,6 +131,42 @@ func (q *Queries) GetSubmission(ctx context.Context, token pgtype.Text) (Submiss
 	return i, err
 }
 
+const insertSubmissionAiReaction = `-- name: InsertSubmissionAiReaction :exec
+INSERT INTO public.submission_ai_reactions
+(id, reaction, created_at, updated_at, judgetoken)
+VALUES(nextval('submission_ai_reactions_id_seq'::regclass), $1, now(), now(), $2)
+`
+
+type InsertSubmissionAiReactionParams struct {
+	Reaction   string
+	Judgetoken string
+}
+
+func (q *Queries) InsertSubmissionAiReaction(ctx context.Context, arg InsertSubmissionAiReactionParams) error {
+	_, err := q.db.Exec(ctx, insertSubmissionAiReaction, arg.Reaction, arg.Judgetoken)
+	return err
+}
+
+const querySubmissionAiReaction = `-- name: QuerySubmissionAiReaction :one
+SELECT id, reaction, created_at, updated_at, deleted_at, judgetoken
+FROM public.submission_ai_reactions
+WHERE judgetoken = $1
+`
+
+func (q *Queries) QuerySubmissionAiReaction(ctx context.Context, judgetoken string) (SubmissionAiReaction, error) {
+	row := q.db.QueryRow(ctx, querySubmissionAiReaction, judgetoken)
+	var i SubmissionAiReaction
+	err := row.Scan(
+		&i.ID,
+		&i.Reaction,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+		&i.Judgetoken,
+	)
+	return i, err
+}
+
 const updateSubmissionStatus = `-- name: UpdateSubmissionStatus :exec
 UPDATE
   public.submissions
