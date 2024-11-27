@@ -5,11 +5,11 @@ import {
 	submitCode,
 	submitStdin,
 	submitSubmission,
-} from "@/services/judge/calls";
+} from "@/services/playground/calls";
 import { useAppStore } from "@/stores/AppStore";
 import type { IAceEditor } from "react-ace/lib/types";
 import { useRTCStore } from "@/stores/RTCStore";
-import { MessageTypes } from "@/services/rtc/client";
+import { MessageTypes } from "@/services/rtc";
 
 export interface StoredSubmission {
 	localId: number;

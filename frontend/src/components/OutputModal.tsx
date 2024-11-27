@@ -37,8 +37,8 @@ import { Live2D } from "@/scripts/live2d.helpers";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import type { GetSubmissionResponse } from "@/services/judge/types";
-import { getSubmission, reactSubmission } from "@/services/judge/calls";
+import type { GetSubmissionResponse } from "@/services/playground/types";
+import { getSubmission, reactSubmission } from "@/services/playground/calls";
 import { useAppStore } from "@/stores/AppStore";
 import { useEditorContent } from "@/hooks/useCodeEditor";
 import { useShallow } from "zustand/react/shallow";
@@ -87,7 +87,7 @@ const OutputModal: React.FC<OutputModalProps> = ({ displayingSharedCode, query: 
     enabled: !!activeTab,
     refetchInterval: (data) => {
       if (
-        data.state.data?.status_id === 2 ||
+        data.state.data?.StatusID === 2 ||
         data.state.data?.status_id === 1
       ) {
         setRefetchInterval(500);
@@ -158,18 +158,14 @@ const OutputModal: React.FC<OutputModalProps> = ({ displayingSharedCode, query: 
   }, [submissionResult, reacting]);
   const getStatusIcon = (id: number) => {
     switch (id) {
-      case 1:
-        return <Queue />;
-      case 2:
+      case 0:
         return <LoadingSpinner />;
-      case 3:
+      case 1:
         return <CheckCircle />;
-      case 5:
+      case 2:
+        return <MaskSad />;;
+      case 3:
         return <BellSimpleSlash />;
-      case 13:
-        return <MaskSad />;
-      case 14:
-        return <QuestionMark />;
       default:
         return <Bug />;
     }
@@ -255,36 +251,18 @@ const OutputModal: React.FC<OutputModalProps> = ({ displayingSharedCode, query: 
       <div className="bg-[#2c2a2a] rounded-lg shadow-lg overflow-auto">
         <div className="flex items-center justify-between mb-2">
           <h4 className="text-lg font-bold flex items-center relative w-full">
-            {getStatusIcon(submissionResult.status_id)}
+            {getStatusIcon(submissionResult.StatusID)}
             <span className="ml-2">
               {(() => {
-                switch (submissionResult.status_id) {
-                  case 1:
-                    return "In Queue";
-                  case 2:
+                switch (submissionResult.StatusID) {
+                  case 0:
                     return "Processing";
-                  case 3:
+                  case 1:
                     return "Executed";
-                  case 5:
+                  case 2:
+                    return "Failed";
+                  case 3:
                     return "Time Limit Exceeded";
-                  case 6:
-                    return "Compilation Error";
-                  case 7:
-                    return "Runtime Error (SIGSEGV)";
-                  case 8:
-                    return "Runtime Error (SIGXFSZ)";
-                  case 9:
-                    return "Runtime Error (SIGFPE)";
-                  case 10:
-                    return "Runtime Error (SIGABRT)";
-                  case 11:
-                    return "Runtime Error (NZEC)";
-                  case 12:
-                    return "Runtime Error (Other)";
-                  case 13:
-                    return "Internal Error";
-                  case 14:
-                    return "Exec Format Error";
                   default:
                     return "Lost in the void";
                 }
@@ -410,7 +388,7 @@ const OutputModal: React.FC<OutputModalProps> = ({ displayingSharedCode, query: 
               <TabsTrigger key={submission.token} value={submission.token} className="flex items-center gap-2">
                 <i className={submission.iconClass} />
                 <span>{submission.localId}</span>
-                {activeTab === submission.token && submissionResult?.status_id !== 3 && (
+                {activeTab === submission.token && submissionResult?.StatusID !== 3 && (
                   <RefreshCw
                     size={14}
                     className="cursor-pointer"

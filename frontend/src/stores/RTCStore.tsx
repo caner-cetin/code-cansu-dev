@@ -1,4 +1,4 @@
-import RTCClient, { PeerMetadata } from "@/services/rtc/client";
+import RTCClient, { PeerMetadata } from "@/services/rtc";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 

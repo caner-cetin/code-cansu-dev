@@ -1,7 +1,7 @@
 -- name: CreateSubmission :exec
 INSERT INTO public.submissions
-(id, source_code, language_id, "stdin", "stdout", status_id, "time", memory, memory_history, memory_min, memory_max, kernel_stack_bytes, page_faults, major_page_faults, io_read_bytes, io_write_bytes, io_read_count, io_write_count, oom, oom_kill, voluntary_context_switch, involuntary_context_switch, "token", max_file_size, exit_code, wall_time, compiler_options, command_line_arguments, additional_files, created_at, updated_at)
-VALUES(nextval('submissions_id_seq'::regclass), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30);
+(id, source_code, language_id, "stdin", "stdout", status_id, "time", memory, memory_history, memory_min, memory_max, kernel_stack_bytes, page_faults, major_page_faults, io_read_bytes, io_write_bytes, io_read_count, io_write_count, oom, oom_kill, voluntary_context_switch, involuntary_context_switch, "token", max_file_size, exit_code, wall_time, compiler_options, command_line_arguments, additional_files, created_at, updated_at, stderr)
+VALUES(nextval('submissions_id_seq'::regclass), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31);
 
 -- name: UpdateSubmissionWithResult :exec
 UPDATE 
@@ -32,8 +32,9 @@ SET
   command_line_arguments = $23, 
   additional_files = $24, 
   updated_at = $25 
+  stderr = $26
 WHERE 
-  token = $26;
+  token = $27;
 
 -- name: UpdateSubmissionStatus :exec
 UPDATE
@@ -44,7 +45,7 @@ WHERE
   token = $2;
 
 -- name: GetSubmission :one
-SELECT id, source_code, language_id, "stdin", "stdout", status_id, "time", memory, memory_history, memory_min, memory_max, kernel_stack_bytes, page_faults, major_page_faults, io_read_bytes, io_write_bytes, io_read_count, io_write_count, oom, oom_kill, voluntary_context_switch, involuntary_context_switch, "token", max_file_size, exit_code, wall_time, compiler_options, command_line_arguments, additional_files, created_at, updated_at
+SELECT id, source_code, language_id, "stdin", "stdout", status_id, "time", memory, memory_history, memory_min, memory_max, kernel_stack_bytes, page_faults, major_page_faults, io_read_bytes, io_write_bytes, io_read_count, io_write_count, oom, oom_kill, voluntary_context_switch, involuntary_context_switch, "token", max_file_size, exit_code, wall_time, compiler_options, command_line_arguments, additional_files, created_at, updated_at, stderr
 FROM public.submissions
 WHERE token = $1;
 

@@ -3,7 +3,7 @@ import { createLazyFileRoute, Link } from '@tanstack/react-router'
 import { Input } from "@/components/ui/input"
 import { useRTCStore } from '@/stores/RTCStore'
 import { useShallow } from 'zustand/react/shallow'
-import RTCClient from '@/services/rtc/client'
+import RTCClient from '@/services/rtc'
 
 export const Route = createLazyFileRoute('/rtc/$proxy')({
   component: RouteComponent,

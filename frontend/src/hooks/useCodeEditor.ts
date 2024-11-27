@@ -5,7 +5,7 @@ import { config } from "ace-builds";
 import { useAppStore } from "@/stores/AppStore";
 import type ReactAce from "react-ace/lib/ace";
 import { useRTCStore } from "@/stores/RTCStore";
-import { LanguageIdPayload, MessageTypes } from "@/services/rtc/client";
+import {  MessageTypes } from "@/services/rtc";
 
 config.set(
 	"basePath",
@@ -78,7 +78,6 @@ export function useCodeEditor(
 	const {rtcEnabled, rtcClient} = useRTCStore();
 	const isFirstRender = useRef(true);
 	const previousLanguageRef = useRef<number>(languageId);
-	const isLocalChange = useRef(true);
 
 	// Memoize editor instance
 	const editor = useMemo(() => editorRef.current?.editor, [editorRef.current]);
