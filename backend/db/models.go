@@ -26,7 +26,7 @@ type Submission struct {
 	StatusID                 pgtype.Int4
 	Time                     pgtype.Float4
 	Memory                   pgtype.Int4
-	MemoryHistory            []int32
+	MemoryHistory            interface{}
 	MemoryMin                pgtype.Int4
 	MemoryMax                pgtype.Int4
 	KernelStackBytes         pgtype.Int4
@@ -49,6 +49,7 @@ type Submission struct {
 	AdditionalFiles          []byte
 	CreatedAt                pgtype.Timestamp
 	UpdatedAt                pgtype.Timestamp
+	Stderr                   pgtype.Text
 }
 
 type SubmissionAiReaction struct {

@@ -13,8 +13,8 @@ import (
 
 const createSubmission = `-- name: CreateSubmission :exec
 INSERT INTO public.submissions
-(id, source_code, language_id, "stdin", "stdout", status_id, "time", memory, memory_history, memory_min, memory_max, kernel_stack_bytes, page_faults, major_page_faults, io_read_bytes, io_write_bytes, io_read_count, io_write_count, oom, oom_kill, voluntary_context_switch, involuntary_context_switch, "token", max_file_size, exit_code, wall_time, compiler_options, command_line_arguments, additional_files, created_at, updated_at)
-VALUES(nextval('submissions_id_seq'::regclass), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30)
+(id, source_code, language_id, "stdin", "stdout", status_id, "time", memory, memory_history, memory_min, memory_max, kernel_stack_bytes, page_faults, major_page_faults, io_read_bytes, io_write_bytes, io_read_count, io_write_count, oom, oom_kill, voluntary_context_switch, involuntary_context_switch, "token", max_file_size, exit_code, wall_time, compiler_options, command_line_arguments, additional_files, created_at, updated_at, stderr)
+VALUES(nextval('submissions_id_seq'::regclass), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31)
 `
 
 type CreateSubmissionParams struct {
@@ -25,7 +25,7 @@ type CreateSubmissionParams struct {
 	StatusID                 pgtype.Int4
 	Time                     pgtype.Float4
 	Memory                   pgtype.Int4
-	MemoryHistory            []int32
+	MemoryHistory            interface{}
 	MemoryMin                pgtype.Int4
 	MemoryMax                pgtype.Int4
 	KernelStackBytes         pgtype.Int4
@@ -48,6 +48,7 @@ type CreateSubmissionParams struct {
 	AdditionalFiles          []byte
 	CreatedAt                pgtype.Timestamp
 	UpdatedAt                pgtype.Timestamp
+	Stderr                   pgtype.Text
 }
 
 func (q *Queries) CreateSubmission(ctx context.Context, arg CreateSubmissionParams) error {
@@ -82,12 +83,13 @@ func (q *Queries) CreateSubmission(ctx context.Context, arg CreateSubmissionPara
 		arg.AdditionalFiles,
 		arg.CreatedAt,
 		arg.UpdatedAt,
+		arg.Stderr,
 	)
 	return err
 }
 
 const getSubmission = `-- name: GetSubmission :one
-SELECT id, source_code, language_id, "stdin", "stdout", status_id, "time", memory, memory_history, memory_min, memory_max, kernel_stack_bytes, page_faults, major_page_faults, io_read_bytes, io_write_bytes, io_read_count, io_write_count, oom, oom_kill, voluntary_context_switch, involuntary_context_switch, "token", max_file_size, exit_code, wall_time, compiler_options, command_line_arguments, additional_files, created_at, updated_at
+SELECT id, source_code, language_id, "stdin", "stdout", status_id, "time", memory, memory_history, memory_min, memory_max, kernel_stack_bytes, page_faults, major_page_faults, io_read_bytes, io_write_bytes, io_read_count, io_write_count, oom, oom_kill, voluntary_context_switch, involuntary_context_switch, "token", max_file_size, exit_code, wall_time, compiler_options, command_line_arguments, additional_files, created_at, updated_at, stderr
 FROM public.submissions
 WHERE token = $1
 `
@@ -127,6 +129,7 @@ func (q *Queries) GetSubmission(ctx context.Context, token pgtype.Text) (Submiss
 		&i.AdditionalFiles,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Stderr,
 	)
 	return i, err
 }
@@ -214,9 +217,10 @@ SET
   compiler_options = $22, 
   command_line_arguments = $23, 
   additional_files = $24, 
-  updated_at = $25 
+  updated_at = $25,
+  stderr = $26
 WHERE 
-  token = $26
+  token = $27
 `
 
 type UpdateSubmissionWithResultParams struct {
@@ -225,7 +229,7 @@ type UpdateSubmissionWithResultParams struct {
 	StatusID                 pgtype.Int4
 	Time                     pgtype.Float4
 	Memory                   pgtype.Int4
-	MemoryHistory            []int32
+	MemoryHistory            interface{}
 	MemoryMin                pgtype.Int4
 	MemoryMax                pgtype.Int4
 	KernelStackBytes         pgtype.Int4
@@ -245,6 +249,7 @@ type UpdateSubmissionWithResultParams struct {
 	CommandLineArguments     pgtype.Text
 	AdditionalFiles          []byte
 	UpdatedAt                pgtype.Timestamp
+	Stderr                   pgtype.Text
 	Token                    pgtype.Text
 }
 
@@ -275,6 +280,7 @@ func (q *Queries) UpdateSubmissionWithResult(ctx context.Context, arg UpdateSubm
 		arg.CommandLineArguments,
 		arg.AdditionalFiles,
 		arg.UpdatedAt,
+		arg.Stderr,
 		arg.Token,
 	)
 	return err

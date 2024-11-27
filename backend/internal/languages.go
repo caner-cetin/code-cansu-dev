@@ -1,5 +1,7 @@
 package internal
 
+import "fmt"
+
 type Language struct {
 	Id         int32  `json:"id"`
 	Name       string `json:"name"`
@@ -101,15 +103,15 @@ var Languages = map[int32]Language{
 		Id:         60,
 		Name:       "Go (1.23.2)",
 		SourceFile: "main.go",
-		CompileCmd: "ASDF_GOLANG_VERSION=1.23.2 GOCACHE=/tmp/.cache/go-build asdf exec go build main.go",
-		RunCmd:     "./main",
+		CompileCmd: "ASDF_GOLANG_VERSION=1.23.2 GOCACHE=/tmp/.cache/go-build asdf exec go build %s main.go ",
+		RunCmd:     "./main %s",
 	},
 	61: {
 		Id:         61,
 		Name:       "Haskell (7.8.4)",
 		SourceFile: "main.hs",
 		CompileCmd: "ASDF_GHC_VERSION=7.8.4 ASDF_HASKELL_VERSION=7.8.4 asdf exec ghc %s main.hs",
-		RunCmd:     "./main",
+		RunCmd:     "./main %s",
 	},
 	62: {
 		Id:         62,
@@ -293,7 +295,7 @@ var Languages = map[int32]Language{
 		Id:         90,
 		Name:       "C (GCC 13.3)",
 		SourceFile: "main.c",
-		CompileCmd: "/usr/local/gcc-13.3/bin/gcc %s main.c",
+		CompileCmd: "/usr/local/gcc-13.3/bin/gcc %s -o a.out main.c",
 		RunCmd:     "./a.out",
 	},
 	91: {
@@ -303,4 +305,86 @@ var Languages = map[int32]Language{
 		CompileCmd: "/usr/local/gcc-13.3/bin/g++ %s main.cpp",
 		RunCmd:     "LD_LIBRARY_PATH=/usr/local/gcc-13.3/lib64 ./a.out",
 	},
+}
+
+// ensure that code is not decoded
+func BuildWrappedCommand(code string, langID int32, cliArgs *string, compileArgs *string) string {
+	lang := Languages[langID]
+	var cmpcmd = ""
+	if lang.CompileCmd != "" {
+		cmpcmd = fmt.Sprintf(lang.CompileCmd, "")
+		if compileArgs != nil {
+			cmpcmd = fmt.Sprintf(lang.CompileCmd, compileArgs)
+		}
+	}
+	var runCmd = fmt.Sprintf(lang.RunCmd, "")
+	if cliArgs != nil {
+		runCmd = fmt.Sprintf(lang.RunCmd, cliArgs)
+	}
+	wrappedCmd := fmt.Sprintf(`
+{
+	# Write the source code to a file
+	echo '%s' | base64 -d > %s
+	
+	# Create files for metrics
+	touch /tmp/metrics.log
+	touch /tmp/real.stderr
+	
+	# Compile if necessary
+	%s
+	
+	# Start process monitoring in background
+	{
+			while true; do
+					ps -o pid,ppid,rss,vsz,pcpu,comm >> /tmp/process_stats.log 2>/dev/null
+					sleep 0.1
+			done
+	} &
+	MONITOR_PID=$!
+	
+	# Redirect original stderr to our metrics file
+	exec 3>&2 # Save original stderr
+	exec 2>/tmp/metrics.log
+	START_TIME=$(date +%%s.%%N)
+	
+	# Execute the program
+	%s 2>/tmp/real.stderr
+	EXIT_CODE=$?
+	END_TIME=$(date +%%s.%%N)
+	WALL_TIME=$(echo "$END_TIME - $START_TIME" | bc)
+	
+	# Kill the monitoring process
+	kill $MONITOR_PID
+	
+	# Collect metrics
+	{
+			echo "Command exit code: $EXIT_CODE"
+			echo "Wall clock time: $WALL_TIME"
+			echo "=== Process Status ==="
+			cat /proc/self/status
+			echo "=== I/O Statistics ==="
+			cat /proc/self/io
+			echo "=== Process Statistics ==="
+			cat /tmp/process_stats.log
+			echo "=== Real STDERR ==="
+			cat /tmp/real.stderr
+	} >&2
+	
+	# Restore original stderr
+	exec 2>&3
+	exit $EXIT_CODE
+}
+`, code, lang.SourceFile,
+		// If compile command exists, add error checking
+		func() string {
+			if cmpcmd != "" {
+				return fmt.Sprintf(`%s
+if [ $? -ne 0 ]; then
+	echo "Compilation failed" >&2
+	exit 2
+fi`, cmpcmd)
+			}
+			return ""
+		}(), runCmd)
+	return wrappedCmd
 }
