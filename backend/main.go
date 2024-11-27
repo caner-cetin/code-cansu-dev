@@ -31,6 +31,7 @@ var (
 	HuggingFaceToken    = NewEnv("HF_TOKEN", "").Get()
 	RedisUrl            = NewEnv("REDIS_URL", "").Get()
 	RedisPassword       = NewEnv("REDIS_PASSWORD", "").Get()
+	LokiUrl             = NewEnv("LOKI_URL", "").Get()
 )
 
 func init() {
@@ -39,6 +40,9 @@ func init() {
 	}
 	if RedisUrl == "" {
 		log.Fatal("Redis connection URL is not set")
+	}
+	if (LokiUrl) == "" {
+		log.Fatal("Loki URL is not set")
 	}
 	internal.REDIS_URL = RedisUrl
 	internal.REDIS_PASSWORD = RedisPassword
@@ -69,7 +73,9 @@ func main() {
 		AllowedOrigins: []string{
 			"https://code.cansu.dev",
 			"http://localhost:5173",
+			"http://localhost:5174",
 			"http://localhost:4173",
+			"http://localhost:4174",
 			"https://haul.code-cansu-dev.pages.dev",
 			"http://localhost:3000",
 		},
@@ -80,7 +86,7 @@ func main() {
 		MaxAge:           300,
 	}))
 	// todo: change this to env
-	config, err := loki.NewDefaultConfig("http://loki:3169/loki/api/v1/push")
+	config, err := loki.NewDefaultConfig(LokiUrl)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -92,7 +98,7 @@ func main() {
 	}
 
 	logger := slog.New(slogmulti.Fanout(
-		slog.NewTextHandler(os.Stdout, nil),
+		slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
 		slogloki.Option{Level: slog.LevelDebug, Client: client}.NewLokiHandler(),
 	))
 	slog.SetDefault(logger)

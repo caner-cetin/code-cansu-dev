@@ -21,20 +21,13 @@ import (
 var Docker *client.Client
 var ContainerHostConfig = &container.HostConfig{
 	Resources: container.Resources{
-		Memory:       512 * 1024 * 1024,
-		MemorySwap:   64 * 1024 * 1024,
+		Memory:       368 * 1024 * 1024,
+		MemorySwap:   369 * 1024 * 1024,
 		CPUPeriod:    100000,  // microseconds
 		CPUQuota:     1000000, // 10 seconds (100000 * 10)
 		CgroupParent: "sandbox.slice",
 	},
 	NetworkMode: network.NetworkNone,
-	// Additional security options
-	SecurityOpt: []string{
-		"no-new-privileges",
-		"seccomp=unconfined",
-	},
-	// Readonly root filesystem
-	ReadonlyRootfs: true,
 }
 var DefaultExecutionTimeLimit = time.Second * 20 // wall time
 
@@ -45,64 +38,12 @@ type ExecutionResult struct {
 	Metrics  ResourceMetrics `json:"metrics"`
 }
 
-func ExecuteInContainer(ctx context.Context, imageName string, cmd []string, stdin *[]byte) (*ExecutionResult, error) {
+func ExecuteInContainer(ctx context.Context, imageName string, code string, stdin *[]byte, languageId int32) (*ExecutionResult, error) {
 	// Create container config
-	wrappedCmd := fmt.Sprintf(`
-	{
-			# Create files for metrics
-			touch /tmp/metrics.log
-			touch /tmp/real.stderr
-			
-			# Start process monitoring in background
-			{
-					while true; do
-							ps -o pid,ppid,rss,vsz,pcpu,comm -C sh >> /tmp/process_stats.log 2>/dev/null
-							sleep 0.1
-					done
-			} &
-			MONITOR_PID=$!
-
-			# Redirect original stderr to our metrics file
-			exec 3>&2              # Save original stderr
-			exec 2>/tmp/metrics.log
-			
-			START_TIME=$(date +%s.%N)
-			
-			# Execute the actual command with stderr going to real.stderr
-			{ %s; } 2>/tmp/real.stderr
-			EXIT_CODE=$?
-			
-			END_TIME=$(date +%s.%N)
-			WALL_TIME=$(echo "$END_TIME - $START_TIME" | bc)
-			
-			# Kill the monitoring process
-			kill $MONITOR_PID
-
-			# Collect metrics
-			{
-					echo "Command exit code: $EXIT_CODE"
-					echo "Wall clock time: $WALL_TIME"
-					echo "=== Process Status ==="
-					cat /proc/self/status
-					echo "=== I/O Statistics ==="
-					cat /proc/self/io
-					echo "=== Process Statistics ==="
-					cat /tmp/process_stats.log
-			} >&2  # Send to our metrics log
-			
-			# Restore original stderr
-			exec 2>&3
-			
-			# Output the real stderr content
-			cat /tmp/real.stderr >&2
-			
-			exit $EXIT_CODE
-	}
-`, strings.Join(cmd, " && "))
-
+	wrappedCmd := BuildWrappedCommand(code, languageId, nil, nil) // todo
 	config := &container.Config{
 		Image:        imageName,
-		Cmd:          []string{"/bin/sh", "-c", wrappedCmd},
+		Cmd:          []string{"sh", "-c", wrappedCmd},
 		AttachStdin:  true,
 		AttachStdout: true,
 		AttachStderr: true,
@@ -215,7 +156,6 @@ func ExecuteInContainer(ctx context.Context, imageName string, cmd []string, std
 
 		stdoutStr := stdoutBuf.String()
 		stderrStr := stderrBuf.String()
-
 		metrics := parseMetrics(stderrStr)
 		if mem != nil {
 			metrics.Memory = mem
@@ -243,39 +183,37 @@ func ExecuteInContainer(ctx context.Context, imageName string, cmd []string, std
 	return &result, nil
 }
 
-func parseMetrics(timeOutput string) ResourceMetrics {
+func parseMetrics(output string) ResourceMetrics {
 	metrics := ResourceMetrics{}
-
-	lines := strings.Split(timeOutput, "\n")
-
+	parts := strings.Split(output, "=== Real STDERR ===")
+	metricsOutput := parts[0] // Everything before the Real STDERR marker
+	lines := strings.Split(metricsOutput, "\n")
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
-
 		switch {
-		case strings.Contains(line, "Wall clock time:"):
+		case strings.HasPrefix(line, "Command exit code:"):
+			// Parse exit code if needed
+		case strings.HasPrefix(line, "Wall clock time:"):
 			timeStr := strings.TrimPrefix(line, "Wall clock time:")
 			metrics.Wall, _ = strconv.ParseFloat(strings.TrimSpace(timeStr), 64)
-
-		case strings.Contains(line, "VmPeak:"):
-			// Memory metrics parsing
+		case strings.HasPrefix(line, "VmPeak:"):
 			valueStr := strings.Fields(line)[1]
 			value, _ := strconv.ParseUint(valueStr, 10, 64)
 			if metrics.Memory == nil {
 				metrics.Memory = &MemoryMetrics{}
 			}
 			metrics.Memory.Max = value * 1024 // Convert from KB to bytes
-
-		case strings.Contains(line, "voluntary_ctxt_switches:"):
+		case strings.HasPrefix(line, "voluntary_ctxt_switches:"):
 			valueStr := strings.Fields(line)[1]
 			metrics.VoluntaryCtxt, _ = strconv.ParseUint(valueStr, 10, 64)
-
-		case strings.Contains(line, "nonvoluntary_ctxt_switches:"):
+		case strings.HasPrefix(line, "nonvoluntary_ctxt_switches:"):
 			valueStr := strings.Fields(line)[1]
 			metrics.InvoluntaryCtxt, _ = strconv.ParseUint(valueStr, 10, 64)
 		}
 	}
 	return metrics
 }
+
 func getCgroupMetrics(containerID string) (*MemoryMetrics, []*stats.IOEntry, error) {
 
 	manager, err := cgroup2.LoadSystemd("sandbox.slice", fmt.Sprintf("docker-%s.scope", containerID))

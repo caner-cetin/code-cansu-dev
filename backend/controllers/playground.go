@@ -7,7 +7,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
@@ -49,28 +48,6 @@ func ExecuteCode(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to decode JSON", http.StatusBadRequest)
 		return
 	}
-	var lang = internal.Languages[request.Language]
-	commands := []string{}
-	commands = append(commands, fmt.Sprintf("touch %s", lang.SourceFile))
-	commands = append(commands, fmt.Sprintf("echo %s | base64 -d > %s", request.Code, lang.SourceFile))
-	if lang.CompileCmd != "" {
-		var cmpcmd = lang.CompileCmd
-		if request.CompilerOptions != nil {
-			cmpcmd = fmt.Sprintf(lang.CompileCmd, request.CompilerOptions)
-		}
-		commands = append(commands, cmpcmd)
-	}
-	var runcmd = lang.RunCmd
-	if request.CommandLineArguments != nil {
-		runcmd = fmt.Sprintf("%s %s", lang.RunCmd, *request.CommandLineArguments)
-	}
-	commands = append(commands, runcmd)
-
-	stdin, err := base64.StdEncoding.DecodeString(*request.Stdin)
-	if err != nil {
-		http.Error(w, "Failed to decode base64", http.StatusBadRequest)
-		return
-	}
 	var subId = uuid.New()
 	to, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -82,52 +59,64 @@ func ExecuteCode(w http.ResponseWriter, r *http.Request) {
 		CreatedAt:  pgtype.Timestamp{Time: time.Now(), Valid: true},
 		UpdatedAt:  pgtype.Timestamp{Time: time.Now(), Valid: true},
 	}
-	err = Queries.CreateSubmission(to, submission)
+	err := Queries.CreateSubmission(to, submission)
 	if err != nil {
 		slog.Error("submission insert to db failed", "error", err)
 		http.Error(w, "oops", http.StatusInternalServerError) // todo: ?
 		return
 	}
-	go func() {
+	go func(lid int32) {
 		to, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
-		result, err := internal.ExecuteInContainer(to, "code-cansu-dev-runner", commands, &stdin)
+		stdin, err := base64.StdEncoding.DecodeString(*request.Stdin)
+		if err != nil {
+			slog.Error("decoding stdin code failed", "error", err)
+			return
+		}
+		result, err := internal.ExecuteInContainer(to, "code-cansu-dev-runner", request.Code, &stdin, lid)
 		if err != nil {
 			var sid = int32(Failed)
 			if (errors.Is(err, internal.ExecutionTimeoutError{})) {
 				sid = int32(TimeLimitExceeded)
 			}
-			// todo: handle error (im tired)
-			Queries.UpdateSubmissionStatus(to, db.UpdateSubmissionStatusParams{
+			slog.Error("error during execution", "error", err)
+
+			err = Queries.UpdateSubmissionStatus(to, db.UpdateSubmissionStatusParams{
 				StatusID: pgtype.Int4{Int32: sid, Valid: true},
 				Token:    pgtype.Text{String: subId.String(), Valid: true},
 			})
+			if err != nil {
+				slog.Error("error while updating submission", "error", err)
+			}
 			return
 		}
 		var encStdout = base64.StdEncoding.EncodeToString([]byte(result.Stdout))
 		var updatedSubmission = db.UpdateSubmissionWithResultParams{
-			Stdout:                   pgtype.Text{String: encStdout, Valid: true},
-			StatusID:                 pgtype.Int4{Int32: int32(Executed), Valid: true},
-			Time:                     pgtype.Float4{Float32: float32(result.Metrics.CPUTime), Valid: true},
-			Memory:                   pgtype.Int4{Int32: int32(result.Metrics.Memory.Latest), Valid: true},
-			MemoryHistory:            result.Metrics.Memory.All,
-			MemoryMin:                pgtype.Int4{Int32: int32(result.Metrics.Memory.Min), Valid: true},
-			MemoryMax:                pgtype.Int4{Int32: int32(result.Metrics.Memory.Max), Valid: true},
-			KernelStackBytes:         pgtype.Int4{Int32: int32(result.Metrics.Memory.KernelStackBytes), Valid: true},
-			PageFaults:               pgtype.Int4{Int32: int32(result.Metrics.Memory.PageFaults), Valid: true},
-			MajorPageFaults:          pgtype.Int4{Int32: int32(result.Metrics.Memory.PageFaults), Valid: true},
-			IoReadBytes:              pgtype.Int4{Int32: int32(result.Metrics.IO.ReadBytes), Valid: true},
-			IoWriteBytes:             pgtype.Int4{Int32: int32(result.Metrics.IO.WriteBytes), Valid: true},
-			IoReadCount:              pgtype.Int4{Int32: int32(result.Metrics.IO.ReadCount), Valid: true},
-			IoWriteCount:             pgtype.Int4{Int32: int32(result.Metrics.IO.WriteCount), Valid: true},
-			Oom:                      pgtype.Int4{Int32: int32(result.Metrics.Memory.OOM), Valid: true},
-			OomKill:                  pgtype.Int4{Int32: int32(result.Metrics.Memory.OOMKill), Valid: true},
-			VoluntaryContextSwitch:   pgtype.Int4{Int32: int32(result.Metrics.VoluntaryCtxt), Valid: true},
-			InvoluntaryContextSwitch: pgtype.Int4{Int32: int32(result.Metrics.InvoluntaryCtxt), Valid: true},
-			ExitCode:                 pgtype.Int4{Int32: int32(result.ExitCode), Valid: true},
-			WallTime:                 pgtype.Float4{Float32: float32(result.Metrics.Wall), Valid: true},
-			UpdatedAt:                pgtype.Timestamp{Time: time.Now(), Valid: true},
-			Token:                    pgtype.Text{String: subId.String(), Valid: true},
+			Stdout:    pgtype.Text{String: encStdout, Valid: true},
+			Stderr:    pgtype.Text{String: result.Stderr, Valid: true},
+			StatusID:  pgtype.Int4{Int32: int32(Executed), Valid: true},
+			Time:      pgtype.Float4{Float32: float32(result.Metrics.CPUTime), Valid: true},
+			ExitCode:  pgtype.Int4{Int32: int32(result.ExitCode), Valid: true},
+			WallTime:  pgtype.Float4{Float32: float32(result.Metrics.Wall), Valid: true},
+			UpdatedAt: pgtype.Timestamp{Time: time.Now(), Valid: true},
+			Token:     pgtype.Text{String: subId.String(), Valid: true},
+		}
+		if result.Metrics.Memory != nil {
+			updatedSubmission.Memory = pgtype.Int4{Int32: int32(result.Metrics.Memory.Latest), Valid: true}
+			updatedSubmission.MemoryMin = pgtype.Int4{Int32: int32(result.Metrics.Memory.Min), Valid: true}
+			updatedSubmission.MemoryMax = pgtype.Int4{Int32: int32(result.Metrics.Memory.Max), Valid: true}
+			updatedSubmission.MemoryHistory = result.Metrics.Memory.All
+			updatedSubmission.KernelStackBytes = pgtype.Int4{Int32: int32(result.Metrics.Memory.KernelStackBytes), Valid: true}
+			updatedSubmission.PageFaults = pgtype.Int4{Int32: int32(result.Metrics.Memory.PageFaults), Valid: true}
+			updatedSubmission.MajorPageFaults = pgtype.Int4{Int32: int32(result.Metrics.Memory.PageFaults), Valid: true}
+			updatedSubmission.IoReadBytes = pgtype.Int4{Int32: int32(result.Metrics.IO.ReadBytes), Valid: true}
+			updatedSubmission.IoWriteBytes = pgtype.Int4{Int32: int32(result.Metrics.IO.WriteBytes), Valid: true}
+			updatedSubmission.IoReadCount = pgtype.Int4{Int32: int32(result.Metrics.IO.ReadCount), Valid: true}
+			updatedSubmission.IoWriteCount = pgtype.Int4{Int32: int32(result.Metrics.IO.WriteCount), Valid: true}
+			updatedSubmission.Oom = pgtype.Int4{Int32: int32(result.Metrics.Memory.OOM), Valid: true}
+			updatedSubmission.OomKill = pgtype.Int4{Int32: int32(result.Metrics.Memory.OOMKill), Valid: true}
+			updatedSubmission.VoluntaryContextSwitch = pgtype.Int4{Int32: int32(result.Metrics.VoluntaryCtxt), Valid: true}
+			updatedSubmission.InvoluntaryContextSwitch = pgtype.Int4{Int32: int32(result.Metrics.InvoluntaryCtxt), Valid: true}
 		}
 		if request.Stdin != nil {
 			updatedSubmission.Stdin = pgtype.Text{String: *request.Stdin, Valid: true}
@@ -135,10 +124,9 @@ func ExecuteCode(w http.ResponseWriter, r *http.Request) {
 		err = Queries.UpdateSubmissionWithResult(to, updatedSubmission)
 		if err != nil {
 			slog.Error("submission update failed", "error", err)
-			http.Error(w, "submission update failed", http.StatusInternalServerError)
 			return
 		}
-	}()
+	}(request.Language)
 	json.NewEncoder(w).Encode(ExecuteCodeResponse{Id: subId.String()})
 }
 
