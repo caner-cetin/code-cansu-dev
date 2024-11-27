@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Share, Copy } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 interface ShareButtonProp {
   uri: string

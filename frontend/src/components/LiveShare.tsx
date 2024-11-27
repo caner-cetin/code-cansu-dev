@@ -5,8 +5,8 @@ import { Label } from "@/components/ui/label"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { useRTCStore } from "@/stores/RTCStore"
 import ShareButton from "@/components/ShareButton"
-import { Circle, EyeSlash, Info,  ShareNetwork, User } from "@phosphor-icons/react"
-import RTCClient from "@/services/rtc/client"
+import { Circle, EyeSlash, Info, ShareNetwork, User } from "@phosphor-icons/react"
+import RTCClient from "@/services/rtc"
 import { useEditorRef } from "@/stores/EditorStore"
 import {
   Tooltip,
@@ -80,7 +80,7 @@ export function LiveShare() {
               </div>
 
               <div className="flex items-center space-x-2">
-                {ctx.peers && ctx.peers.map((peer, index) => (
+                {ctx.peers && ctx.peers.map((peer, _) => (
                   <>
                     <User
                       className="h-4 w-4"

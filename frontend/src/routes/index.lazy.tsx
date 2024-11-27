@@ -8,7 +8,7 @@ import OutputModal from '@/components/OutputModal'
 import { LanguageId } from '@/services/settings'
 import { isMobile } from '@/hooks/useMobile'
 import WaifuWidget from '@/components/WaifuWidget';
-import { getLanguages } from '@/services/judge/calls';
+import { getLanguages } from '@/services/playground/calls';
 import { AceEditor } from '@/components/AceEditor';
 import MarkdownView from '@/components/Markdown'
 import { createLazyFileRoute } from '@tanstack/react-router'
@@ -25,7 +25,7 @@ function CodeEditorPage() {
   const ctx = useAppStore(useShallow((state) => ({
     live2DModelEnabled: state.live2DModelEnabled,
     languageId: state.languageId,
-})))
+  })))
   useEffect(() => {
     setMobile(isMobile())
     window.addEventListener('resize', () => {

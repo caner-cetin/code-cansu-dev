@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { LanguagesResponse } from "@/services/judge/types";
+import type { LanguagesResponse } from "@/services/playground/types";
 import type { StoredSubmission } from "@/hooks/useSubmissions";
 import {
 	LanguageId,

@@ -1,7 +1,7 @@
 import 'ace-builds/src-min-noconflict/ace';
 import AceEditorComponent from "react-ace";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
 import React from "react";
 // unfortunately, i cannot use dynamic import for ace-builds
 // i will find a way to do so, but initial load is around 1.6 MB, and with cached, network transfer is around 4 KB, so it is not a big deal. for now.
@@ -135,8 +135,7 @@ import "ace-builds/src-min-noconflict/theme-chaos";
 import "ace-builds/src-min-noconflict/theme-ambiance";
 // ========================
 import { LANGUAGE_CONFIG } from "@/config/languages";
-import { type CodeStorage, Settings } from "@/services/settings";
-import { edit, type Ace } from "ace-builds";
+import type { Ace } from "ace-builds";
 import { useAppStore } from "@/stores/AppStore";
 import { useShallow } from 'zustand/react/shallow'
 import { useEditorRef } from "@/stores/EditorStore";

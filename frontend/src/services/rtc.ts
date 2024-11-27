@@ -1,4 +1,3 @@
-import signallerApi from "@/services/rtc/api";
 import { Ace } from "ace-builds";
 import { useRTCStore } from "@/stores/RTCStore";
 import ReactAce from "react-ace/lib/ace";
@@ -7,6 +6,7 @@ import { LanguageId } from "@/services/settings";
 import { useAppStore } from "@/stores/AppStore";
 import toast from "react-hot-toast";
 import { StoredSubmission } from "@/hooks/useSubmissions";
+import api from "./api";
 export enum MessageTypes {
     EDITOR_CHANGE_DELTA = "editor_change_delta",
     PEER_CONNECT = "peer_connect",
@@ -57,10 +57,8 @@ export default class RTCClient {
     }
     private initializeWebSocket() {
         const state = useRTCStore.getState()
-        const backendUri = import.meta.env.VITE_RTC_PLANE_PROXY_URI
-        const socketPort = import.meta.env.VITE_RTC_PLANE_PROXY_PORT ? `:${import.meta.env.VITE_RTC_PLANE_PROXY_PORT}` : '';
         
-        const wsUrl = `ws://${backendUri}${socketPort}/${state.proxyToken}/rooms/subscribe`;
+        const wsUrl = `ws://${import.meta.env.VITE_DRONE_URI}/${state.proxyToken}/rooms/subscribe`;
         console.log('Connecting to WebSocket:', wsUrl);
 
         try {
@@ -123,7 +121,7 @@ export default class RTCClient {
             }
         });
 
-        this.ws.addEventListener("close", (event) => {
+        this.ws.addEventListener("close", () => {
             this.ws?.send(JSON.stringify({
                 type: MessageTypes.PEER_DISCONNECT,
                 payload: this.metadata,
@@ -159,7 +157,7 @@ export default class RTCClient {
       const setBackendId = state.setBackendId
       const setProxyToken = state.setProxyToken
         try {
-            await signallerApi.post<{
+            await api.post<{
                 backendId: string;
                 proxyToken: string;
             }>(`/rooms/create`).then((state) => {
@@ -170,6 +168,10 @@ export default class RTCClient {
             console.error('Failed to initialize room:', error);
             throw error;
         }
+    }
+
+    async isRoomValid() {
+        // todo: implement this
     }
     public setupEditorBroadcasts() {
         if (!this.editorRef?.current) return;

@@ -1,7 +1,7 @@
 import axios, { type AxiosError } from "axios";
 import toast from "react-hot-toast";
 const api = axios.create({
-	baseURL: `${import.meta.env.VITE_BACKEND_PROTOCOL ?? "http"}://${import.meta.env.VITE_BACKEND_URI}:${import.meta.env.VITE_BACKEND_PORT ?? ""}`,
+	baseURL: `${import.meta.env.VITE_BACKEND_URI}`,
 });
 
 api.interceptors.response.use(
