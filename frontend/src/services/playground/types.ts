@@ -16,7 +16,7 @@ export interface ExecuteCodeRequest {
 	commandLineArguments: string | undefined;
 }
 
-enum SubmissionStatus {
+export enum SubmissionStatus {
   Processing = 0,
   Executed = 1,
   Failed = 2,
@@ -29,10 +29,11 @@ export interface GetSubmissionResponse {
   LanguageID: number
   Stdin: string
   Stdout: string
+  Stderr: string
   StatusID: number
   Time: number
   Memory: number
-  MemoryHistory: number[]
+  MemoryHistory?: number[]
   MemoryMin: number
   MemoryMax: number
   KernelStackBytes: number

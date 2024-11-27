@@ -49,8 +49,8 @@ export async function reactSubmission(
 		ctx.displayingSharedCode === true
 	)
 		return;
-	const res = await api.post<string>(
-		`/react/submission/${token}`,
+	const res = await api.get<string>(
+		`/judge/${token}/react`,
 	);
 	return res.data;
 }
