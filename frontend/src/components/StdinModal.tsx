@@ -45,7 +45,7 @@ const StdinModal: React.FC<StdinModalProps> = ({ display, setDisplay }) => {
 						Cancel
 					</Button>
 					<Button
-						onClick={() => { Submissions.handleSubmitCode(stdin, code.current?.editor); }}
+						onClick={() => { Submissions.executeCode(code.current?.editor.session.getValue(), stdin); }}
 						className="bg-[#3c3836] text-[#e9efec] border border-[#555568] hover:bg-[#211e20]"
 					>
 						Submit
