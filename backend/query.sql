@@ -31,7 +31,7 @@ SET
   compiler_options = $22, 
   command_line_arguments = $23, 
   additional_files = $24, 
-  updated_at = $25 
+  updated_at = $25,
   stderr = $26
 WHERE 
   token = $27;
