@@ -12,7 +12,7 @@ api.interceptors.response.use(
 			if (!response) {
 				return Promise.reject(error);
 			}
-			toast.error(response.data.message);
+			toast.error(response.data);
 		}
 		return Promise.reject(error);
 	},
