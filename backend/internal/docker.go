@@ -57,7 +57,7 @@ type ExecutionResult struct {
 }
 
 func ExecuteInContainer(ctx context.Context, code string, stdin *[]byte, languageId int32) (*ExecutionResult, error) {
-	var hostCfg = ContainerHostConfig
+	var hostCfg = *ContainerHostConfig
 	tmp, err := os.MkdirTemp(os.TempDir(), fmt.Sprintf("metrics-%d-*", languageId))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temporary directory: %w", err)
@@ -92,7 +92,7 @@ func ExecuteInContainer(ctx context.Context, code string, stdin *[]byte, languag
 	var cfg = ContainerConfig
 	cfg.Cmd = []string{"/bin/bash", "-c", wrappedCmd}
 
-	resp, err := Docker.ContainerCreate(ctx, cfg, hostCfg, nil, nil, "")
+	resp, err := Docker.ContainerCreate(ctx, cfg, &hostCfg, nil, nil, "")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create container: %v", err)
 	}
