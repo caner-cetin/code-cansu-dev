@@ -2,18 +2,14 @@ import { toast } from "react-hot-toast";
 import { LANGUAGE_CONFIG } from "@/config/languages";
 import { LanguageId } from "@/services/settings";
 import {
-	submitCode,
-	submitStdin,
 	submitSubmission,
 } from "@/services/playground/calls";
 import { useAppStore } from "@/stores/AppStore";
-import type { IAceEditor } from "react-ace/lib/types";
 import { useRTCStore } from "@/stores/RTCStore";
 import { MessageTypes } from "@/services/rtc";
 
 export interface StoredSubmission {
 	localId: number;
-	globalId: number;
 	token: string;
 	iconClass: string;
 }
@@ -52,44 +48,27 @@ export namespace Submissions {
 		state.setSubmissions([]);
 		state.setSubmissionCounter(0);
 	}
-	export async function handleSubmitCode(
-		stdin: string | undefined,
-		editor: IAceEditor | undefined,
-	): Promise<void> {
+	// do not encode b64 string while sending here im decoding already
+	export async function executeCode(code: string | undefined, stdin: string | undefined): Promise<void> {
+		if (!code) {
+			toast.error("No code to execute");
+			return
+		}
+		if (!stdin) {
+			stdin = '';
+		}
 		const ctx = useAppStore.getState();
-		if (ctx.languageId === LanguageId.Markdown) {
-			toast.error("what did you expect?");
-			return;
-		}
-		if (!editor) {
-			toast.error("Editor not initialized, please refresh page");
-			return;
-		}
-		const src = editor.session.getValue();
-		if (src === undefined || src.trim() === "") {
-			toast.error("Code cannot be empty");
-			return;
-		}
-		const subId = (await submitCode(src)).id;
-		try {
-			if (stdin !== undefined) {
-				await submitStdin(subId, stdin);
-			}
-			await finalizeSubmission(subId);
-		} catch (error) {
-			console.error(error);
-			toast.error("Processing submission failed");
-		}
-	}
-
-	async function finalizeSubmission(id: number): Promise<void> {
-		const ctx = useAppStore.getState();
-		const result = await submitSubmission(id, ctx.languageId);
+		const result = await submitSubmission({
+			code: btoa(code),
+			stdin: btoa(stdin),
+			language: ctx.languageId as LanguageId,
+			commandLineArguments: undefined,
+			compilerOptions: undefined,
+		});
 		const localId = getNextSubmissionId();
 		const newSubmission = {
 			localId,
-			globalId: id,
-			token: result.token,
+			token: result.id,
 			iconClass: LANGUAGE_CONFIG[ctx.languageId]?.iconClass || "",
 		};
 		saveSubmission(newSubmission);

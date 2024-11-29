@@ -47,7 +47,7 @@ function SharedCodePage() {
   // biome-ignore lint/correctness/useExhaustiveDependencies: <setters wont change>
   useEffect(() => {
     ctx.setDisplayingSharedCode(true)
-    const sc = query.data?.source_code
+    const sc = query.data?.SourceCode
     code.current?.editor.session.setValue(sc ? atob(sc) : '// no source code found')
   }, [query.data])
 

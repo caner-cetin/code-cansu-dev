@@ -18,17 +18,8 @@ import {
   Bug,
   ClockClockwise,
   MaskSad,
-  QuestionMark,
-  Queue,
 } from "@phosphor-icons/react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+
 import type { StoredSubmission } from "@/hooks/useSubmissions";
 import toast from "react-hot-toast";
 import ShareButton from "./ShareButton";
@@ -37,12 +28,13 @@ import { Live2D } from "@/scripts/live2d.helpers";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import type { GetSubmissionResponse } from "@/services/playground/types";
+import { SubmissionStatus, type GetSubmissionResponse } from "@/services/playground/types";
 import { getSubmission, reactSubmission } from "@/services/playground/calls";
 import { useAppStore } from "@/stores/AppStore";
 import { useEditorContent } from "@/hooks/useCodeEditor";
 import { useShallow } from "zustand/react/shallow";
 import { useEditorRef } from "@/stores/EditorStore";
+import MemoryGraph from "./MemoryGraph";
 
 interface OutputModalProps {
   displayingSharedCode: boolean;
@@ -67,7 +59,6 @@ const OutputModal: React.FC<OutputModalProps> = ({ displayingSharedCode, query: 
 
   // Then, all useState hooks
   const [activeTab, setActiveTab] = useState<string | undefined>(undefined);
-  const [refetchInterval, setRefetchInterval] = useState<number | false>(false);
   const [reacting, setReacting] = useState(false);
 
   // Then, all useCallback hooks
@@ -87,13 +78,10 @@ const OutputModal: React.FC<OutputModalProps> = ({ displayingSharedCode, query: 
     enabled: !!activeTab,
     refetchInterval: (data) => {
       if (
-        data.state.data?.StatusID === 2 ||
-        data.state.data?.status_id === 1
+        data.state.data?.StatusID === SubmissionStatus.Processing
       ) {
-        setRefetchInterval(500);
         return 500;
       }
-      setRefetchInterval(false);
       return false;
     },
   });
@@ -104,8 +92,8 @@ const OutputModal: React.FC<OutputModalProps> = ({ displayingSharedCode, query: 
       toast.error("No submission result to restore code from");
       return;
     }
-    if (loadContent) loadContent(atob(submissionResult.source_code));
-    if (setMode) setMode(submissionResult.language_id);
+    if (loadContent) loadContent(atob(submissionResult.SourceCode));
+    if (setMode) setMode(submissionResult.LanguageID);
   }, [submissionResult, loadContent, setMode]);
 
   // Finally, all useEffect hooks
@@ -133,24 +121,21 @@ const OutputModal: React.FC<OutputModalProps> = ({ displayingSharedCode, query: 
 
   useEffect(() => {
     if (displayingSharedCode) {
-      const token = initialQuery?.data?.token;
+      const token = initialQuery?.data?.Token;
       if (token) {
         setActiveTab(token);
       }
     }
-  }, [displayingSharedCode, initialQuery?.data?.token]);
+  }, [displayingSharedCode, initialQuery?.data?.Token]);
 
   useEffect(() => {
     if (submissionResult !== undefined && !reacting) {
       setReacting(true);
-      reactSubmission(submissionResult.token)?.then((res) => {
-        if (!res) return;
-        if (res.message) {
-          Live2D.showMessage({
-            text: res.message,
-            timeout: 3000,
-          });
-        }
+      reactSubmission(submissionResult.Token)?.then((res) => {
+        Live2D.showMessage({
+          text: res || "zzz...",
+          timeout: 3000,
+        });
       }).finally(() => {
         setReacting(false);
       });
@@ -158,13 +143,13 @@ const OutputModal: React.FC<OutputModalProps> = ({ displayingSharedCode, query: 
   }, [submissionResult, reacting]);
   const getStatusIcon = (id: number) => {
     switch (id) {
-      case 0:
+      case SubmissionStatus.Processing:
         return <LoadingSpinner />;
-      case 1:
+      case SubmissionStatus.Executed:
         return <CheckCircle />;
-      case 2:
+      case SubmissionStatus.Failed:
         return <MaskSad />;;
-      case 3:
+      case SubmissionStatus.TimeLimitExceeded:
         return <BellSimpleSlash />;
       default:
         return <Bug />;
@@ -173,67 +158,8 @@ const OutputModal: React.FC<OutputModalProps> = ({ displayingSharedCode, query: 
 
   const renderPerformanceCharts = () => {
     if (!submissionResult) return null;
-
-    const memoryData = [
-      { name: "Memory Usage", value: submissionResult.memory },
-      { name: "Memory Limit", value: submissionResult.memory_limit },
-    ];
-
-    const timeData = [
-      {
-        name: "Exec Time",
-        value: Number.parseFloat(submissionResult.time) * 1000,
-      },
-      {
-        name: "Wall Time",
-        value: Number.parseFloat(submissionResult.wall_time) * 1000,
-      },
-      {
-        name: "CPU Time Limit",
-        value: Number.parseFloat(submissionResult.cpu_time_limit) * 1000,
-      },
-    ];
-
     return (
-      <div className="mb-4">
-        <h5 className="font-semibold mb-2">Performance Metrics</h5>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <h6 className="text-center">Memory Usage (KB)</h6>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={memoryData}>
-                <XAxis
-                  dataKey="name"
-                  angle={-45}
-                  textAnchor="end"
-                  height={100}
-                  interval={0}
-                />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="value" fill="#8884d8" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-          <div>
-            <h6 className="text-center">Time Usage (milliseconds)</h6>
-            <ResponsiveContainer width="100%" height={305}>
-              <BarChart data={timeData}>
-                <XAxis
-                  dataKey="name"
-                  angle={-45}
-                  textAnchor="end"
-                  height={105}
-                  interval={0}
-                />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="value" fill="#82ca9d" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
+      <MemoryGraph memoryHistory={submissionResult.MemoryHistory ?? []} />
     );
   };
   const renderSubmissionResult = () => {
@@ -268,12 +194,12 @@ const OutputModal: React.FC<OutputModalProps> = ({ displayingSharedCode, query: 
                 }
               })()}
             </span>
-            {refetchInterval && (
+            {submissionResult.StatusID == SubmissionStatus.Processing && (
               <span className="text-sm text-gray-400 ml-2">
-                Refreshing... Interval: {refetchInterval}ms
+                Refreshing...
               </span>
             )}
-            {(!refetchInterval && !displayingSharedCode) && (
+            {(!displayingSharedCode) && (
               <div className="flex items-center ml-auto">
                 <span className="text-sm text-gray-400 mr-2">
                   <Button
@@ -291,85 +217,63 @@ const OutputModal: React.FC<OutputModalProps> = ({ displayingSharedCode, query: 
 
         <div className="text-sm">
           <span className="mr-2 font-extrabold">
-            {LANGUAGE_CONFIG[submissionResult.language_id]?.runnerName}
+            {LANGUAGE_CONFIG[submissionResult.LanguageID]?.runnerName}
           </span>
-          <span>exited with code {submissionResult.exit_code}</span>
+          <span>exited with code {submissionResult.ExitCode}</span>
         </div>
 
         <div className="grid grid-cols-3 gap-2 text-sm mb-4 mt-2">
           <div className="flex items-center">
             <Clock className="mr-1 w-4 h-4" />
-            <span>Exec: {submissionResult.time}s</span>
+            <span>Exec: {submissionResult.Time}s</span>
           </div>
           <div className="flex items-center">
             <Clock className="mr-1 w-4 h-4" />
-            <span>Wall: {submissionResult.wall_time}s</span>
+            <span>Wall: {submissionResult.WallTime}s</span>
           </div>
           <div className="flex items-center">
             <Cpu className="mr-1 w-4 h-4" />
-            <span>Limit: {submissionResult.cpu_time_limit}s</span>
+            <span>MemLow: {submissionResult.MemoryMin / 1024 / 1024}s</span>
           </div>
           <div className="flex items-center">
             <MemoryStick className="mr-1 w-4 h-4" />
-            <span>Mem: {submissionResult.memory}KB</span>
+            <span>MemMax: {submissionResult.MemoryMax / 1024 / 1024}MB</span>
           </div>
           <div className="flex items-center">
             <Calendar className="mr-1 w-4 h-4" />
             <span>
               Created:{" "}
-              {new Date(submissionResult.created_at).toLocaleTimeString()}
+              {new Date(submissionResult.CreatedAt).toLocaleTimeString()}
             </span>
           </div>
           <div className="flex items-center">
             <Calendar className="mr-1 w-4 h-4" />
             <span>
-              Finished:{" "}
-              {new Date(submissionResult.finished_at).toLocaleTimeString()}
+              Updated:{" "}
+              {new Date(submissionResult.UpdatedAt).toLocaleTimeString()}
             </span>
           </div>
         </div>
 
-        {submissionResult.stdout && (
+        {submissionResult.Stdout && (
           <div className="mb-4">
             <h5 className="font-semibold mb-2 flex items-center">
               <Terminal className="mr-2" />
               Output:
             </h5>
             <pre className="bg-[#3c3836] p-3 rounded overflow-x-auto max-h-96 text-sm">
-              {submissionResult.stdout}
+              {submissionResult.Stdout}
             </pre>
           </div>
         )}
-        {submissionResult.stderr && (
-          <div className="mb-4">
-            <h5 className="font-semibold mb-2 text-red-500 flex items-center">
-              <Terminal className="mr-2" />
-              Error:
-            </h5>
-            <pre className="bg-[#3c3836] p-3 rounded overflow-x-auto max-h-96 text-red-400 text-sm">
-              {submissionResult.stderr}
-            </pre>
-          </div>
-        )}
-        {submissionResult.compile_output && (
+        {submissionResult.Stderr && (
           <div className="mb-4">
             <h5 className="font-semibold mb-2 flex items-center">
               <Terminal className="mr-2" />
-              Compile Output:
+              Stderr:
             </h5>
             <pre className="bg-[#3c3836] p-3 rounded overflow-x-auto max-h-96 text-sm">
-              {submissionResult.compile_output}
-            </pre>
-          </div>
-        )}
-        {submissionResult.message && (
-          <div className="mb-4">
-            <h5 className="font-semibold mb-2 flex items-center">
-              <Terminal className="mr-2" />
-              Message:
-            </h5>
-            <pre className="bg-[#3c3836] p-3 rounded overflow-x-auto max-h-96">
-              {submissionResult.message}
+              {submissionResult.Stderr}
             </pre>
           </div>
         )}

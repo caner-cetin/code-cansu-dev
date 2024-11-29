@@ -33,7 +33,7 @@ export default function Header() {
                 variant="link"
                 style={{ color: "#e9efec" }}
                 className="hover:bg-[#504945] transition-colors duration-200"
-                onClick={() => Submissions.handleSubmitCode(undefined, code.current?.editor)}
+                onClick={() => Submissions.executeCode(code.current?.editor.session.getValue(), undefined)}
               >
                 Execute
               </Button>
