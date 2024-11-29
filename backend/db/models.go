@@ -24,7 +24,6 @@ type Submission struct {
 	Stdin                    pgtype.Text
 	Stdout                   pgtype.Text
 	StatusID                 pgtype.Int4
-	Time                     pgtype.Float4
 	Memory                   pgtype.Int4
 	MemoryHistory            interface{}
 	MemoryMin                pgtype.Int4
@@ -43,13 +42,16 @@ type Submission struct {
 	Token                    pgtype.Text
 	MaxFileSize              pgtype.Int4
 	ExitCode                 pgtype.Int4
-	WallTime                 pgtype.Float4
+	Wall                     pgtype.Float4
 	CompilerOptions          pgtype.Text
 	CommandLineArguments     pgtype.Text
 	AdditionalFiles          []byte
 	CreatedAt                pgtype.Timestamp
 	UpdatedAt                pgtype.Timestamp
 	Stderr                   pgtype.Text
+	CpuHistory               []byte
+	CpuAverage               pgtype.Float4
+	CpuMax                   pgtype.Float4
 }
 
 type SubmissionAiReaction struct {

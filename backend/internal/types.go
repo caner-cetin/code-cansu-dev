@@ -1,23 +1,29 @@
 package internal
 
 type ResourceMetrics struct {
-	// CPU Statistics
-	CPUTime float64 `json:"cpuTime"` // Total CPU time in seconds
-	IO IOMetrics `json:"io"`
-	// Time Statistics
-	Wall float64 `json:"wall"` // Time spent in user mode (seconds)
-	// Context Switches
-	VoluntaryCtxt   uint64 `json:"voluntaryCtxt"`   // Voluntary context switches
-	InvoluntaryCtxt uint64 `json:"involuntaryCtxt"` // Involuntary context switches
+	Wall            float64        `json:"wall"`
+	Memory          *MemoryMetrics `json:"memory,omitempty"`
+	IO              IOMetrics      `json:"io"`
+	CPU             *CPUMetrics    `json:"cpu,omitempty"`
+	VoluntaryCtxt   uint64         `json:"voluntaryCtxt"`
+	InvoluntaryCtxt uint64         `json:"involuntaryCtxt"`
+}
 
-	Memory *MemoryMetrics `json:"memory"`
+type CPUHistory struct {
+	Timestamp float64 `json:"timestamp"`
+	Usage     float64 `json:"usage"`
+}
+type CPUMetrics struct {
+	History []CPUHistory `json:"history"`
+	Average float64      `json:"average"`
+	Max     float64      `json:"max"`
 }
 
 type MemoryMetrics struct {
 	// Memory Usage (bytes)
-	Min    uint64   `json:"min"`
-	Max    uint64   `json:"max"`
-	Latest uint64   `json:"latest"`
+	Min    uint64  `json:"min"`
+	Max    uint64  `json:"max"`
+	Latest uint64  `json:"latest"`
 	All    []int32 `json:"all"`
 
 	// Detailed Memory Breakdown

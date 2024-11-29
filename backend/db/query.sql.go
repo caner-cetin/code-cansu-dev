@@ -13,8 +13,8 @@ import (
 
 const createSubmission = `-- name: CreateSubmission :exec
 INSERT INTO public.submissions
-(id, source_code, language_id, "stdin", "stdout", status_id, "time", memory, memory_history, memory_min, memory_max, kernel_stack_bytes, page_faults, major_page_faults, io_read_bytes, io_write_bytes, io_read_count, io_write_count, oom, oom_kill, voluntary_context_switch, involuntary_context_switch, "token", max_file_size, exit_code, wall_time, compiler_options, command_line_arguments, additional_files, created_at, updated_at, stderr)
-VALUES(nextval('submissions_id_seq'::regclass), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31)
+(id, source_code, language_id, "stdin", "stdout", status_id, memory, memory_history, memory_min, memory_max, kernel_stack_bytes, page_faults, major_page_faults, io_read_bytes, io_write_bytes, io_read_count, io_write_count, oom, oom_kill, voluntary_context_switch, involuntary_context_switch, "token", max_file_size, exit_code, wall, compiler_options, command_line_arguments, additional_files, created_at, updated_at, stderr, cpu_history, cpu_average, cpu_max)
+VALUES(nextval('submissions_id_seq'::regclass), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33)
 `
 
 type CreateSubmissionParams struct {
@@ -23,7 +23,6 @@ type CreateSubmissionParams struct {
 	Stdin                    pgtype.Text
 	Stdout                   pgtype.Text
 	StatusID                 pgtype.Int4
-	Time                     pgtype.Float4
 	Memory                   pgtype.Int4
 	MemoryHistory            interface{}
 	MemoryMin                pgtype.Int4
@@ -42,13 +41,16 @@ type CreateSubmissionParams struct {
 	Token                    pgtype.Text
 	MaxFileSize              pgtype.Int4
 	ExitCode                 pgtype.Int4
-	WallTime                 pgtype.Float4
+	Wall                     pgtype.Float4
 	CompilerOptions          pgtype.Text
 	CommandLineArguments     pgtype.Text
 	AdditionalFiles          []byte
 	CreatedAt                pgtype.Timestamp
 	UpdatedAt                pgtype.Timestamp
 	Stderr                   pgtype.Text
+	CpuHistory               []byte
+	CpuAverage               pgtype.Float4
+	CpuMax                   pgtype.Float4
 }
 
 func (q *Queries) CreateSubmission(ctx context.Context, arg CreateSubmissionParams) error {
@@ -58,7 +60,6 @@ func (q *Queries) CreateSubmission(ctx context.Context, arg CreateSubmissionPara
 		arg.Stdin,
 		arg.Stdout,
 		arg.StatusID,
-		arg.Time,
 		arg.Memory,
 		arg.MemoryHistory,
 		arg.MemoryMin,
@@ -77,19 +78,22 @@ func (q *Queries) CreateSubmission(ctx context.Context, arg CreateSubmissionPara
 		arg.Token,
 		arg.MaxFileSize,
 		arg.ExitCode,
-		arg.WallTime,
+		arg.Wall,
 		arg.CompilerOptions,
 		arg.CommandLineArguments,
 		arg.AdditionalFiles,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 		arg.Stderr,
+		arg.CpuHistory,
+		arg.CpuAverage,
+		arg.CpuMax,
 	)
 	return err
 }
 
 const getSubmission = `-- name: GetSubmission :one
-SELECT id, source_code, language_id, "stdin", "stdout", status_id, "time", memory, memory_history, memory_min, memory_max, kernel_stack_bytes, page_faults, major_page_faults, io_read_bytes, io_write_bytes, io_read_count, io_write_count, oom, oom_kill, voluntary_context_switch, involuntary_context_switch, "token", max_file_size, exit_code, wall_time, compiler_options, command_line_arguments, additional_files, created_at, updated_at, stderr
+SELECT id, source_code, language_id, stdin, stdout, status_id, memory, memory_history, memory_min, memory_max, kernel_stack_bytes, page_faults, major_page_faults, io_read_bytes, io_write_bytes, io_read_count, io_write_count, oom, oom_kill, voluntary_context_switch, involuntary_context_switch, token, max_file_size, exit_code, wall, compiler_options, command_line_arguments, additional_files, created_at, updated_at, stderr, cpu_history, cpu_average, cpu_max
 FROM public.submissions
 WHERE token = $1
 `
@@ -104,7 +108,6 @@ func (q *Queries) GetSubmission(ctx context.Context, token pgtype.Text) (Submiss
 		&i.Stdin,
 		&i.Stdout,
 		&i.StatusID,
-		&i.Time,
 		&i.Memory,
 		&i.MemoryHistory,
 		&i.MemoryMin,
@@ -123,13 +126,16 @@ func (q *Queries) GetSubmission(ctx context.Context, token pgtype.Text) (Submiss
 		&i.Token,
 		&i.MaxFileSize,
 		&i.ExitCode,
-		&i.WallTime,
+		&i.Wall,
 		&i.CompilerOptions,
 		&i.CommandLineArguments,
 		&i.AdditionalFiles,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Stderr,
+		&i.CpuHistory,
+		&i.CpuAverage,
+		&i.CpuMax,
 	)
 	return i, err
 }
@@ -196,7 +202,7 @@ SET
   "stdin" = $1, 
   "stdout" = $2, 
   status_id = $3, 
-  "time" = $4, 
+  cpu_history = $4, 
   memory = $5, 
   memory_history = $6, 
   memory_min = $7, 
@@ -213,21 +219,23 @@ SET
   voluntary_context_switch = $18, 
   involuntary_context_switch = $19, 
   exit_code = $20, 
-  wall_time = $21, 
+  wall = $21, 
   compiler_options = $22, 
   command_line_arguments = $23, 
   additional_files = $24, 
   updated_at = $25,
-  stderr = $26
+  stderr = $26,
+  cpu_average = $27,
+  cpu_max = $28
 WHERE 
-  token = $27
+  token = $29
 `
 
 type UpdateSubmissionWithResultParams struct {
 	Stdin                    pgtype.Text
 	Stdout                   pgtype.Text
 	StatusID                 pgtype.Int4
-	Time                     pgtype.Float4
+	CpuHistory               []byte
 	Memory                   pgtype.Int4
 	MemoryHistory            interface{}
 	MemoryMin                pgtype.Int4
@@ -244,12 +252,14 @@ type UpdateSubmissionWithResultParams struct {
 	VoluntaryContextSwitch   pgtype.Int4
 	InvoluntaryContextSwitch pgtype.Int4
 	ExitCode                 pgtype.Int4
-	WallTime                 pgtype.Float4
+	Wall                     pgtype.Float4
 	CompilerOptions          pgtype.Text
 	CommandLineArguments     pgtype.Text
 	AdditionalFiles          []byte
 	UpdatedAt                pgtype.Timestamp
 	Stderr                   pgtype.Text
+	CpuAverage               pgtype.Float4
+	CpuMax                   pgtype.Float4
 	Token                    pgtype.Text
 }
 
@@ -258,7 +268,7 @@ func (q *Queries) UpdateSubmissionWithResult(ctx context.Context, arg UpdateSubm
 		arg.Stdin,
 		arg.Stdout,
 		arg.StatusID,
-		arg.Time,
+		arg.CpuHistory,
 		arg.Memory,
 		arg.MemoryHistory,
 		arg.MemoryMin,
@@ -275,12 +285,14 @@ func (q *Queries) UpdateSubmissionWithResult(ctx context.Context, arg UpdateSubm
 		arg.VoluntaryContextSwitch,
 		arg.InvoluntaryContextSwitch,
 		arg.ExitCode,
-		arg.WallTime,
+		arg.Wall,
 		arg.CompilerOptions,
 		arg.CommandLineArguments,
 		arg.AdditionalFiles,
 		arg.UpdatedAt,
 		arg.Stderr,
+		arg.CpuAverage,
+		arg.CpuMax,
 		arg.Token,
 	)
 	return err

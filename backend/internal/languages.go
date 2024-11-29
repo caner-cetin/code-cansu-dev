@@ -1,6 +1,8 @@
 package internal
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type Language struct {
 	Id         int32  `json:"id"`
@@ -307,84 +309,117 @@ var Languages = map[int32]Language{
 	},
 }
 
-// ensure that code is not decoded
-func BuildWrappedCommand(code string, langID int32, cliArgs *string, compileArgs *string) string {
-	lang := Languages[langID]
-	var cmpcmd = ""
+// ensure that code is not decoded and its same b64 string
+// returns the shell command for docker cmd and error
+//
+// => tmp/cpu_stats.log 	(timestamp, cpu usage percent) 1732830980.076539678 7
+// => tmp/stderr.log 		(string block) real stderr of compiler&run process, you can still use the container stderr as I dont output anything there
+// => tmp/timing_stats.log 	(wall time)
+// => tmp/debug.log			(string block)
+//
+// dont forget removing the tmp
+func BuildWrappedCommand(code string, langID int32, cliArgs *string, compileArgs *string) (string, error) {
+	lang, ok := Languages[langID]
+	if !ok {
+		return "", fmt.Errorf("unsupported language ID: %d", langID)
+	}
+
+	cmpcmd := ""
 	if lang.CompileCmd != "" {
-		cmpcmd = fmt.Sprintf(lang.CompileCmd, "")
 		if compileArgs != nil {
-			cmpcmd = fmt.Sprintf(lang.CompileCmd, compileArgs)
+			cmpcmd = fmt.Sprintf(lang.CompileCmd, *compileArgs)
+		} else {
+			cmpcmd = fmt.Sprintf(lang.CompileCmd, "")
 		}
 	}
-	var runCmd = fmt.Sprintf(lang.RunCmd, "")
-	if cliArgs != nil {
-		runCmd = fmt.Sprintf(lang.RunCmd, cliArgs)
-	}
+
+	runCmd := fmt.Sprintf(lang.RunCmd, func() string {
+		if cliArgs != nil {
+			return *cliArgs
+		}
+		return ""
+	}())
+
 	wrappedCmd := fmt.Sprintf(`
 {
-	# Write the source code to a file
-	echo '%s' | base64 -d > %s
-	
-	# Create files for metrics
-	touch /tmp/metrics.log
-	touch /tmp/real.stderr
-	
-	# Compile if necessary
-	%s
-	
-	# Start process monitoring in background
-	{
-			while true; do
-					ps -o pid,ppid,rss,vsz,pcpu,comm >> /tmp/process_stats.log 2>/dev/null
-					sleep 0.1
-			done
-	} &
-	MONITOR_PID=$!
-	
-	# Redirect original stderr to our metrics file
-	exec 3>&2 # Save original stderr
-	exec 2>/tmp/metrics.log
-	START_TIME=$(date +%%s.%%N)
-	
-	# Execute the program
-	%s 2>/tmp/real.stderr
-	EXIT_CODE=$?
-	END_TIME=$(date +%%s.%%N)
-	WALL_TIME=$(echo "$END_TIME - $START_TIME" | bc)
-	
-	# Kill the monitoring process
-	kill $MONITOR_PID
-	
-	# Collect metrics
-	{
-			echo "Command exit code: $EXIT_CODE"
-			echo "Wall clock time: $WALL_TIME"
-			echo "=== Process Status ==="
-			cat /proc/self/status
-			echo "=== I/O Statistics ==="
-			cat /proc/self/io
-			echo "=== Process Statistics ==="
-			cat /tmp/process_stats.log
-			echo "=== Real STDERR ==="
-			cat /tmp/real.stderr
-	} >&2
-	
-	# Restore original stderr
-	exec 2>&3
-	exit $EXIT_CODE
+
+	echo "Testing write access" > "/tmp/debug.log" || {
+        echo "Failed to write to debug.log" >&2
+        exit 1
+    }
+
+
+    start_monitoring() {
+            while true; do
+                read cpu user nice system idle iowait irq softirq steal guest guest_nice < /proc/stat
+                total=$((user + nice + system + idle + iowait + irq + softirq + steal))
+                idle_all=$((idle + iowait))
+
+                if [ -n "${total_old-}" ]; then
+                    total_diff=$((total - total_old))
+                    idle_diff=$((idle_all - idle_old))
+
+                    if [ $total_diff -gt 0 ]; then
+                        cpu_usage=$(( 100 * (total_diff - idle_diff) / total_diff ))
+                        timestamp=$(date +%%s.%%N)
+                        echo "$timestamp $cpu_usage" >> "/tmp/cpu_stats.log" || {
+                                                echo "Failed to write CPU stats" >&2
+                                                return 1
+                                            }
+                    fi
+                fi
+
+                total_old=$total
+                idle_old=$idle_all
+
+                sleep 0.1 || true
+            done &
+            echo $! > "/tmp/cpu_monitor.pid"
+
+            # Debug info
+            echo "CPU monitoring started with PID $(cat /tmp/cpu_monitor.pid)" >> "/tmp/debug.log"
+    }
+
+    cleanup() {
+        local exit_code=$?
+        END_TIME=$(date +%%s.%%N)
+        WALL_TIME=$(echo "scale=9; $END_TIME - $START_TIME" | bc)
+        if [ -f "/tmp/cpu_monitor.pid" ]; then
+            kill -TERM $(cat "/tmp/cpu_monitor.pid") 2>/dev/null || true
+            wait $(cat "/tmp/cpu_monitor.pid") 2>/dev/null || true
+        fi
+        echo "$WALL_TIME" >> "/tmp/timing_stats.log"
+        echo "Exit code: $exit_code" >> "/tmp/debug.log"
+        exit $exit_code
+    }
+
+    trap cleanup EXIT INT TERM
+
+    echo '%s' | base64 -d > %s || {
+        echo "Failed to decode source code" >&2
+        exit 1
+    }
+
+    start_monitoring
+    START_TIME=$(date +%%s.%%N)
+
+    %s
+    { %s 2>&1 | tee -a "/tmp/stderr.log"; } || {
+        echo "Command failed with exit code $?" >&2
+        exit 1
+    }
 }
-`, code, lang.SourceFile,
-		// If compile command exists, add error checking
-		func() string {
-			if cmpcmd != "" {
-				return fmt.Sprintf(`%s
-if [ $? -ne 0 ]; then
-	echo "Compilation failed" >&2
-	exit 2
-fi`, cmpcmd)
-			}
-			return ""
-		}(), runCmd)
-	return wrappedCmd
+`, code, lang.SourceFile, func() string {
+		if cmpcmd != "" {
+			return fmt.Sprintf(`
+    if ! %s; then
+        echo "=== Compilation Exit Code: $? ===" >&2
+        echo "Compilation failed" >&2
+        exit 2
+    fi`, cmpcmd)
+		}
+		return ""
+	}(), runCmd)
+
+	return wrappedCmd, nil
 }
