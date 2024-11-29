@@ -44,7 +44,6 @@ CREATE TABLE public.submissions (
 	"stdin" text NULL,
 	"stdout" text NULL,
 	status_id int4 NULL,
-	"time" float4 NULL,
 	memory int4 NULL,
 	memory_history _int4 NULL,
 	memory_min int4 NULL,
@@ -63,13 +62,16 @@ CREATE TABLE public.submissions (
 	"token" varchar NULL,
 	max_file_size int4 NULL,
 	exit_code int4 NULL,
-	wall_time float4 NULL,
+	wall float4 NULL,
 	compiler_options varchar NULL,
 	command_line_arguments varchar NULL,
 	additional_files bytea NULL,
 	created_at timestamp NULL,
 	updated_at timestamp NULL,
 	stderr text NULL,
+	cpu_history jsonb NULL,
+	cpu_average float4 NULL,
+	cpu_max float4 NULL,
 	CONSTRAINT submissions_pkey PRIMARY KEY (id)
 );
 CREATE INDEX index_submissions_on_token ON public.submissions USING btree (token);

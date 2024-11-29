@@ -73,7 +73,7 @@ func ExecuteCode(w http.ResponseWriter, r *http.Request) {
 			slog.Error("decoding stdin code failed", "error", err)
 			return
 		}
-		result, err := internal.ExecuteInContainer(to, "code-cansu-dev-runner", request.Code, &stdin, lid)
+		result, err := internal.ExecuteInContainer(to, request.Code, &stdin, lid)
 		if err != nil {
 			var sid = int32(Failed)
 			if (errors.Is(err, internal.ExecutionTimeoutError{})) {
@@ -95,9 +95,8 @@ func ExecuteCode(w http.ResponseWriter, r *http.Request) {
 			Stdout:    pgtype.Text{String: encStdout, Valid: true},
 			Stderr:    pgtype.Text{String: result.Stderr, Valid: true},
 			StatusID:  pgtype.Int4{Int32: int32(Executed), Valid: true},
-			Time:      pgtype.Float4{Float32: float32(result.Metrics.CPUTime), Valid: true},
 			ExitCode:  pgtype.Int4{Int32: int32(result.ExitCode), Valid: true},
-			WallTime:  pgtype.Float4{Float32: float32(result.Metrics.Wall), Valid: true},
+			Wall:      pgtype.Float4{Float32: float32(result.Metrics.Wall), Valid: true},
 			UpdatedAt: pgtype.Timestamp{Time: time.Now(), Valid: true},
 			Token:     pgtype.Text{String: subId.String(), Valid: true},
 		}
@@ -117,6 +116,16 @@ func ExecuteCode(w http.ResponseWriter, r *http.Request) {
 			updatedSubmission.OomKill = pgtype.Int4{Int32: int32(result.Metrics.Memory.OOMKill), Valid: true}
 			updatedSubmission.VoluntaryContextSwitch = pgtype.Int4{Int32: int32(result.Metrics.VoluntaryCtxt), Valid: true}
 			updatedSubmission.InvoluntaryContextSwitch = pgtype.Int4{Int32: int32(result.Metrics.InvoluntaryCtxt), Valid: true}
+		}
+		if result.Metrics.CPU != nil {
+			chst, err := json.Marshal(result.Metrics.CPU.History)
+			if err != nil {
+				slog.Error("error marshalling cpu history", "error", err)
+				return
+			}
+			updatedSubmission.CpuHistory = chst
+			updatedSubmission.CpuAverage = pgtype.Float4{Float32: float32(result.Metrics.CPU.Average), Valid: true}
+			updatedSubmission.CpuMax = pgtype.Float4{Float32: float32(result.Metrics.CPU.Max), Valid: true}
 		}
 		if request.Stdin != nil {
 			updatedSubmission.Stdin = pgtype.Text{String: *request.Stdin, Valid: true}

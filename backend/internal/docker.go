@@ -1,11 +1,13 @@
 package internal
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"fmt"
 	"io"
 	"log/slog"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -13,6 +15,7 @@ import (
 	"github.com/containerd/cgroups/v2/cgroup2"
 	"github.com/containerd/cgroups/v2/cgroup2/stats"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
@@ -28,36 +31,68 @@ var ContainerHostConfig = &container.HostConfig{
 		CgroupParent: "sandbox.slice",
 	},
 	NetworkMode: network.NetworkNone,
+	CapDrop:     []string{"all"},
+	CapAdd: []string{
+		"SETUID",
+		"SETGID",
+		"DAC_OVERRIDE",
+	},
+}
+var ContainerConfig = &container.Config{
+	Image:        "code-cansu-dev-runner",
+	AttachStdin:  true,
+	AttachStdout: true,
+	AttachStderr: true,
+	Tty:          false,
+	OpenStdin:    true,
+	StdinOnce:    true,
 }
 var DefaultExecutionTimeLimit = time.Second * 20 // wall time
 
 type ExecutionResult struct {
 	ExitCode int64           `json:"exitCode"`
 	Stdout   string          `json:"stdout"`
-	Stderr   string          `json:"-"`
+	Stderr   string          `json:"stderr"`
 	Metrics  ResourceMetrics `json:"metrics"`
 }
 
-func ExecuteInContainer(ctx context.Context, imageName string, code string, stdin *[]byte, languageId int32) (*ExecutionResult, error) {
-	// Create container config
-	wrappedCmd := BuildWrappedCommand(code, languageId, nil, nil) // todo
-	config := &container.Config{
-		Image:        imageName,
-		Cmd:          []string{"sh", "-c", wrappedCmd},
-		AttachStdin:  true,
-		AttachStdout: true,
-		AttachStderr: true,
-		Tty:          false,
-		OpenStdin:    true,
-		StdinOnce:    true,
+func ExecuteInContainer(ctx context.Context, code string, stdin *[]byte, languageId int32) (*ExecutionResult, error) {
+	var hostCfg = ContainerHostConfig
+	tmp, err := os.MkdirTemp(os.TempDir(), fmt.Sprintf("metrics-%d-*", languageId))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create temporary directory: %w", err)
+	}
+	// defer os.RemoveAll(tmp)
+	if err := os.Chmod(tmp, 0777); err != nil {
+		return nil, fmt.Errorf("failed to chmod temp directory: %w", err)
+	}
+	files := []string{"cpu_stats.log", "timing_stats.log", "stderr.log", "debug.log"}
+	for _, file := range files {
+		filepath := fmt.Sprintf("%s/%s", tmp, file)
+		var f *os.File
+		if f, err = os.Create(filepath); err != nil {
+			return nil, fmt.Errorf("failed to create metric file %s: %w", file, err)
+		}
+		hostCfg.Mounts = append(hostCfg.Mounts, mount.Mount{
+			Type:   mount.TypeBind,
+			Source: f.Name(),
+			Target: fmt.Sprintf("/tmp/%s", file),
+		})
+	}
+	wrappedCmd, err := BuildWrappedCommand(code, languageId, nil, nil) // todo
+	if err != nil {
+		return nil, err
 	}
 	res := cgroup2.Resources{}
-	_, err := cgroup2.NewSystemd("/", "sandbox.slice", -1, &res)
+	_, err = cgroup2.NewSystemd("/", "sandbox.slice", -1, &res)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := Docker.ContainerCreate(ctx, config, ContainerHostConfig, nil, nil, "")
+	var cfg = ContainerConfig
+	cfg.Cmd = []string{"/bin/bash", "-c", wrappedCmd}
+
+	resp, err := Docker.ContainerCreate(ctx, cfg, hostCfg, nil, nil, "")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create container: %v", err)
 	}
@@ -155,8 +190,7 @@ func ExecuteInContainer(ctx context.Context, imageName string, code string, stdi
 		}
 
 		stdoutStr := stdoutBuf.String()
-		stderrStr := stderrBuf.String()
-		metrics := parseMetrics(stderrStr)
+		metrics, stderr := parseMetrics(tmp)
 		if mem != nil {
 			metrics.Memory = mem
 			metrics.Memory.Max = maxMem
@@ -165,15 +199,16 @@ func ExecuteInContainer(ctx context.Context, imageName string, code string, stdi
 		}
 		metrics.IO = iom
 
-		realStderr := ""
-		if parts := strings.Split(stderrStr, "=== Real STDERR ==="); len(parts) > 1 {
-			realStderr = parts[1]
-		}
-
 		result.ExitCode = status.StatusCode
 		result.Stdout = stdoutStr
-		result.Stderr = realStderr
+		result.Stderr = stderr
 		result.Metrics = metrics
+
+		slog.Debug("container finished",
+			"stdout_size", stdoutBuf.Len(),
+			"stderr_size", stderrBuf.Len(),
+			"stdout_content", stdoutBuf.String(),
+			"stderr_content", stderrBuf.String())
 
 	case <-time.After(DefaultExecutionTimeLimit):
 		timeoutSignal <- true
@@ -183,37 +218,86 @@ func ExecuteInContainer(ctx context.Context, imageName string, code string, stdi
 	return &result, nil
 }
 
-func parseMetrics(output string) ResourceMetrics {
-	metrics := ResourceMetrics{}
-	parts := strings.Split(output, "=== Real STDERR ===")
-	metricsOutput := parts[0] // Everything before the Real STDERR marker
-	lines := strings.Split(metricsOutput, "\n")
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		switch {
-		case strings.HasPrefix(line, "Command exit code:"):
-			// Parse exit code if needed
-		case strings.HasPrefix(line, "Wall clock time:"):
-			timeStr := strings.TrimPrefix(line, "Wall clock time:")
-			metrics.Wall, _ = strconv.ParseFloat(strings.TrimSpace(timeStr), 64)
-		case strings.HasPrefix(line, "VmPeak:"):
-			valueStr := strings.Fields(line)[1]
-			value, _ := strconv.ParseUint(valueStr, 10, 64)
-			if metrics.Memory == nil {
-				metrics.Memory = &MemoryMetrics{}
-			}
-			metrics.Memory.Max = value * 1024 // Convert from KB to bytes
-		case strings.HasPrefix(line, "voluntary_ctxt_switches:"):
-			valueStr := strings.Fields(line)[1]
-			metrics.VoluntaryCtxt, _ = strconv.ParseUint(valueStr, 10, 64)
-		case strings.HasPrefix(line, "nonvoluntary_ctxt_switches:"):
-			valueStr := strings.Fields(line)[1]
-			metrics.InvoluntaryCtxt, _ = strconv.ParseUint(valueStr, 10, 64)
+func parseMetrics(tmpDir string) (ResourceMetrics, string) {
+	var metrics ResourceMetrics
+
+	var cpuHistory []CPUHistory
+	var totalUsage, maxUsage float64
+	cpu_statsFile, err := os.Open(fmt.Sprintf("%s/cpu_stats.log", tmpDir))
+	if err != nil {
+		slog.Warn("cannot open cpu stats", "error", err)
+		return metrics, ""
+	}
+	cpuStatScan := bufio.NewScanner(cpu_statsFile)
+	for cpuStatScan.Scan() {
+		cpuStat := strings.Split(cpuStatScan.Text(), " ")
+		time, err := strconv.ParseFloat(strings.TrimSpace(cpuStat[0]), 64)
+		if err != nil {
+			slog.Warn("cannot convert cpu timestamp to float64", "error", err, "timestampString", cpuStat[0])
+			return metrics, ""
+		}
+		cpu, err := strconv.ParseFloat(cpuStat[1], 64)
+		cpuHistory = append(cpuHistory, CPUHistory{
+			Timestamp: time,
+			Usage:     cpu,
+		})
+		totalUsage += cpu
+		maxUsage = max(cpu, maxUsage)
+	}
+	if cpuStatScan.Err() != nil {
+		slog.Warn("cannot scan cpu stats log file", "error", cpuStatScan.Err())
+		return metrics, ""
+	}
+	if len(cpuHistory) > 0 {
+		metrics.CPU = &CPUMetrics{
+			History: cpuHistory,
+			Average: totalUsage / float64(len(cpuHistory)),
+			Max:     maxUsage,
 		}
 	}
-	return metrics
-}
 
+	// timingStatsFile, err := os.Open(fmt.Sprintf("%s/timing_stats.log", tmpDir))
+	// if err != nil {
+	// 	slog.Warn("cannot open timing stats", "error", err)
+	// 	return metrics, ""
+	// }
+	// timingStats, err := io.ReadAll(timingStatsFile)
+	// if err != nil {
+	// 	slog.Warn("cannot read timing stats", "error", err)
+	// 	return metrics, ""
+	// }
+	// timingStatsSplit := strings.Split(string(timingStats), " ")
+	// wall, err := strconv.ParseFloat(strings.TrimSpace(timingStatsSplit[0]), 64)
+	// if err != nil {
+	// 	slog.Warn("cannot convert wall time to float64", "error", err, "wallString", timingStatsSplit[0])
+	// 	return metrics, ""
+	// }
+	// metrics.Wall = wall
+
+	debugLogFile, err := os.Open(fmt.Sprintf("%s/debug.log", tmpDir))
+	if err != nil {
+		slog.Warn("cannot open debug log file", "error", err)
+	}
+	if debugLogFile != nil {
+		debugLogBytes, err := io.ReadAll(debugLogFile)
+		if err != nil {
+			slog.Warn("cannot read debug log file", "error", err)
+		}
+		slog.Debug("debug: ", "string", debugLogBytes)
+	}
+	stderrLogFile, err := os.Open(fmt.Sprintf("%s/stderr.log", tmpDir))
+	if err != nil {
+		slog.Warn("cannot open stderr log file", "error", err)
+		return metrics, ""
+	}
+
+	stderrLog, err := io.ReadAll(stderrLogFile)
+	if err != nil {
+		slog.Warn("cannot read stderr log file", "error", err)
+	}
+
+	return metrics, string(stderrLog)
+}
 func getCgroupMetrics(containerID string) (*MemoryMetrics, []*stats.IOEntry, error) {
 
 	manager, err := cgroup2.LoadSystemd("sandbox.slice", fmt.Sprintf("docker-%s.scope", containerID))
