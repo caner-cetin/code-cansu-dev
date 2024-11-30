@@ -62,7 +62,7 @@ func ExecuteInContainer(ctx context.Context, code string, stdin *[]byte, languag
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temporary directory: %w", err)
 	}
-	// defer os.RemoveAll(tmp)
+	defer os.RemoveAll(tmp)
 	if err := os.Chmod(tmp, 0777); err != nil {
 		return nil, fmt.Errorf("failed to chmod temp directory: %w", err)
 	}
