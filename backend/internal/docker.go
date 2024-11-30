@@ -178,7 +178,8 @@ func ExecuteInContainer(ctx context.Context, code string, stdin *[]byte, languag
 	select {
 	case err := <-errCh:
 		slog.Error("error waiting for container startup: %v", "error", err)
-		return nil, err
+		result.Stderr = stdoutBuf.String()
+		return &result, err
 	case status := <-statusCh:
 		if status.Error != nil {
 			slog.Error("error in docker container: %s", "error", status.Error.Message)
@@ -189,8 +190,7 @@ func ExecuteInContainer(ctx context.Context, code string, stdin *[]byte, languag
 			return nil, fmt.Errorf("error reading output: %v", err)
 		}
 
-		stdoutStr := stdoutBuf.String()
-		metrics, stderr := parseMetrics(tmp)
+		metrics := parseMetrics(tmp)
 		if mem != nil {
 			metrics.Memory = mem
 			metrics.Memory.Max = maxMem
@@ -200,15 +200,9 @@ func ExecuteInContainer(ctx context.Context, code string, stdin *[]byte, languag
 		metrics.IO = iom
 
 		result.ExitCode = status.StatusCode
-		result.Stdout = stdoutStr
-		result.Stderr = stderr
+		result.Stdout = stdoutBuf.String()
+		result.Stderr = stderrBuf.String()
 		result.Metrics = metrics
-
-		slog.Debug("container finished",
-			"stdout_size", stdoutBuf.Len(),
-			"stderr_size", stderrBuf.Len(),
-			"stdout_content", stdoutBuf.String(),
-			"stderr_content", stderrBuf.String())
 
 	case <-time.After(DefaultExecutionTimeLimit):
 		timeoutSignal <- true
@@ -218,7 +212,7 @@ func ExecuteInContainer(ctx context.Context, code string, stdin *[]byte, languag
 	return &result, nil
 }
 
-func parseMetrics(tmpDir string) (ResourceMetrics, string) {
+func parseMetrics(tmpDir string) ResourceMetrics {
 	var metrics ResourceMetrics
 
 	var cpuHistory []CPUHistory
@@ -226,7 +220,7 @@ func parseMetrics(tmpDir string) (ResourceMetrics, string) {
 	cpu_statsFile, err := os.Open(fmt.Sprintf("%s/cpu_stats.log", tmpDir))
 	if err != nil {
 		slog.Warn("cannot open cpu stats", "error", err)
-		return metrics, ""
+		return metrics
 	}
 	cpuStatScan := bufio.NewScanner(cpu_statsFile)
 	for cpuStatScan.Scan() {
@@ -234,7 +228,7 @@ func parseMetrics(tmpDir string) (ResourceMetrics, string) {
 		time, err := strconv.ParseFloat(strings.TrimSpace(cpuStat[0]), 64)
 		if err != nil {
 			slog.Warn("cannot convert cpu timestamp to float64", "error", err, "timestampString", cpuStat[0])
-			return metrics, ""
+			return metrics
 		}
 		cpu, err := strconv.ParseFloat(cpuStat[1], 64)
 		cpuHistory = append(cpuHistory, CPUHistory{
@@ -246,7 +240,7 @@ func parseMetrics(tmpDir string) (ResourceMetrics, string) {
 	}
 	if cpuStatScan.Err() != nil {
 		slog.Warn("cannot scan cpu stats log file", "error", cpuStatScan.Err())
-		return metrics, ""
+		return metrics
 	}
 	if len(cpuHistory) > 0 {
 		metrics.CPU = &CPUMetrics{
@@ -256,23 +250,32 @@ func parseMetrics(tmpDir string) (ResourceMetrics, string) {
 		}
 	}
 
-	// timingStatsFile, err := os.Open(fmt.Sprintf("%s/timing_stats.log", tmpDir))
-	// if err != nil {
-	// 	slog.Warn("cannot open timing stats", "error", err)
-	// 	return metrics, ""
-	// }
-	// timingStats, err := io.ReadAll(timingStatsFile)
-	// if err != nil {
-	// 	slog.Warn("cannot read timing stats", "error", err)
-	// 	return metrics, ""
-	// }
-	// timingStatsSplit := strings.Split(string(timingStats), " ")
-	// wall, err := strconv.ParseFloat(strings.TrimSpace(timingStatsSplit[0]), 64)
-	// if err != nil {
-	// 	slog.Warn("cannot convert wall time to float64", "error", err, "wallString", timingStatsSplit[0])
-	// 	return metrics, ""
-	// }
-	// metrics.Wall = wall
+	timingStatsFile, err := os.Open(fmt.Sprintf("%s/timing_stats.log", tmpDir))
+	if err != nil {
+		slog.Warn("cannot open timing stats", "error", err)
+	}
+	timingStats, err := io.ReadAll(timingStatsFile)
+	if err != nil {
+		slog.Warn("cannot read timing stats", "error", err)
+	}
+	fmt.Println(string(timingStats))
+	timingStatsSplit := strings.Split(string(timingStats), " ")
+	for i, spl := range timingStatsSplit {
+		if spl != "" {
+			tm, err := strconv.ParseFloat(spl, 64)
+			if err != nil {
+				slog.Warn("time output parsing failed", "error", err)
+			}
+			switch i {
+			case 0:
+				metrics.Timing.Real = tm
+			case 1:
+				metrics.Timing.User = tm
+			case 2:
+				metrics.Timing.Sys = tm
+			}
+		}
+	}
 
 	debugLogFile, err := os.Open(fmt.Sprintf("%s/debug.log", tmpDir))
 	if err != nil {
@@ -285,18 +288,8 @@ func parseMetrics(tmpDir string) (ResourceMetrics, string) {
 		}
 		slog.Debug("debug: ", "string", debugLogBytes)
 	}
-	stderrLogFile, err := os.Open(fmt.Sprintf("%s/stderr.log", tmpDir))
-	if err != nil {
-		slog.Warn("cannot open stderr log file", "error", err)
-		return metrics, ""
-	}
 
-	stderrLog, err := io.ReadAll(stderrLogFile)
-	if err != nil {
-		slog.Warn("cannot read stderr log file", "error", err)
-	}
-
-	return metrics, string(stderrLog)
+	return metrics
 }
 func getCgroupMetrics(containerID string) (*MemoryMetrics, []*stats.IOEntry, error) {
 

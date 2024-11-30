@@ -13,8 +13,8 @@ import (
 
 const createSubmission = `-- name: CreateSubmission :exec
 INSERT INTO public.submissions
-(id, source_code, language_id, "stdin", "stdout", status_id, memory, memory_history, memory_min, memory_max, kernel_stack_bytes, page_faults, major_page_faults, io_read_bytes, io_write_bytes, io_read_count, io_write_count, oom, oom_kill, voluntary_context_switch, involuntary_context_switch, "token", max_file_size, exit_code, wall, compiler_options, command_line_arguments, additional_files, created_at, updated_at, stderr, cpu_history, cpu_average, cpu_max)
-VALUES(nextval('submissions_id_seq'::regclass), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33)
+(id, source_code, language_id, "stdin", "stdout", status_id, memory, memory_history, memory_min, memory_max, kernel_stack_bytes, page_faults, major_page_faults, io_read_bytes, io_write_bytes, io_read_count, io_write_count, oom, oom_kill, voluntary_context_switch, involuntary_context_switch, "token", max_file_size, exit_code, timing_real, compiler_options, command_line_arguments, additional_files, created_at, updated_at, stderr, cpu_history, cpu_average, cpu_max, timing_user, timing_sys)
+VALUES(nextval('submissions_id_seq'::regclass), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35)
 `
 
 type CreateSubmissionParams struct {
@@ -41,7 +41,7 @@ type CreateSubmissionParams struct {
 	Token                    pgtype.Text
 	MaxFileSize              pgtype.Int4
 	ExitCode                 pgtype.Int4
-	Wall                     pgtype.Float4
+	TimingReal               pgtype.Float4
 	CompilerOptions          pgtype.Text
 	CommandLineArguments     pgtype.Text
 	AdditionalFiles          []byte
@@ -51,6 +51,8 @@ type CreateSubmissionParams struct {
 	CpuHistory               []byte
 	CpuAverage               pgtype.Float4
 	CpuMax                   pgtype.Float4
+	TimingUser               pgtype.Float4
+	TimingSys                pgtype.Float4
 }
 
 func (q *Queries) CreateSubmission(ctx context.Context, arg CreateSubmissionParams) error {
@@ -78,7 +80,7 @@ func (q *Queries) CreateSubmission(ctx context.Context, arg CreateSubmissionPara
 		arg.Token,
 		arg.MaxFileSize,
 		arg.ExitCode,
-		arg.Wall,
+		arg.TimingReal,
 		arg.CompilerOptions,
 		arg.CommandLineArguments,
 		arg.AdditionalFiles,
@@ -88,12 +90,14 @@ func (q *Queries) CreateSubmission(ctx context.Context, arg CreateSubmissionPara
 		arg.CpuHistory,
 		arg.CpuAverage,
 		arg.CpuMax,
+		arg.TimingUser,
+		arg.TimingSys,
 	)
 	return err
 }
 
 const getSubmission = `-- name: GetSubmission :one
-SELECT id, source_code, language_id, stdin, stdout, status_id, memory, memory_history, memory_min, memory_max, kernel_stack_bytes, page_faults, major_page_faults, io_read_bytes, io_write_bytes, io_read_count, io_write_count, oom, oom_kill, voluntary_context_switch, involuntary_context_switch, token, max_file_size, exit_code, wall, compiler_options, command_line_arguments, additional_files, created_at, updated_at, stderr, cpu_history, cpu_average, cpu_max
+SELECT id, source_code, language_id, stdin, stdout, status_id, memory, memory_history, memory_min, memory_max, kernel_stack_bytes, page_faults, major_page_faults, io_read_bytes, io_write_bytes, io_read_count, io_write_count, oom, oom_kill, voluntary_context_switch, involuntary_context_switch, token, max_file_size, exit_code, timing_real, compiler_options, command_line_arguments, additional_files, created_at, updated_at, stderr, cpu_history, cpu_average, cpu_max, timing_user, timing_sys
 FROM public.submissions
 WHERE token = $1
 `
@@ -126,7 +130,7 @@ func (q *Queries) GetSubmission(ctx context.Context, token pgtype.Text) (Submiss
 		&i.Token,
 		&i.MaxFileSize,
 		&i.ExitCode,
-		&i.Wall,
+		&i.TimingReal,
 		&i.CompilerOptions,
 		&i.CommandLineArguments,
 		&i.AdditionalFiles,
@@ -136,6 +140,8 @@ func (q *Queries) GetSubmission(ctx context.Context, token pgtype.Text) (Submiss
 		&i.CpuHistory,
 		&i.CpuAverage,
 		&i.CpuMax,
+		&i.TimingUser,
+		&i.TimingSys,
 	)
 	return i, err
 }
@@ -179,7 +185,7 @@ func (q *Queries) QuerySubmissionAiReaction(ctx context.Context, judgetoken stri
 const updateSubmissionStatus = `-- name: UpdateSubmissionStatus :exec
 UPDATE
   public.submissions
-SET 
+SET
   status_id = $1
 WHERE
   token = $2
@@ -196,39 +202,41 @@ func (q *Queries) UpdateSubmissionStatus(ctx context.Context, arg UpdateSubmissi
 }
 
 const updateSubmissionWithResult = `-- name: UpdateSubmissionWithResult :exec
-UPDATE 
-  public.submissions 
-SET 
-  "stdin" = $1, 
-  "stdout" = $2, 
-  status_id = $3, 
-  cpu_history = $4, 
-  memory = $5, 
-  memory_history = $6, 
-  memory_min = $7, 
-  memory_max = $8, 
-  kernel_stack_bytes = $9, 
-  page_faults = $10, 
-  major_page_faults = $11, 
-  io_read_bytes = $12, 
-  io_write_bytes = $13, 
-  io_read_count = $14, 
-  io_write_count = $15, 
-  oom = $16, 
-  oom_kill = $17, 
-  voluntary_context_switch = $18, 
-  involuntary_context_switch = $19, 
-  exit_code = $20, 
-  wall = $21, 
-  compiler_options = $22, 
-  command_line_arguments = $23, 
-  additional_files = $24, 
+UPDATE
+  public.submissions
+SET
+  "stdin" = $1,
+  "stdout" = $2,
+  status_id = $3,
+  cpu_history = $4,
+  memory = $5,
+  memory_history = $6,
+  memory_min = $7,
+  memory_max = $8,
+  kernel_stack_bytes = $9,
+  page_faults = $10,
+  major_page_faults = $11,
+  io_read_bytes = $12,
+  io_write_bytes = $13,
+  io_read_count = $14,
+  io_write_count = $15,
+  oom = $16,
+  oom_kill = $17,
+  voluntary_context_switch = $18,
+  involuntary_context_switch = $19,
+  exit_code = $20,
+  timing_real = $21,
+  compiler_options = $22,
+  command_line_arguments = $23,
+  additional_files = $24,
   updated_at = $25,
   stderr = $26,
   cpu_average = $27,
-  cpu_max = $28
-WHERE 
-  token = $29
+  cpu_max = $28,
+  timing_user = $29,
+  timing_sys = $30
+WHERE
+  token = $31
 `
 
 type UpdateSubmissionWithResultParams struct {
@@ -252,7 +260,7 @@ type UpdateSubmissionWithResultParams struct {
 	VoluntaryContextSwitch   pgtype.Int4
 	InvoluntaryContextSwitch pgtype.Int4
 	ExitCode                 pgtype.Int4
-	Wall                     pgtype.Float4
+	TimingReal               pgtype.Float4
 	CompilerOptions          pgtype.Text
 	CommandLineArguments     pgtype.Text
 	AdditionalFiles          []byte
@@ -260,6 +268,8 @@ type UpdateSubmissionWithResultParams struct {
 	Stderr                   pgtype.Text
 	CpuAverage               pgtype.Float4
 	CpuMax                   pgtype.Float4
+	TimingUser               pgtype.Float4
+	TimingSys                pgtype.Float4
 	Token                    pgtype.Text
 }
 
@@ -285,7 +295,7 @@ func (q *Queries) UpdateSubmissionWithResult(ctx context.Context, arg UpdateSubm
 		arg.VoluntaryContextSwitch,
 		arg.InvoluntaryContextSwitch,
 		arg.ExitCode,
-		arg.Wall,
+		arg.TimingReal,
 		arg.CompilerOptions,
 		arg.CommandLineArguments,
 		arg.AdditionalFiles,
@@ -293,6 +303,8 @@ func (q *Queries) UpdateSubmissionWithResult(ctx context.Context, arg UpdateSubm
 		arg.Stderr,
 		arg.CpuAverage,
 		arg.CpuMax,
+		arg.TimingUser,
+		arg.TimingSys,
 		arg.Token,
 	)
 	return err
