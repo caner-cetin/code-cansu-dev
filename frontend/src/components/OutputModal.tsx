@@ -9,17 +9,30 @@ import {
   Clock,
   CheckCircle,
   MemoryStick,
-  Cpu,
   Calendar,
   Terminal,
+  ChevronsUpDown,
 } from "lucide-react";
 import {
   BellSimpleSlash,
   Bug,
   ClockClockwise,
+  Cpu,
+  FloppyDisk,
+  Info,
   MaskSad,
 } from "@phosphor-icons/react";
-
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import type { StoredSubmission } from "@/hooks/useSubmissions";
 import toast from "react-hot-toast";
 import ShareButton from "./ShareButton";
@@ -35,7 +48,7 @@ import { useEditorContent } from "@/hooks/useCodeEditor";
 import { useShallow } from "zustand/react/shallow";
 import { useEditorRef } from "@/stores/EditorStore";
 import MemoryGraph from "./MemoryGraph";
-
+import CPUMetrics from "./CPUMetrics";
 interface OutputModalProps {
   displayingSharedCode: boolean;
   query?: UseQueryResult<GetSubmissionResponse, unknown>;
@@ -159,7 +172,46 @@ const OutputModal: React.FC<OutputModalProps> = ({ displayingSharedCode, query: 
   const renderPerformanceCharts = () => {
     if (!submissionResult) return null;
     return (
-      <MemoryGraph memoryHistory={submissionResult.MemoryHistory ?? []} />
+      <>
+        <div className="space-y-5">
+          <Collapsible>
+            <div className="flex items-center">
+              <Cpu className="w-4 h-4 mr-2" />
+              <h4 className="font-bold">
+                CPU Metrics
+              </h4>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="w-9 p-0">
+                  <ChevronsUpDown className="h-4 w-4" />
+                  <span className="sr-only">Collapse CPU Metrics</span>
+                </Button>
+              </CollapsibleTrigger>
+            </div>
+            <CollapsibleContent>
+              <CPUMetrics cpuHistoryBase64={submissionResult.CpuHistory} />
+            </CollapsibleContent>
+          </Collapsible>
+          <Collapsible>
+            <div className="flex items-center">
+              <MemoryStick className="w-4 h-4 mr-2" />
+              <h4 className="font-bold">
+                Memory Metrics
+              </h4>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="w-9 p-0">
+                  <ChevronsUpDown className="h-4 w-4" />
+                  <span className="sr-only">Collapse Memory Metrics</span>
+                </Button>
+              </CollapsibleTrigger>
+            </div>
+            <CollapsibleContent>
+              <MemoryGraph memoryHistory={submissionResult.MemoryHistory ?? []} />
+
+            </CollapsibleContent>
+          </Collapsible>
+
+        </div>
+      </>
     );
   };
   const renderSubmissionResult = () => {
@@ -202,6 +254,7 @@ const OutputModal: React.FC<OutputModalProps> = ({ displayingSharedCode, query: 
             {(!displayingSharedCode) && (
               <div className="flex items-center ml-auto">
                 <span className="text-sm text-gray-400 mr-2">
+                  {new Date(submissionResult.CreatedAt).toLocaleTimeString()}
                   <Button
                     variant="secondary"
                     onClick={() => restoreCode()}
@@ -219,47 +272,177 @@ const OutputModal: React.FC<OutputModalProps> = ({ displayingSharedCode, query: 
           <span className="mr-2 font-extrabold">
             {LANGUAGE_CONFIG[submissionResult.LanguageID]?.runnerName}
           </span>
-          <span>exited with code {submissionResult.ExitCode}</span>
+          <span>exited with code {submissionResult.ExitCode} </span>
         </div>
 
         <div className="grid grid-cols-3 gap-2 text-sm mb-4 mt-2">
-          <div className="flex items-center">
+          <div className="flex items-center gap-1">
             <Clock className="mr-1 w-4 h-4" />
-            <span>Exec: {submissionResult.Time}s</span>
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Info className="cursor-pointer w-4 h-4" />
+                </TooltipTrigger>
+                <TooltipContent className="bg-[#1a1a1a] border-none border-r-8 text-white max-w-64">
+                  <p>
+                    <span className="font-extrabold">
+                      Does not include compilation time, measured from run command only.
+                    </span>
+
+                    <br />
+                    <br />
+
+                    Refers to the wall clock time i.e the time taken from the start of the program to finish and includes even the time slices taken by
+                    other processes when the kernel context switches them. It also includes any time, the process is blocked (on I/O events, etc.)
+
+                    <br />
+                    <br />
+
+                    <a href="https://stackoverflow.com/a/15427275/22757599" className="underline">source</a>
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <span>Real: {submissionResult.TimingReal} ms</span>
+
           </div>
-          <div className="flex items-center">
+          <div className="flex items-center gap-1">
             <Clock className="mr-1 w-4 h-4" />
-            <span>Wall: {submissionResult.WallTime}s</span>
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Info className="cursor-pointer w-4 h-4" />
+                </TooltipTrigger>
+                <TooltipContent className="bg-[#1a1a1a] border-none border-r-8 text-white max-w-64 overflow-x-auto">
+                  <span className="font-extrabold">
+                    Does not include compilation time, measured from run command only.
+                  </span>
+                  <br />
+                  <br />
+
+                  <p>
+                    Refers to the CPU time spent in the user space, i.e. outside the kernel. Unlike the real time, it refers to only the CPU cycles taken by the process, including the time it is blocked.
+
+                    <br />
+                    <br />
+
+                    <a href="https://stackoverflow.com/a/15427275/22757599" className="underline">source</a>
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <span>User: {submissionResult.TimingUser} ms</span>
+
           </div>
-          <div className="flex items-center">
-            <Cpu className="mr-1 w-4 h-4" />
-            <span>MemLow: {submissionResult.MemoryMin / 1024 / 1024}s</span>
+          <div className="flex items-center gap-1">
+            <Clock className="mr-1 w-4 h-4" />
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Info className="cursor-pointer w-4 h-4" />
+                </TooltipTrigger>
+                <TooltipContent className="bg-[#1a1a1a] border-none border-r-8 text-white max-w-64 overflow-x-auto">
+                  <span className="font-extrabold">
+                    Does not include compilation time, measured from run command only.
+                  </span>
+                  <br />
+                  <br />
+
+                  <p>
+                    Refers to the CPU time spent in the kernel space, (as part of system calls). This is only counting the CPU cycles spent in kernel space on behalf of the process and not any time it is blocked.
+
+                    <br />
+                    <br />
+
+                    <a href="https://stackoverflow.com/a/15427275/22757599" className="underline">source</a>
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <span>Sys: {submissionResult.TimingSys} ms</span>
+
           </div>
           <div className="flex items-center">
             <MemoryStick className="mr-1 w-4 h-4" />
-            <span>MemMax: {submissionResult.MemoryMax / 1024 / 1024}MB</span>
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Info className="cursor-pointer w-4 h-4" />
+                </TooltipTrigger>
+                <TooltipContent className="bg-[#1a1a1a] border-none border-r-8 text-white max-w-64 overflow-x-auto">
+                  <p>
+                    Bytes of memory used by the program at its peak. This includes all the memory used by the program, including the operating system during the program's execution.
+                    <br />
+                    For example, when you run a Nim program, you may see an output like this:
+                    <br />
+                    <br />
+                    <span className="italic">
+                      42956 lines; 0.865s; 59.09MiB peakmem; proj: /main.nim; out: /main
+
+                    </span>
+                    <br />
+                    <br />
+                    Where peak memory shown by compiler is 59.09 megabytes but the peak shown in the output is 85.813 MB. That is caused by the memory used by the operating system, compiler, and every process within the lifetime of
+                    runner.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <span>Peak Memory: <br /> {(submissionResult.MemoryMax / 1024 / 1024).toFixed(3)}MB</span>
+
           </div>
-          <div className="flex items-center">
-            <Calendar className="mr-1 w-4 h-4" />
-            <span>
-              Created:{" "}
-              {new Date(submissionResult.CreatedAt).toLocaleTimeString()}
-            </span>
+          <div className="flex items-center gap-1">
+            <FloppyDisk className="mr-1 w-4 h-4" />
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Info className="cursor-pointer w-4 h-4" />
+                </TooltipTrigger>
+                <TooltipContent className="bg-[#1a1a1a] border-none border-r-8 text-white max-w-64 overflow-x-auto">
+                  <p>
+                    Bytes of read input written to disk and bytes of output written to disk by the program. This includes all the I/O operations done by the program, including the operating system during the program's execution.
+                    <br />
+                    <br />
+                    Bytes:
+                    <br />
+                    ---------
+                    <br />
+                    Read: {submissionResult.IoReadBytes} / Write: {submissionResult.IoWriteBytes}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <span>IO R/W MB: <br /> R:{(submissionResult.IoReadBytes * 0.001).toFixed(2)} <br /> W:{(submissionResult.IoWriteBytes * 0.001).toFixed(2)} </span>
+
           </div>
-          <div className="flex items-center">
-            <Calendar className="mr-1 w-4 h-4" />
-            <span>
-              Updated:{" "}
-              {new Date(submissionResult.UpdatedAt).toLocaleTimeString()}
-            </span>
+          <div className="flex items-center gap-1">
+            <FloppyDisk className="mr-1 w-4 h-4" />
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Info className="cursor-pointer w-4 h-4" />
+                </TooltipTrigger>
+                <TooltipContent className="bg-[#1a1a1a] border-none border-r-8 text-white max-w-64 overflow-x-auto">
+                  <p>
+                    Total number of read and write operations done by the program. This includes all the I/O operations done by the program, including the operating system during the program's execution.
+                    <br />
+                    <br />
+                    This includes every operation during runner's lifetime, such as saving the source code, reading the input, writing the output, etc.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <span>IO R/W: <br /> {submissionResult.IoReadCount}/{submissionResult.IoWriteCount}</span>
+
           </div>
         </div>
+        {renderPerformanceCharts()}
 
         {submissionResult.Stdout && (
-          <div className="mb-4">
+          <div className="mb-4 mt-4">
             <h5 className="font-semibold mb-2 flex items-center">
               <Terminal className="mr-2" />
-              Output:
+              Stdout:
             </h5>
             <pre className="bg-[#3c3836] p-3 rounded overflow-x-auto max-h-96 text-sm">
               {submissionResult.Stdout}
@@ -277,7 +460,7 @@ const OutputModal: React.FC<OutputModalProps> = ({ displayingSharedCode, query: 
             </pre>
           </div>
         )}
-        {renderPerformanceCharts()}
+
       </div>
     );
   };

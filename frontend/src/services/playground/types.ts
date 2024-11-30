@@ -50,14 +50,19 @@ export interface GetSubmissionResponse {
   Token: string
   MaxFileSize: any
   ExitCode: number
-  WallTime: number
   CompilerOptions: any
   CommandLineArguments: any
   AdditionalFiles: any
   CreatedAt: string
   UpdatedAt: string
+  // b64
+  CpuHistory: string
+  CpuAverage: number
+  CpuMax: number
+  TimingReal: number
+  TimingUser: number
+  TimingSys: number
 }
-
 
 export type ReactCodeResponse = {
 	message: string;
