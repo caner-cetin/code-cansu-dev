@@ -62,7 +62,7 @@ CREATE TABLE public.submissions (
 	"token" varchar NULL,
 	max_file_size int4 NULL,
 	exit_code int4 NULL,
-	wall float4 NULL,
+	timing_real float4 NULL,
 	compiler_options varchar NULL,
 	command_line_arguments varchar NULL,
 	additional_files bytea NULL,
@@ -72,6 +72,8 @@ CREATE TABLE public.submissions (
 	cpu_history jsonb NULL,
 	cpu_average float4 NULL,
 	cpu_max float4 NULL,
+	timing_user float4 NULL,
+	timing_sys float4 NULL,
 	CONSTRAINT submissions_pkey PRIMARY KEY (id)
 );
 CREATE INDEX index_submissions_on_token ON public.submissions USING btree (token);

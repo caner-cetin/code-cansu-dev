@@ -1,12 +1,19 @@
 package internal
 
 type ResourceMetrics struct {
-	Wall            float64        `json:"wall"`
+	Timing          Timing         `json:"timing"`
 	Memory          *MemoryMetrics `json:"memory,omitempty"`
 	IO              IOMetrics      `json:"io"`
 	CPU             *CPUMetrics    `json:"cpu,omitempty"`
 	VoluntaryCtxt   uint64         `json:"voluntaryCtxt"`
 	InvoluntaryCtxt uint64         `json:"involuntaryCtxt"`
+}
+
+// All times are in microsecond [µs]
+type Timing struct {
+	Real float64
+	User float64
+	Sys  float64
 }
 
 type CPUHistory struct {

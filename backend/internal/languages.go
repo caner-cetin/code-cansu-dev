@@ -18,7 +18,7 @@ var Languages = map[int32]Language{
 		Name:       "Assembly (NASM 2.16.03)",
 		SourceFile: "main.asm",
 		CompileCmd: "/usr/local/nasm-2.16.03/bin/nasm -f elf64 %s main.asm",
-		RunCmd:     "./a.out",
+		RunCmd:     "./a.out %s",
 	},
 	48: {
 		Id:         48,
@@ -271,7 +271,7 @@ var Languages = map[int32]Language{
 		Id:         85,
 		Name:       "Perl (5.40.0)",
 		SourceFile: "script.pl",
-		RunCmd:     "/usr/bin/perl script.pl",
+		RunCmd:     "ASDF_PERL_VERSION=2.0.21 asdf exec perl script.pl",
 	},
 	86: {
 		Id:         86,
@@ -284,7 +284,7 @@ var Languages = map[int32]Language{
 		Name:       "Nim (2.2.0)",
 		SourceFile: "main.nim",
 		CompileCmd: "ASDF_NIM_VERSION=2.2.0 asdf exec nim compile %s main.nim",
-		RunCmd:     "./main",
+		RunCmd:     "./main %s",
 	},
 	88: {
 		Id:         88,
@@ -314,7 +314,7 @@ var Languages = map[int32]Language{
 //
 // => tmp/cpu_stats.log 	(timestamp, cpu usage percent) 1732830980.076539678 7
 // => tmp/stderr.log 		(string block) real stderr of compiler&run process, you can still use the container stderr as I dont output anything there
-// => tmp/timing_stats.log 	(wall time)
+// => tmp/timing_stats.log 	(time command output) 0m0.000s 0m0.000s 0m0.000s
 // => tmp/debug.log			(string block)
 //
 // dont forget removing the tmp
@@ -382,15 +382,47 @@ func BuildWrappedCommand(code string, langID int32, cliArgs *string, compileArgs
 
     cleanup() {
         local exit_code=$?
-        END_TIME=$(date +%%s.%%N)
-        WALL_TIME=$(echo "scale=9; $END_TIME - $START_TIME" | bc)
         if [ -f "/tmp/cpu_monitor.pid" ]; then
             kill -TERM $(cat "/tmp/cpu_monitor.pid") 2>/dev/null || true
             wait $(cat "/tmp/cpu_monitor.pid") 2>/dev/null || true
         fi
-        echo "$WALL_TIME" >> "/tmp/timing_stats.log"
         echo "Exit code: $exit_code" >> "/tmp/debug.log"
         exit $exit_code
+    }
+
+    timer() {
+        ASDF_PERL_VERSION=5.40.0 asdf exec perl -e '
+        		# this  https://metacpan.org/pod/Unix::Getrusage module is from 2006, only 4 years younger than me
+          		# a 18 year old package, that has not been updated since, is saving my ass and it feels like a fucking miracle
+            	# in the meantime there are 18 javascript frameworks per day being created to fix the previous 18 javascript frameworks
+             	# and nextjs cannot guarantee if their 2 month old versions will work or not
+              	#
+               	# http://www.cpantesters.org/report/85ba3e7a-acdc-11ef-b4ea-ff586c31a372 last running test was only three days ago from now (27 nov 24)
+                # he uploaded this package and 863 tests ran since that day on CPAN
+                # result? it fucking works, 6 decimal accuracy,
+                # Real: 0.196594 ms
+                # User: 0.000188 ms
+                # Sys: 0.000047 ms
+                # i know this is just an interface to UNIX system call, but still. impressive.
+        		use Unix::Getrusage;
+                use Time::HiRes qw(gettimeofday);
+                $start_wall = gettimeofday;
+                my $start = getrusage;
+                system(@ARGV);
+                $exit_code = $? >> 8;
+                my $end = getrusage;
+                $end_wall = gettimeofday;
+
+                $wall = $end_wall - $start_wall;
+                $user = ($end->{ru_utime} - $start->{ru_utime});
+                $sys = ($end->{ru_stime} - $start->{ru_stime});
+
+                open(my $fh, ">", "/tmp/timing_stats.log") or die "Cannot open file: $!";
+                print $fh sprintf("%%.6f %%.6f %%.6f", $wall, $user, $sys);
+                close $fh;
+
+                exit $exit_code;
+            ' -- "$@"
     }
 
     trap cleanup EXIT INT TERM
@@ -401,10 +433,8 @@ func BuildWrappedCommand(code string, langID int32, cliArgs *string, compileArgs
     }
 
     start_monitoring
-    START_TIME=$(date +%%s.%%N)
-
     %s
-    { %s 2>&1 | tee -a "/tmp/stderr.log"; } || {
+    timer "%s" || {
         echo "Command failed with exit code $?" >&2
         exit 1
     }

@@ -92,13 +92,15 @@ func ExecuteCode(w http.ResponseWriter, r *http.Request) {
 		}
 		var encStdout = base64.StdEncoding.EncodeToString([]byte(result.Stdout))
 		var updatedSubmission = db.UpdateSubmissionWithResultParams{
-			Stdout:    pgtype.Text{String: encStdout, Valid: true},
-			Stderr:    pgtype.Text{String: result.Stderr, Valid: true},
-			StatusID:  pgtype.Int4{Int32: int32(Executed), Valid: true},
-			ExitCode:  pgtype.Int4{Int32: int32(result.ExitCode), Valid: true},
-			Wall:      pgtype.Float4{Float32: float32(result.Metrics.Wall), Valid: true},
-			UpdatedAt: pgtype.Timestamp{Time: time.Now(), Valid: true},
-			Token:     pgtype.Text{String: subId.String(), Valid: true},
+			Stdout:     pgtype.Text{String: encStdout, Valid: true},
+			Stderr:     pgtype.Text{String: result.Stderr, Valid: true},
+			StatusID:   pgtype.Int4{Int32: int32(Executed), Valid: true},
+			ExitCode:   pgtype.Int4{Int32: int32(result.ExitCode), Valid: true},
+			UpdatedAt:  pgtype.Timestamp{Time: time.Now(), Valid: true},
+			Token:      pgtype.Text{String: subId.String(), Valid: true},
+			TimingReal: pgtype.Float4{Float32: float32(result.Metrics.Timing.Real), Valid: true},
+			TimingSys:  pgtype.Float4{Float32: float32(result.Metrics.Timing.Sys), Valid: true},
+			TimingUser: pgtype.Float4{Float32: float32(result.Metrics.Timing.User), Valid: true},
 		}
 		if result.Metrics.Memory != nil {
 			updatedSubmission.Memory = pgtype.Int4{Int32: int32(result.Metrics.Memory.Latest), Valid: true}

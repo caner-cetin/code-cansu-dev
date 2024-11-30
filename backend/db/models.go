@@ -42,7 +42,7 @@ type Submission struct {
 	Token                    pgtype.Text
 	MaxFileSize              pgtype.Int4
 	ExitCode                 pgtype.Int4
-	Wall                     pgtype.Float4
+	TimingReal               pgtype.Float4
 	CompilerOptions          pgtype.Text
 	CommandLineArguments     pgtype.Text
 	AdditionalFiles          []byte
@@ -52,6 +52,8 @@ type Submission struct {
 	CpuHistory               []byte
 	CpuAverage               pgtype.Float4
 	CpuMax                   pgtype.Float4
+	TimingUser               pgtype.Float4
+	TimingSys                pgtype.Float4
 }
 
 type SubmissionAiReaction struct {
