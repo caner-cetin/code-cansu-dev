@@ -96,7 +96,8 @@ func SpawnBackend() (*ControlConnectResponse, error) {
 		return nil, err
 	}
 	reader := bytes.NewReader(body)
-	resp, err := http.DefaultClient.Post("http://localhost:8787/ctrl/connect", "application/json", reader)
+	// todo: take the port from env
+	resp, err := http.DefaultClient.Post("http://plane-controller:32322/ctrl/connect", "application/json", reader)
 	if err != nil {
 		slog.Error("Failed to connect to Plane controller", "error", err)
 		return nil, err
@@ -122,4 +123,70 @@ func SpawnBackend() (*ControlConnectResponse, error) {
 		return nil, err
 	}
 	return &response, err
+}
+
+type LifecycleStatus string
+
+// https://plane.dev/concepts/backend-lifecycle
+const (
+	// The Plane controller has chosen a drone to run the backend.
+	Scheduled LifecycleStatus = "scheduled"
+	// The drone has acknowledged the backend and is loading the appropriate image from the registry.
+	Loading LifecycleStatus = "loading"
+	// The drone has loaded the image and is starting the container.
+	Starting LifecycleStatus = "starting"
+	// The container has started. The drone is waiting for it to listen on an HTTP port.
+	Waiting LifecycleStatus = "waiting"
+	// The container is listening on an HTTP port. The drone is ready to route traffic to it.
+	Ready LifecycleStatus = "ready"
+	// The drone has sent a “soft” request to terminate the backend. The backend may remain in this state for a grace period (by default 10 seoconds) before being hard-terminated, unless it exits on its own first.
+	Terminating LifecycleStatus = "terminating"
+	// The drone has sent a “hard” request to terminate the backend.
+	HardTerminating LifecycleStatus = "hard-terminating"
+	// The drone has terminated the backend. This is considered the only terminal state.
+	Terminated LifecycleStatus = "terminated"
+)
+
+type BackendStatusResponse struct {
+	// The status of the backend, such as ready.
+	Status LifecycleStatus `json:"status"`
+	// The time at which the backend entered its current status, in milliseconds since the Unix epoch.
+	Time int64 `json:"time"`
+}
+
+// https://plane.dev/plane-api#status-api
+// /pub/c/:cluster/b/:backend/status
+// Where :cluster is the name of the cluster the backend is running on, and :backend is the name of the backend.
+func BackendStatus(cluster string, backend string) *BackendStatusResponse {
+	request, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://plane-controller:32322/pub/c/%s/b/%s/status", cluster, backend), nil)
+	if err != nil {
+		slog.Error("Failed to create request", "error", err)
+		return nil
+	}
+	resp, err := http.DefaultClient.Do(request)
+	if err != nil {
+		slog.Error("Failed to connect to Plane controller", "error", err)
+		return nil
+	}
+	if resp.StatusCode != http.StatusOK {
+		err = fmt.Errorf("failed to get status, status: %d", resp.StatusCode)
+		if resp.StatusCode == http.StatusNotFound {
+			slog.Error("Plane controller not found", "error", err)
+			return nil
+		}
+		failedResponse, err := io.ReadAll(resp.Body)
+		if err != nil {
+			slog.Error("Failed to read response body", "error", err)
+			return nil
+		}
+		slog.Error("Failed to get backend status", "status", resp.StatusCode, "response", string(failedResponse))
+		return nil
+	}
+	defer resp.Body.Close()
+	var response BackendStatusResponse
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		slog.Error("Failed to decode JSON", "error", err)
+		return nil
+	}
+	return &response
 }

@@ -26,3 +26,8 @@ func CreateRoom(w http.ResponseWriter, r *http.Request) {
 	response.BackendID = spawnResult.BackendID
 	json.NewEncoder(w).Encode(response)
 }
+
+func RoomStatus(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+	return
+}

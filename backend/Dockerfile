@@ -13,5 +13,4 @@ RUN apt-get update && apt-get install -y \
   systemd \
   && rm -rf /var/lib/apt/lists/*
 COPY --from=build /go/bin/app /
-# Set proper permissions for cgroup access
 CMD ["/app"]

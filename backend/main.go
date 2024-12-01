@@ -18,6 +18,7 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/grafana/loki-client-go/loki"
 	"github.com/jackc/pgx/v5/pgxpool"
+	libredis "github.com/redis/go-redis/v9"
 	slogchi "github.com/samber/slog-chi"
 	slogloki "github.com/samber/slog-loki/v3"
 	slogmulti "github.com/samber/slog-multi"
@@ -38,20 +39,6 @@ func init() {
 	if DBUrl == "" {
 		log.Fatal("Database connection URL is not set")
 	}
-	if RedisUrl == "" {
-		log.Fatal("Redis connection URL is not set")
-	}
-	if (LokiUrl) == "" {
-		log.Fatal("Loki URL is not set")
-	}
-	internal.REDIS_URL = RedisUrl
-	internal.REDIS_PASSWORD = RedisPassword
-	controllers.SetupWSHandlers()
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		log.Fatal(err)
-	}
-	internal.Docker = cli
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 	pool, err := pgxpool.New(ctx, DBUrl)
@@ -59,6 +46,37 @@ func init() {
 		log.Fatal(err)
 	}
 	controllers.DB = pool
+	//
+	//
+	if RedisUrl == "" {
+		log.Fatal("Redis connection URL is not set")
+	}
+	if RedisPassword == "" {
+		log.Fatal("Redis password is not set")
+	}
+	option, err := libredis.ParseURL(RedisUrl)
+	if err != nil {
+		log.Fatal(err)
+	}
+	option.Password = RedisPassword
+	internal.RedisInstance = libredis.NewClient(option)
+	//
+	//
+	if (LokiUrl) == "" {
+		log.Fatal("Loki URL is not set")
+	}
+	//
+	//
+	controllers.SetupWSHandlers()
+	//
+	//
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		log.Fatal(err)
+	}
+	internal.Docker = cli
+	//
+	//
 	controllers.Queries = db.New(pool)
 	internal.HF_MODEL_URL = HuggingFaceModelUrl
 	internal.HF_TOKEN = HuggingFaceToken
@@ -107,8 +125,9 @@ func main() {
 		http.Redirect(w, r, "https://www.youtube.com/watch?v=eAaGYwBR38I", http.StatusSeeOther)
 	})
 	r.Route("/rooms", func(r chi.Router) {
-		r.Post("/create", controllers.CreateRoom)
+		r.Post("/create", internal.Limiter(internal.RoomCreateLimit, "room_create_limit").Handler(http.HandlerFunc(controllers.CreateRoom)).ServeHTTP)
 		r.Get("/subscribe", controllers.SubscribeRoom)
+		r.Get("/status", controllers.GetRoomStatus)
 	})
 	r.Route("/judge", func(r chi.Router) {
 		r.Get("/languages", controllers.GetLanguages)
