@@ -127,6 +127,7 @@ func main() {
 	r.Route("/rooms", func(r chi.Router) {
 		r.Post("/create", internal.Limiter(internal.RoomCreateLimit, "room_create_limit").Handler(http.HandlerFunc(controllers.CreateRoom)).ServeHTTP)
 		r.Get("/subscribe", controllers.SubscribeRoom)
+		r.Get("/status", controllers.RoomStatus)
 	})
 	r.Route("/judge", func(r chi.Router) {
 		r.Get("/languages", controllers.GetLanguages)
