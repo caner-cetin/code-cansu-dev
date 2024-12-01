@@ -11,27 +11,21 @@ import (
 	limiterredis "github.com/ulule/limiter/v3/drivers/store/redis"
 )
 
-var REDIS_URL string
-var REDIS_PASSWORD string
 type RateLimitTypes int
+
 var CodeExecuteLimit = limiter.Rate{
 	Period: 60 * time.Second,
 	Limit:  5,
 }
+var RoomCreateLimit = limiter.Rate{
+	Period: 60 * time.Second,
+	Limit:  1,
+}
+var RedisInstance *libredis.Client
 
 func Limiter(rate limiter.Rate, prefix string) *limiterhttp.Middleware {
-
-	// Create a redis client.
-	option, err := libredis.ParseURL(REDIS_URL)
-	if err != nil {
-		log.Fatal(err)
-	}
-	option.Password = REDIS_PASSWORD
-	client := libredis.NewClient(option)
-
-	// Create a store with the redis client.
-	store, err := limiterredis.NewStoreWithOptions(client, limiter.StoreOptions{
-		Prefix:   prefix,
+	store, err := limiterredis.NewStoreWithOptions(RedisInstance, limiter.StoreOptions{
+		Prefix: prefix,
 	})
 	if err != nil {
 		log.Fatal(err)
