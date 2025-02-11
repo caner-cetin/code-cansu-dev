@@ -12,13 +12,12 @@ import { useAppStore } from "@/stores/AppStore";
 export type ReactSubmissionResponse = ReactCodeResponse;
 
 
-export async function getLanguages(): Promise<void> {
+export async function getLanguages(): Promise<LanguagesResponse | undefined> {
 	const ctx = useAppStore.getState();
 	if (ctx.languages === undefined || ctx.languages.length === 0) {
-		ctx.setLanguages(
-			(await api.get<LanguagesResponse>("/judge/languages")).data,
-		);
-	}
+		return (await api.get<LanguagesResponse>("/judge/languages")).data
+	};
+	return undefined;
 }
 
 export async function submitSubmission(request: ExecuteCodeRequest): Promise<ExecuteCodeResponse> {
@@ -45,7 +44,7 @@ export async function reactSubmission(
 	const ctx = useAppStore.getState();
 	if (
 		(typeof window !== "undefined" &&
-		localStorage.getItem(States.DISPLAYING_WAIFU_TIPS) === "1") ||
+			localStorage.getItem(States.DISPLAYING_WAIFU_TIPS) === "1") ||
 		ctx.displayingSharedCode === true
 	)
 		return;

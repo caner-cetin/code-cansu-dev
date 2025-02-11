@@ -8,7 +8,6 @@ import OutputModal from '@/components/OutputModal'
 import { LanguageId } from '@/services/settings'
 import { isMobile } from '@/hooks/useMobile'
 import WaifuWidget from '@/components/WaifuWidget';
-import { getLanguages } from '@/services/playground/calls';
 import { AceEditor } from '@/components/AceEditor';
 import MarkdownView from '@/components/Markdown'
 import { createLazyFileRoute } from '@tanstack/react-router'
@@ -32,12 +31,6 @@ function CodeEditorPage() {
       setMobile(isMobile())
     })
   }, [])
-  useEffect(() => {
-    const fetchLanguages = async () => {
-      await getLanguages();
-    }
-    fetchLanguages()
-  }, []);
   return (
     <>
       {mobile ? (
