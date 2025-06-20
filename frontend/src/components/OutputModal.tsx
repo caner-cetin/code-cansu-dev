@@ -37,12 +37,11 @@ import type { StoredSubmission } from "@/hooks/useSubmissions";
 import toast from "react-hot-toast";
 import ShareButton from "./ShareButton";
 import { LANGUAGE_CONFIG } from "@/config/languages";
-import { Live2D } from "@/scripts/live2d.helpers";
 import { LoadingSpinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { SubmissionStatus, type GetSubmissionResponse } from "@/services/playground/types";
-import { getSubmission, reactSubmission } from "@/services/playground/calls";
+import { getSubmission } from "@/services/playground/calls";
 import { useAppStore } from "@/stores/AppStore";
 import { useEditorContent } from "@/hooks/useCodeEditor";
 import { useShallow } from "zustand/react/shallow";
@@ -72,7 +71,6 @@ const OutputModal: React.FC<OutputModalProps> = ({ displayingSharedCode, query: 
 
   // Then, all useState hooks
   const [activeTab, setActiveTab] = useState<string | undefined>(undefined);
-  const [reacting, setReacting] = useState(false);
 
   // Then, all useCallback hooks
   const getSubmissionId = useCallback((submission: StoredSubmission): number =>
@@ -141,19 +139,6 @@ const OutputModal: React.FC<OutputModalProps> = ({ displayingSharedCode, query: 
     }
   }, [displayingSharedCode, initialQuery?.data?.Token]);
 
-  useEffect(() => {
-    if (submissionResult !== undefined && !reacting) {
-      setReacting(true);
-      reactSubmission(submissionResult.Token)?.then((res) => {
-        Live2D.showMessage({
-          text: res || "zzz...",
-          timeout: 3000,
-        });
-      }).finally(() => {
-        setReacting(false);
-      });
-    }
-  }, [submissionResult, reacting]);
   const getStatusIcon = (id: number) => {
     switch (id) {
       case SubmissionStatus.Processing:
